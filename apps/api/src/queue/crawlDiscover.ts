@@ -1,7 +1,7 @@
 import type { ExecutionContext, MessageBatch } from '@cloudflare/workers-types';
 import { db } from '@anju/db';
 import { utils } from '@anju/utils';
-import { eq } from 'drizzle-orm';
+import { eq, and, inArray, ne } from 'drizzle-orm';
 import { getResourceHandler } from '@anju/containers';
 
 import { markResourceFailed, reportQueueError } from './shared';
@@ -81,7 +81,33 @@ const discoverOne = async (
     ...(seed ? { seo: seed } : {})
   };
 
-  if (pages.length === 0) {
+  const candidateUris = Array.from(new Set(pages.map(p => p.url)));
+  const existingRows =
+    candidateUris.length > 0
+      ? await dbInstance
+          .select({ uri: db.schema.artifactResource.uri })
+          .from(db.schema.artifactResource)
+          .where(
+            and(
+              eq(
+                db.schema.artifactResource.artifactId,
+                resource.artifactId
+              ),
+              inArray(db.schema.artifactResource.uri, candidateUris),
+              ne(db.schema.artifactResource.id, resource.id)
+            )
+          )
+      : [];
+  const existingUriSet = new Set(existingRows.map(r => r.uri));
+  const seenUris = new Set<string>();
+  const newPages = pages.filter(p => {
+    if (existingUriSet.has(p.url)) return false;
+    if (seenUris.has(p.url)) return false;
+    seenUris.add(p.url);
+    return true;
+  });
+
+  if (newPages.length === 0) {
     await dbInstance
       .update(db.schema.artifactResource)
       .set({
@@ -95,7 +121,7 @@ const discoverOne = async (
   const inserted = await dbInstance
     .insert(db.schema.artifactResource)
     .values(
-      pages.map(page => ({
+      newPages.map(page => ({
         title: page.title || page.url,
         uri: page.url,
         type: utils.constants.RESOURCE_TYPE_STATIC,
@@ -113,7 +139,7 @@ const discoverOne = async (
   await dbInstance
     .update(db.schema.artifactResource)
     .set({
-      childResourceCount: pages.length,
+      childResourceCount: newPages.length,
       status: utils.constants.STATUS_PENDING,
       ...(seed ? { metadata: mergedParentMetadata } : {})
     })

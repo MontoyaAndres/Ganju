@@ -50,6 +50,17 @@ const business = async (c: Context<AppEnv>) => {
     throw new Error('MCP Server not found');
   }
 
+  // Website parents are folders, not queryable resources: they have no
+  // content of their own, and their URI collides with the seed page that
+  // ends up indexed as a child. Hide them from MCP entirely.
+  const exposedResources = artifact.artifactResources.filter(
+    r =>
+      !(
+        r.sourceType === utils.constants.RESOURCE_SOURCE_TYPE_WEBSITE &&
+        !r.parentResourceId
+      )
+  );
+
   const refreshedCredentials = await Promise.all(
     artifact.artifactCredentials.map(cred => refreshCredentialIfNeeded(c, cred))
   );
@@ -98,7 +109,7 @@ const business = async (c: Context<AppEnv>) => {
     );
   }
 
-  for (const resource of artifact.artifactResources) {
+  for (const resource of exposedResources) {
     const resourceMetadata = {
       title: resource.title,
       description: resource.description || undefined,
@@ -206,7 +217,7 @@ const business = async (c: Context<AppEnv>) => {
         return handler.handler(args, {
           config: toolConfig,
           credentials: toolCredentials,
-          resources: artifact.artifactResources,
+          resources: exposedResources,
           bucket,
           env: c.env,
           db: dbInstance,
