@@ -182,7 +182,7 @@ export const artifact = pgTable('artifact', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => uuid()),
-  hash: text('hash').notNull().unique(),
+  slug: text('slug').notNull().unique(),
   artifactPromptCount: integer('artifact_prompt_count').notNull().default(0),
   artifactResourceCount: integer('artifact_resource_count')
     .notNull()

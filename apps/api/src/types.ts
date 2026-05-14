@@ -1,4 +1,9 @@
-import type { Hyperdrive, Queue, R2Bucket } from '@cloudflare/workers-types';
+import type {
+  Fetcher,
+  Hyperdrive,
+  Queue,
+  R2Bucket
+} from '@cloudflare/workers-types';
 import type { ResourceHandler } from '@anju/containers';
 
 import type { Auth } from './utils';
@@ -29,6 +34,7 @@ export type Bindings = {
   ONEDRIVE_FILE_QUEUE: Queue<OnedriveFileJob>;
   RESOURCE_HANDLER: DurableObjectNamespace<ResourceHandler>;
   RESOURCE_HANDLER_PORT: string;
+  MCP: Fetcher;
   DATABASE_URL?: string;
   NODE_ENV?: string;
 };

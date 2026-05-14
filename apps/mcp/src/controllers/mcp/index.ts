@@ -12,23 +12,27 @@ import { toolRegistry } from '../../tools';
 import {
   readResourceContent,
   refreshCredentialIfNeeded,
-  generateEmbedding
+  generateEmbedding,
+  resolveArtifactSlug
 } from '../../utils';
 
 // types
 import { AppEnv } from '../../types';
 
 const business = async (c: Context<AppEnv>) => {
-  const query = c.req.query();
+  const slug = c.req.param('slug') ?? resolveArtifactSlug(c.req.raw);
 
-  const currentValues = await utils.Schema.BUSINESS_QUERY.parseAsync({
-    hash: query.hash
-  });
+  if (!slug) {
+    return c.json({ error: 'Missing MCP slug' }, 400);
+  }
+  if (!utils.isValidSlugFormat(slug) || utils.isReservedSlug(slug)) {
+    return c.json({ error: 'Invalid MCP slug' }, 400);
+  }
 
   const dbInstance = db.create(c);
 
   const artifact = await dbInstance.query.artifact.findFirst({
-    where: eq(db.schema.artifact.hash, currentValues.hash),
+    where: eq(db.schema.artifact.slug, slug),
     with: {
       artifactPrompts: true,
       artifactResources: true,

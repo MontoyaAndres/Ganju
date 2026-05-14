@@ -529,6 +529,52 @@ const URI_BEARING_RESOURCE_TOOL_KEYS = [
   RESOURCE_TOOL_KEY_SEND_RESOURCE
 ];
 
+const RESERVED_SLUGS = [
+  'www',
+  'api',
+  'app',
+  'admin',
+  'auth',
+  'mcp',
+  'dev',
+  'prod',
+  'staging',
+  'development',
+  'production',
+  'docs',
+  'blog',
+  'help',
+  'support',
+  'status',
+  'mail',
+  'ftp',
+  'ns',
+  'ns1',
+  'ns2',
+  'cdn',
+  'static',
+  'assets',
+  'auth',
+  'oauth',
+  'authentication',
+  'authorization',
+  'login',
+  'logout',
+  'signin',
+  'signup',
+  'register',
+  'me',
+  'user',
+  'users',
+  'account',
+  'accounts',
+  'billing',
+  'settings',
+  'health',
+  'metrics',
+  'internal'
+];
+
 export const constants = {
   USER_ROLE_ADMIN,
   USER_ROLES,
@@ -721,5 +767,6 @@ export const constants = {
   RESOURCE_TOOL_KEY_READ_RESOURCE,
   RESOURCE_TOOL_KEY_SEND_RESOURCE,
   RESOURCE_TOOL_KEYS,
-  URI_BEARING_RESOURCE_TOOL_KEYS
+  URI_BEARING_RESOURCE_TOOL_KEYS,
+  RESERVED_SLUGS
 };

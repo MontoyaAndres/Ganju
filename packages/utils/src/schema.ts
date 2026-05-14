@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { constants } from './constants';
+import { isReservedSlug, isValidSlugFormat } from './slug';
 
 const SCHEMA_DEFINITION = z.object({
   type: z.enum(constants.SCHEMA_DEFINITION_TYPES),
@@ -423,10 +424,6 @@ const ARTIFACT_REMOVE_CREDENTIAL = z.object({
   organizationId: z.uuid()
 });
 
-const BUSINESS_QUERY = z.object({
-  hash: z.string().length(8).min(8).max(8)
-});
-
 const ORGANIZATION_LIST_LLM = z.object({
   userId: z.uuid(),
   organizationId: z.uuid()
@@ -503,6 +500,27 @@ const ARTIFACT_UPDATE_RESOURCE_SHOW_SOURCE = z.object({
   organizationId: z.uuid()
 });
 
+const ARTIFACT_GET = z.object({
+  projectId: z.uuid(),
+  userId: z.uuid(),
+  organizationId: z.uuid()
+});
+
+const ARTIFACT_UPDATE_SLUG = z.object({
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine(isValidSlugFormat, {
+      message:
+        'Slug must be 3–63 chars, lowercase letters, digits, or hyphens, and start/end with a letter or digit'
+    })
+    .refine(s => !isReservedSlug(s), { message: 'Slug is reserved' }),
+  projectId: z.uuid(),
+  userId: z.uuid(),
+  organizationId: z.uuid()
+});
+
 const CHANNEL_GET = z.object({
   projectId: z.uuid(),
   userId: z.uuid(),
@@ -570,6 +588,12 @@ const ARTIFACT_UPDATE_RESOURCE_VIEW = ARTIFACT_UPDATE_RESOURCE.omit({
   organizationId: true
 });
 
+const ARTIFACT_UPDATE_SLUG_VIEW = ARTIFACT_UPDATE_SLUG.omit({
+  projectId: true,
+  userId: true,
+  organizationId: true
+});
+
 export const Schema = {
   ORGANIZATION_CREATE,
   ORGANIZATION_CREATE_VIEW,
@@ -611,7 +635,9 @@ export const Schema = {
   ARTIFACT_REMOVE_TOOL,
   ARTIFACT_GET_CREDENTIAL,
   ARTIFACT_REMOVE_CREDENTIAL,
-  BUSINESS_QUERY,
+  ARTIFACT_GET,
+  ARTIFACT_UPDATE_SLUG,
+  ARTIFACT_UPDATE_SLUG_VIEW,
   ORGANIZATION_LIST_LLM,
   ORGANIZATION_CREATE_LLM,
   ORGANIZATION_CREATE_LLM_VIEW,

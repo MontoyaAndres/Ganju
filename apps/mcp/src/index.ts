@@ -34,6 +34,7 @@ app
 
   // MCP controller
   .post('/', MCPController.business)
+  .post('/:slug', MCPController.business)
   .get('/health', MCPController.health);
 
 export default app;

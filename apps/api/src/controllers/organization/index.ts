@@ -47,15 +47,10 @@ const create = async (c: Context<AppEnv>) => {
       .values({ userId: currentValues.userId, projectId: project.id });
 
     const artifactId = uuid();
-    const artifactHash = utils.hashObject({
-      organizationId: org.id,
-      projectId: project.id,
-      artifactId
-    });
 
     await tx.insert(db.schema.artifact).values({
       id: artifactId,
-      hash: artifactHash,
+      slug: utils.generateRandomSlug(),
       artifactPromptCount: 0,
       artifactResourceCount: 0,
       projectId: project.id

@@ -214,7 +214,7 @@ export const runChannelTurn = async (
     artifactResources.map(r => [r.uri, r.id])
   );
 
-  const mcp = await createMcpClient(artifactRow.hash);
+  const mcp = await createMcpClient(c, artifactRow.slug);
   let assistantText = '';
   let assistantMessageId = '';
   let totalLatency = 0;

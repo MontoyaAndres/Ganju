@@ -1261,6 +1261,80 @@ const updateResourceShowSource = async (c: Context<AppEnv>) => {
   return c.json(updated);
 };
 
+const get = async (c: Context<AppEnv>) => {
+  const currentValues = await utils.Schema.ARTIFACT_GET.parseAsync({
+    projectId: c.req.param('projectId'),
+    userId: c.get('user').id,
+    organizationId: c.req.param('organizationId')
+  });
+
+  const dbInstance = db.create(c);
+
+  const [row] = await dbInstance
+    .select({
+      id: db.schema.artifact.id,
+      slug: db.schema.artifact.slug,
+      projectId: db.schema.artifact.projectId,
+      artifactPromptCount: db.schema.artifact.artifactPromptCount,
+      artifactResourceCount: db.schema.artifact.artifactResourceCount,
+      artifactToolCount: db.schema.artifact.artifactToolCount,
+      artifactCredentialCount: db.schema.artifact.artifactCredentialCount,
+      channelCount: db.schema.artifact.channelCount,
+      createdAt: db.schema.artifact.createdAt,
+      updatedAt: db.schema.artifact.updatedAt
+    })
+    .from(db.schema.artifact)
+    .where(eq(db.schema.artifact.projectId, currentValues.projectId))
+    .limit(1);
+
+  if (!row) {
+    throw new Error('Artifact not found for the project');
+  }
+
+  return c.json(row);
+};
+
+const updateSlug = async (c: Context<AppEnv>) => {
+  const body = await c.req.json();
+  const currentValues = await utils.Schema.ARTIFACT_UPDATE_SLUG.parseAsync({
+    ...body,
+    projectId: c.req.param('projectId'),
+    userId: c.get('user').id,
+    organizationId: c.req.param('organizationId')
+  });
+
+  const dbInstance = db.create(c);
+
+  const [currentArtifactByProject] = await dbInstance
+    .select()
+    .from(db.schema.artifact)
+    .where(eq(db.schema.artifact.projectId, currentValues.projectId))
+    .limit(1);
+
+  if (!currentArtifactByProject) {
+    throw new Error('Artifact not found for the project');
+  }
+
+  if (currentArtifactByProject.slug === currentValues.slug) {
+    return c.json(currentArtifactByProject);
+  }
+
+  try {
+    const [updated] = await dbInstance
+      .update(db.schema.artifact)
+      .set({ slug: currentValues.slug })
+      .where(eq(db.schema.artifact.id, currentArtifactByProject.id))
+      .returning();
+
+    return c.json(updated);
+  } catch (error: any) {
+    if (error?.code === '23505') {
+      throw new Error('Slug already in use');
+    }
+    throw error;
+  }
+};
+
 
 export const ArtifactController = {
   createPrompt,
@@ -1280,5 +1354,7 @@ export const ArtifactController = {
   removeTool,
   listTools,
   removeCredential,
-  listCredentials
+  listCredentials,
+  get,
+  updateSlug
 };

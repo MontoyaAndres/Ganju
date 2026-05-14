@@ -3,7 +3,11 @@ import { getEnv } from './getEnv';
 import type { EnvSource } from './getEnv';
 import { fetcher } from './fetcher';
 import { constants } from './constants';
-import { hashObject } from './hashObject';
+import {
+  generateRandomSlug,
+  isReservedSlug,
+  isValidSlugFormat
+} from './slug';
 import {
   encryptString,
   decryptString,
@@ -113,7 +117,9 @@ export const utils = {
   getEnv,
   fetcher,
   constants,
-  hashObject,
+  generateRandomSlug,
+  isReservedSlug,
+  isValidSlugFormat,
   encryptString,
   decryptString,
   getCredentialEncryptionKey,

@@ -41,15 +41,10 @@ const create = async (c: Context<AppEnv>) => {
       .where(eq(db.schema.organization.id, currentValues.organizationId));
 
     const artifactId = uuid();
-    const artifactHash = utils.hashObject({
-      organizationId: currentValues.organizationId,
-      projectId: project.id,
-      artifactId
-    });
 
     await tx.insert(db.schema.artifact).values({
       id: artifactId,
-      hash: artifactHash,
+      slug: utils.generateRandomSlug(),
       artifactPromptCount: 0,
       artifactResourceCount: 0,
       projectId: project.id

@@ -115,6 +115,18 @@ app
     ProjectController.remove
   )
 
+  // Artifact controller
+  .get(
+    '/organization/:organizationId/project/:projectId/artifact',
+    UserMiddleware.verify,
+    ArtifactController.get
+  )
+  .put(
+    '/organization/:organizationId/project/:projectId/artifact/slug',
+    UserMiddleware.verify,
+    ArtifactController.updateSlug
+  )
+
   // Artifact Prompt controller
   .get(
     '/organization/:organizationId/project/:projectId/artifact/prompt',
