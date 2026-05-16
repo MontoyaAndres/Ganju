@@ -101,12 +101,12 @@ export const Settings = () => {
   }, []);
 
   const scrollToSection = (id: Section) => {
-    const el =
-      id === 'organization'
-        ? organizationRef.current
-        : id === 'models'
-          ? modelsRef.current
-          : dangerRef.current;
+    const map: Record<Section, HTMLElement | null> = {
+      organization: organizationRef.current,
+      models: modelsRef.current,
+      danger: dangerRef.current
+    };
+    const el = map[id];
     if (!el) return;
     setSection(id);
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -567,12 +567,7 @@ export const Settings = () => {
         {orgLoading && !organization ? (
           <div className="projects-list">
             {[0, 1].map(i => (
-              <UI.Skeleton
-                key={i}
-                variant="rounded"
-                width="100%"
-                height={48}
-              />
+              <UI.Skeleton key={i} variant="rounded" width="100%" height={48} />
             ))}
           </div>
         ) : !organization?.projects || organization.projects.length === 0 ? (
@@ -620,8 +615,8 @@ export const Settings = () => {
           <div className="settings-section-text">
             <h2 className="settings-section-title">Configured models</h2>
             <p className="settings-section-description">
-              Add a model with its API key once and reuse it across any
-              channel in the organization.
+              Add a model with its API key once and reuse it across any channel
+              in the organization.
             </p>
           </div>
           <UI.Button
@@ -640,20 +635,15 @@ export const Settings = () => {
         {llmsLoading && llms.length === 0 ? (
           <div className="llm-list">
             {[0, 1, 2].map(i => (
-              <UI.Skeleton
-                key={i}
-                variant="rounded"
-                width="100%"
-                height={64}
-              />
+              <UI.Skeleton key={i} variant="rounded" width="100%" height={64} />
             ))}
           </div>
         ) : null}
 
         {!llmsLoading && !llmForm && llms.length === 0 && (
           <p className="llms-empty">
-            No models configured yet. Add one to give your channels something
-            to talk with.
+            No models configured yet. Add one to give your channels something to
+            talk with.
           </p>
         )}
 
@@ -721,8 +711,8 @@ export const Settings = () => {
         <p className="danger-warning">
           <strong>This action cannot be undone.</strong> Removing the
           organization will permanently delete every project, channel,
-          conversation, message, resource, tool and language model it owns.
-          Make sure you really want to do this.
+          conversation, message, resource, tool and language model it owns. Make
+          sure you really want to do this.
         </p>
 
         <div className="settings-actions">

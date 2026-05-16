@@ -5,6 +5,7 @@ import { Resources } from './resources';
 import { Channels } from './channels';
 import { Organization } from './organization';
 import { Settings } from './settings';
+import { Link } from './link';
 
 export const Views = {
   Auth,
@@ -13,5 +14,6 @@ export const Views = {
   Resources,
   Channels,
   Organization,
-  Settings
+  Settings,
+  Link
 };

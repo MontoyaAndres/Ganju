@@ -3,7 +3,8 @@ import { cors } from 'hono/cors';
 import { utils as dbUtils } from '@anju/db';
 import { utils } from '@anju/utils';
 
-import { MCPController } from './controllers';
+import { MCPController, WellKnownController } from './controllers';
+import { AuthMiddleware } from './middleware';
 
 // types
 import type { AppEnv } from './types';
@@ -14,15 +15,18 @@ app
   .use(
     '*',
     cors({
-      origin: ['*'],
+      origin: '*',
       allowHeaders: [
         'Content-Type',
         'User-Agent',
         'Authorization',
         'Accept',
-        'Mcp-Session-Id'
+        'Mcp-Session-Id',
+        'mcp-protocol-version',
+        utils.constants.MCP_INTERNAL_HEADER
       ],
-      allowMethods: ['GET', 'POST']
+      exposeHeaders: ['WWW-Authenticate', 'Mcp-Session-Id'],
+      allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS']
     })
   )
   .onError(async (error, c) => {
@@ -32,9 +36,20 @@ app
     return c.json(body, status);
   })
 
-  // MCP controller
-  .post('/', MCPController.business)
-  .post('/:slug', MCPController.business)
+  // OAuth 2.0 Protected Resource Metadata (RFC 9728) — lets MCP clients
+  // discover the authorization server after a 401. Public, no auth gate.
+  .get(
+    '/.well-known/oauth-protected-resource',
+    WellKnownController.protectedResourceMetadata
+  )
+  .get(
+    '/.well-known/oauth-protected-resource/:slug',
+    WellKnownController.protectedResourceMetadata
+  )
+
+  // MCP controller — auth gate runs only on artifact-bearing routes
+  .post('/', AuthMiddleware.verify, MCPController.business)
+  .post('/:slug', AuthMiddleware.verify, MCPController.business)
   .get('/health', MCPController.health);
 
 export default app;

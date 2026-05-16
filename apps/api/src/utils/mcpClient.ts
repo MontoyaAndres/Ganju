@@ -1,10 +1,15 @@
 import { Context } from 'hono';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { utils } from '@anju/utils';
 
 import type { AppEnv } from '../types';
 
-export const createMcpClient = async (c: Context<AppEnv>, slug: string) => {
+export const createMcpClient = async (
+  c: Context<AppEnv>,
+  slug: string,
+  bearerToken?: string
+) => {
   const mcpBaseUrl = process.env.NEXT_PUBLIC_MCP_URL;
   if (!mcpBaseUrl) {
     throw new Error('Missing env: NEXT_PUBLIC_MCP_URL');
@@ -14,11 +19,24 @@ export const createMcpClient = async (c: Context<AppEnv>, slug: string) => {
   base.pathname = `/${slug}`;
 
   const mcpBinding = c.env.MCP;
+  const internalSecret = c.env.MCP_INTERNAL_SECRET;
+
   const transport = new StreamableHTTPClientTransport(base, {
-    fetch: (url, init) =>
-      mcpBinding.fetch(url.toString(), init as never) as unknown as Promise<
-        Response
-      >
+    fetch: (url, init) => {
+      const headers = new Headers(init?.headers);
+      // A bearer token (bot-on-behalf-of, per linked user) takes precedence;
+      // otherwise fall back to the channel's internal-secret access.
+      if (bearerToken) {
+        headers.set('authorization', `Bearer ${bearerToken}`);
+      } else if (internalSecret) {
+        headers.set(utils.constants.MCP_INTERNAL_HEADER, internalSecret);
+      }
+      const forwarded = { ...(init ?? {}), headers };
+      return mcpBinding.fetch(
+        url.toString(),
+        forwarded as never
+      ) as unknown as Promise<Response>;
+    }
   });
   const client = new Client({ name: 'anju-channel', version: '0.0.1' });
   await client.connect(transport);

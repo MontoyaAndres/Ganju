@@ -16,7 +16,8 @@
     "@google/genai": "^1.50.1",
     "@hono/mcp": "^0.2.3",
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "hono": "^4.11.9"
+    "hono": "^4.11.9",
+    "jose": "^6.2.3"
   },
   "devDependencies": {
     "@anju/tsconfig": "*",

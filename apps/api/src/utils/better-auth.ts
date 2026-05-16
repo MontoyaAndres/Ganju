@@ -1,14 +1,21 @@
 import { Context } from 'hono';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth';
+import { jwt } from 'better-auth/plugins/jwt';
+import { oidcProvider } from 'better-auth/plugins/oidc-provider';
 import { v7 as uuid } from 'uuid';
 import { utils } from '@anju/utils';
 import { db } from '@anju/db';
+
+import { anjuAuthPlugin } from './anju-auth-plugin';
+import { oauthConsentHTML } from './oauth-consent-page';
 
 export const createAuth = (c: Context) => {
   const dbInstance = db.create(c);
   const isProduction = utils.getEnv(c, 'NODE_ENV') === 'production';
   const domain = utils.getEnv(c, 'NEXT_PUBLIC_DOMAIN');
+  const apiUrl = utils.getEnv(c, 'NEXT_PUBLIC_API_URL')!;
+  const webUrl = utils.getEnv(c, 'NEXT_PUBLIC_WEB_URL')!;
 
   return betterAuth({
     appName: 'anju',
@@ -16,7 +23,7 @@ export const createAuth = (c: Context) => {
       provider: 'pg',
       schema: db.schema
     }),
-    baseURL: utils.getEnv(c, 'NEXT_PUBLIC_API_URL'),
+    baseURL: apiUrl,
     basePath: '/auth',
     secret: utils.getEnv(c, 'JWT_SECRET')!,
     socialProviders: {
@@ -29,10 +36,7 @@ export const createAuth = (c: Context) => {
         clientSecret: utils.getEnv(c, 'GITHUB_CLIENT_SECRET')!
       }
     },
-    trustedOrigins: [
-      utils.getEnv(c, 'NEXT_PUBLIC_WEB_URL')!,
-      utils.getEnv(c, 'NEXT_PUBLIC_API_URL')!
-    ],
+    trustedOrigins: [webUrl, apiUrl],
     account: {
       storeStateStrategy: 'database',
       skipStateCookieCheck: true
@@ -45,7 +49,24 @@ export const createAuth = (c: Context) => {
         generateId: () => uuid()
       },
       useSecureCookies: isProduction
-    }
+    },
+    plugins: [
+      jwt({
+        jwt: {
+          issuer: apiUrl,
+          expirationTime: '1h'
+        }
+      }),
+      oidcProvider({
+        loginPage: `${webUrl}/login`,
+        getConsentHTML: oauthConsentHTML,
+        useJWTPlugin: true,
+        allowDynamicClientRegistration: true,
+        accessTokenExpiresIn: 3600,
+        refreshTokenExpiresIn: 60 * 60 * 24 * 30
+      }),
+      anjuAuthPlugin(utils.getEnv(c, 'BOT_OAUTH_CLIENT_ID'))
+    ]
   });
 };
 

@@ -32,10 +32,16 @@ id = "20b38b96e12a4f45ac111fb7d8161edf"
 [[env.development.r2_buckets]]
 binding = "STORAGE_BUCKET"
 bucket_name = "anju-storage-development"
+[[env.development.kv_namespaces]]
+binding = "JWKS_CACHE"
+id = "970ea5ba5ff948c587803b33c594e5bc"
 [[env.development.durable_objects.bindings]]
 name = "RESOURCE_HANDLER"
 class_name = "ResourceHandler"
 script_name = "anju-api-development"
+[[env.development.services]]
+binding = "API"
+service = "anju-api-development"
 
 [env.production]
 name = "anju-mcp-production"
@@ -62,7 +68,13 @@ id = "<YOUR_HYPERDRIVE_ID>"
 [[env.production.r2_buckets]]
 binding = "STORAGE_BUCKET"
 bucket_name = "anju-storage-production"
+[[env.production.kv_namespaces]]
+binding = "JWKS_CACHE"
+id = "<JWKS_CACHE_KV_ID_PROD>"
 [[env.production.durable_objects.bindings]]
 name = "RESOURCE_HANDLER"
 class_name = "ResourceHandler"
 script_name = "anju-api-production"
+[[env.production.services]]
+binding = "API"
+service = "anju-api-production"

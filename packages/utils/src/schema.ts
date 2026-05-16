@@ -2,6 +2,19 @@ import { z } from 'zod';
 
 import { constants } from './constants';
 import { isReservedSlug, isValidSlugFormat } from './slug';
+import { slugifyPromptTitle } from './slugifyPromptTitle';
+
+// A prompt title becomes a slash command; it must not collide with a command
+// the channel runner handles itself (e.g. `/link`).
+const PROMPT_TITLE = z
+  .string()
+  .min(3)
+  .max(200)
+  .refine(
+    title =>
+      !constants.RESERVED_BOT_COMMANDS.includes(slugifyPromptTitle(title)),
+    { message: 'This title is reserved as a bot command' }
+  );
 
 const SCHEMA_DEFINITION = z.object({
   type: z.enum(constants.SCHEMA_DEFINITION_TYPES),
@@ -71,7 +84,7 @@ const PROJECT_GET = z.object({
 });
 
 const ARTIFACT_CREATE_PROMPT = z.object({
-  title: z.string().min(3).max(200),
+  title: PROMPT_TITLE,
   description: z.string().max(1000).optional(),
   messages: z
     .array(
@@ -89,7 +102,7 @@ const ARTIFACT_CREATE_PROMPT = z.object({
 
 const ARTIFACT_UPDATE_PROMPT = z.object({
   promptId: z.uuid(),
-  title: z.string().min(3).max(200),
+  title: PROMPT_TITLE,
   description: z.string().max(1000).optional(),
   messages: z
     .array(

@@ -10,7 +10,7 @@ import type {
 import { getResourceHandler } from '@anju/containers';
 
 import { runChannelTurn } from './runner';
-import { markdownToTelegramHtml } from '../../utils';
+import { markdownToTelegramHtml, createAuth } from '../../utils';
 
 import type { ChannelAttachment } from './runner';
 import type { AppEnv, Bindings } from '../../types';
@@ -120,6 +120,24 @@ export const handleTelegramWebhook = async (c: Context<AppEnv>) => {
   const cleanText = stripBotMention(message.text, botMeta?.username);
 
   const slashCommand = parseSlashCommand(message, botMeta?.username);
+
+  if (slashCommand?.name === utils.constants.BOT_COMMAND_LINK) {
+    // The link code must never be posted in a group — anyone who reads it
+    // could redeem it and bind that Telegram identity to their own account.
+    const isPrivateChat =
+      message.chat.type === utils.constants.CHANNEL_CONVERSATION_SCOPE_PRIVATE;
+    const replyText = isPrivateChat
+      ? await startTelegramLink(c, message, displayName)
+      : 'For your security, account linking only works in a private chat — open a direct message with me and send /link there.';
+    await sendTelegramMessage(
+      credentials.botToken,
+      message.chat.id,
+      message.message_id,
+      replyText
+    );
+    return c.json({ ok: true });
+  }
+
   const promptMatch = slashCommand
     ? await resolveSlashPrompt(c, channelRow.artifactId, slashCommand)
     : null;
@@ -343,10 +361,7 @@ const createTelegramNotifier = (
 });
 
 const escapeTelegramHtml = (text: string): string =>
-  text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 const sendChatAction = async (
   botToken: string,
@@ -424,6 +439,70 @@ const resolveSlashPrompt = async (
   }
 
   return { promptId: match.id, args };
+};
+
+interface ExternalLinkApi {
+  startExternalLink: (args: {
+    body: {
+      provider: string;
+      externalId: string;
+      displayName?: string;
+      client_id?: string;
+      client_secret?: string;
+    };
+  }) => Promise<{ code: string }>;
+}
+
+// `/link` lets a Telegram user connect their account to an Anju user. It calls
+// the bot-client link endpoint in-process (a Worker self-fetch to its own
+// hostname times out) and replies with a code to redeem on the web.
+const startTelegramLink = async (
+  c: Context<AppEnv>,
+  message: TelegramIncomingMessage,
+  displayName: string
+): Promise<string> => {
+  const webUrl = utils.getEnv(c, 'NEXT_PUBLIC_WEB_URL');
+  const clientId = utils.getEnv(c, 'BOT_OAUTH_CLIENT_ID');
+  const clientSecret = utils.getEnv(c, 'BOT_OAUTH_CLIENT_SECRET');
+  if (!webUrl || !clientId || !clientSecret) {
+    return 'Account linking is not available right now.';
+  }
+
+  try {
+    const auth = createAuth(c);
+
+    const api = auth.api as unknown as ExternalLinkApi;
+    const result = await api.startExternalLink({
+      body: {
+        provider: utils.constants.CHANNEL_PLATFORM_TELEGRAM,
+        externalId: String(message.from.id),
+        displayName: displayName || message.from.username || undefined,
+        client_id: clientId,
+        client_secret: clientSecret
+      }
+    });
+
+    return [
+      'Link this Telegram account to your Anju account.',
+      '',
+      `Open ${webUrl}/link?code=${result.code}`,
+      `(or go to ${webUrl}/link and enter the code ${result.code})`,
+      '',
+      'The code expires in 10 minutes.'
+    ].join('\n');
+  } catch (error) {
+    await dbUtils.handleError(c, error, {
+      service: utils.constants.SERVICE_NAME_API,
+      metadata: {
+        source: 'startTelegramLink',
+        platform: utils.constants.CHANNEL_PLATFORM_TELEGRAM,
+        chatId: message.chat.id,
+        messageId: message.message_id,
+        externalId: String(message.from.id)
+      }
+    });
+    return 'Could not start account linking. Please try again later.';
+  }
 };
 
 const messageAddressesBot = (
@@ -517,7 +596,11 @@ export const registerTelegramBotCommands = async (
       command: utils.slugifyPromptTitle(p.title).slice(0, 32),
       description: (p.description || p.title).slice(0, 256)
     }))
-    .filter(c => /^[a-z][a-z0-9_]*$/.test(c.command))
+    .filter(
+      c =>
+        /^[a-z][a-z0-9_]*$/.test(c.command) &&
+        !utils.constants.RESERVED_BOT_COMMANDS.includes(c.command)
+    )
     .slice(0, 100);
 
   await fetch(

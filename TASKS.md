@@ -1,7 +1,7 @@
-- Protect by default using api token for mcp, each has its own token to use the mcp
 - In artifact table save the total of size for resources
-- User from resource preview can upload multiple files
 - invitations and roles on projects and organizations
+- Make more accessible projects and organizations, show mcp client url
+- When user using just the mcp for Claude Desktop, or any mcp client, save logs - save how the user uses the mcp server we create
 - make http endpoint generate types for apps
 - Create outlook, slack tool and search for the best ones out there
 - Create landing

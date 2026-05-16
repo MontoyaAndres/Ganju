@@ -35,6 +35,9 @@ export type Bindings = {
   RESOURCE_HANDLER: DurableObjectNamespace<ResourceHandler>;
   RESOURCE_HANDLER_PORT: string;
   MCP: Fetcher;
+  MCP_INTERNAL_SECRET?: string;
+  BOT_OAUTH_CLIENT_ID?: string;
+  BOT_OAUTH_CLIENT_SECRET?: string;
   DATABASE_URL?: string;
   NODE_ENV?: string;
 };

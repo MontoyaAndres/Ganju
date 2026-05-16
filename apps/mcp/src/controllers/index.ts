@@ -1,3 +1,4 @@
 import { MCPController } from './mcp';
+import { WellKnownController } from './wellKnown';
 
-export { MCPController };
+export { MCPController, WellKnownController };

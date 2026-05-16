@@ -13,7 +13,8 @@ import {
   CatalogController,
   ChannelController,
   GoogleDriveController,
-  OneDriveController
+  OneDriveController,
+  WellKnownController
 } from './controllers';
 import { UserMiddleware } from './middleware';
 import { createAuth } from './utils';
@@ -46,10 +47,28 @@ app
   .use(
     '*',
     cors({
-      origin: (origin, c) =>
-        origin === utils.getEnv(c, 'NEXT_PUBLIC_WEB_URL') ? origin : null,
+      origin: (origin, c) => {
+        // OAuth discovery + protocol endpoints are reached by any MCP client,
+        // including browser-based ones (e.g. the MCP Inspector).
+        const path = c.req.path;
+        if (
+          path.startsWith('/.well-known/') ||
+          path.startsWith('/auth/oauth2/')
+        ) {
+          return origin ?? '*';
+        }
+        return origin === utils.getEnv(c, 'NEXT_PUBLIC_WEB_URL')
+          ? origin
+          : null;
+      },
       credentials: true,
-      allowHeaders: ['Content-Type', 'User-Agent', 'x-file-name'],
+      allowHeaders: [
+        'Content-Type',
+        'User-Agent',
+        'x-file-name',
+        'Authorization',
+        'mcp-protocol-version'
+      ],
       allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     })
   )
@@ -59,6 +78,17 @@ app
     });
     return c.json(body, status);
   })
+
+  // OAuth discovery — advertises the better-auth oidcProvider endpoints at the
+  // origin root so MCP clients (Claude Code, MCP Inspector) can discover them.
+  .get(
+    '/.well-known/oauth-authorization-server',
+    WellKnownController.authorizationServerMetadata
+  )
+  .get(
+    '/.well-known/openid-configuration',
+    WellKnownController.authorizationServerMetadata
+  )
 
   // Auth controller
   .on(['GET', 'POST'], '/auth/*', c => {
@@ -352,11 +382,7 @@ export default {
       );
     }
     if (batch.queue.startsWith('anju-crawl-page')) {
-      return handleCrawlPageBatch(
-        batch as MessageBatch<PageJob>,
-        env,
-        ctx
-      );
+      return handleCrawlPageBatch(batch as MessageBatch<PageJob>, env, ctx);
     }
     if (batch.queue.startsWith('anju-gdrive-discover')) {
       return handleGdriveDiscoverBatch(

@@ -9,7 +9,7 @@ export const Wrapper = styled.div`
       color: ${theme.colors.bastille};
       text-transform: uppercase;
       letter-spacing: 0.6px;
-      margin: 0 0 6px 0;
+      margin: 6px 0;
     }
 
     .copyable-block {

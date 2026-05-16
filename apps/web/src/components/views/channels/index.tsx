@@ -118,7 +118,11 @@ interface Message {
   latencyMs: number | null;
   createdAt: string;
   metadata: { sources?: Source[] } | null;
-  participant: { displayName: string | null; externalUserId: string } | null;
+  participant: {
+    displayName: string | null;
+    externalUserId: string;
+    linkedUser: { id: string; name: string; image: string | null } | null;
+  } | null;
   usages: MessageUsage[];
 }
 
@@ -1057,17 +1061,40 @@ export const Channels = () => {
                       key={msg.id}
                       className={`panel-message-bubble ${isUser ? 'is-user' : 'is-assistant'}`}
                     >
-                      <p className="panel-message-meta">
-                        <span>{msg.role}</span>
-                        {isUser && msg.participant?.displayName && (
+                      <div className="panel-message-meta">
+                        {isUser && msg.participant?.linkedUser ? (
                           <>
+                            <div className="panel-message-linked">
+                              {msg.participant.linkedUser.image ? (
+                                <img
+                                  className="panel-message-linked-avatar"
+                                  src={msg.participant.linkedUser.image}
+                                  alt={msg.participant.linkedUser.name || ''}
+                                />
+                              ) : (
+                                <span className="panel-message-linked-avatar is-fallback">
+                                  {msg.participant.linkedUser.name
+                                    .charAt(0)
+                                    .toUpperCase()}
+                                </span>
+                              )}
+                              <span>{msg.participant.linkedUser.name}</span>
+                            </div>
                             <span>·</span>
-                            <span>{msg.participant.displayName}</span>
                           </>
+                        ) : (
+                          isUser &&
+                          msg.participant?.displayName && (
+                            <>
+                              <span>{msg.participant.displayName}</span>
+                              <span>·</span>
+                            </>
+                          )
                         )}
+                        <span>{msg.role}</span>
                         <span>·</span>
                         <span>{utils.formatRelative(msg.createdAt)}</span>
-                      </p>
+                      </div>
                       {msg.content ? (
                         <UI.Markdown
                           className="panel-message-content"
@@ -1309,7 +1336,7 @@ export const Channels = () => {
                     text={viewingUsage.userMessage.content || ''}
                     onCopy={() => snackbar.success('User message copied')}
                     onCopyError={() => snackbar.error('Failed to copy')}
-                    meta={`${viewingUsage.userMessage.participant?.displayName || 'Unknown'} · ${utils.formatRelative(viewingUsage.userMessage.createdAt)}`}
+                    meta={`${viewingUsage.userMessage.participant?.linkedUser?.name || viewingUsage.userMessage.participant?.displayName || 'Unknown'} · ${utils.formatRelative(viewingUsage.userMessage.createdAt)}`}
                   />
                 )}
                 {(viewingUsage.message.tokensIn != null ||

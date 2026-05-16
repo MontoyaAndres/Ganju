@@ -637,12 +637,39 @@ export const Wrapper = styled.div<IProps>`
             .panel-message-meta {
               font-size: ${theme.fonts.xs};
               color: ${theme.colors.saltBox};
-              margin: 0 0 4px 0;
+              margin-bottom: 4px;
               display: flex;
+              align-items: center;
               gap: 8px;
               text-transform: uppercase;
               letter-spacing: 0.5px;
               font-weight: 600;
+            }
+
+            .panel-message-linked {
+              display: flex;
+              align-items: center;
+              gap: 5px;
+              text-transform: none;
+              letter-spacing: 0;
+            }
+
+            .panel-message-linked-avatar {
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              object-fit: cover;
+              flex-shrink: 0;
+
+              &.is-fallback {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: ${theme.colors.bastille}15;
+                color: ${theme.colors.bastille}CC;
+                font-size: 9px;
+                font-weight: 700;
+              }
             }
 
             .panel-message-content {

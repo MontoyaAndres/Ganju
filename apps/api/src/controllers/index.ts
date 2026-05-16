@@ -8,6 +8,7 @@ import { CatalogController } from './catalog';
 import { ChannelController } from './channel';
 import { GoogleDriveController } from './googleDrive';
 import { OneDriveController } from './oneDrive';
+import { WellKnownController } from './wellKnown';
 
 export {
   UserController,
@@ -19,5 +20,6 @@ export {
   CatalogController,
   ChannelController,
   GoogleDriveController,
-  OneDriveController
+  OneDriveController,
+  WellKnownController
 };

@@ -29,6 +29,14 @@ const business = async (c: Context<AppEnv>) => {
     return c.json({ error: 'Invalid MCP slug' }, 400);
   }
 
+  const authContext = c.get('authContext');
+  const jwtUserId =
+    authContext?.kind === 'jwt' ? authContext.userId : undefined;
+
+  if (authContext?.kind === 'jwt' && !jwtUserId) {
+    return c.json({ error: 'Token missing subject' }, 401);
+  }
+
   const dbInstance = db.create(c);
 
   const artifact = await dbInstance.query.artifact.findFirst({
@@ -46,12 +54,29 @@ const business = async (c: Context<AppEnv>) => {
         }
       },
       artifactCredentials: true,
-      project: true
+      project: {
+        with: {
+          projectUsers: jwtUserId
+            ? {
+                where: eq(db.schema.projectUser.userId, jwtUserId),
+                columns: { userId: true },
+                limit: 1
+              }
+            : { limit: 0, columns: { userId: true } }
+        }
+      }
     }
   });
 
   if (!artifact) {
     throw new Error('MCP Server not found');
+  }
+
+  if (jwtUserId && artifact.project.projectUsers.length === 0) {
+    return c.json(
+      { error: 'You do not have access to this artifact' },
+      403
+    );
   }
 
   // Folders aren't queryable resources: website parents collide with their

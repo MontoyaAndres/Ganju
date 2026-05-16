@@ -529,6 +529,37 @@ const URI_BEARING_RESOURCE_TOOL_KEYS = [
   RESOURCE_TOOL_KEY_SEND_RESOURCE
 ];
 
+const MCP_INTERNAL_HEADER = 'x-anju-internal-secret';
+const JWKS_KV_KEY = 'jwks:v1';
+const JWKS_TTL_SECONDS = 600;
+
+// Standard OIDC scopes the better-auth oidcProvider honors for user OAuth
+// flows. Advertised in the OAuth discovery documents (RFC 8414
+// authorization-server metadata and RFC 9728 protected-resource metadata).
+const OAUTH_SCOPES_SUPPORTED = ['openid', 'profile', 'email', 'offline_access'];
+
+// Anju-specific OAuth scopes for MCP access. `mcp:read` is the default scope
+// minted by the bot-on-behalf-of grant (a custom grant that bypasses the OIDC
+// authorize endpoint). `artifact:<slug>` — built from this prefix — gates a
+// subjectless machine token to a single MCP server in the MCP auth middleware.
+// Neither is in better-auth's OIDC scope allowlist, so they are NOT advertised
+// in the discovery documents: a standard OIDC client requesting an advertised
+// scope that isn't allowlisted would be rejected with `invalid_scope`.
+// TODO: Net: mcp:read is a cosmetic claim on bot tokens; artifact: is a code path that can't fire. Neither affects security today. They become real only if you build the per-server confinement feature (which would make artifact:<slug> issued + enforced). This is more for OIDC.
+const MCP_SCOPE_READ = 'mcp:read';
+const ARTIFACT_SCOPE_PREFIX = 'artifact:';
+
+const BOT_GRANT_TYPE = 'urn:anju:bot-on-behalf-of';
+const EXTERNAL_LINK_VERIFICATION_PREFIX = 'external_link:';
+const EXTERNAL_LINK_TTL_SECONDS = 600;
+const BOT_ACCESS_TOKEN_TTL_SECONDS = 3600;
+
+const LINK_CODE_LENGTH = 12;
+const LINK_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+const BOT_COMMAND_LINK = 'link';
+const RESERVED_BOT_COMMANDS = [BOT_COMMAND_LINK];
+
 const RESERVED_SLUGS = [
   'www',
   'api',
@@ -768,5 +799,19 @@ export const constants = {
   RESOURCE_TOOL_KEY_SEND_RESOURCE,
   RESOURCE_TOOL_KEYS,
   URI_BEARING_RESOURCE_TOOL_KEYS,
-  RESERVED_SLUGS
+  RESERVED_SLUGS,
+  MCP_INTERNAL_HEADER,
+  JWKS_KV_KEY,
+  JWKS_TTL_SECONDS,
+  OAUTH_SCOPES_SUPPORTED,
+  MCP_SCOPE_READ,
+  ARTIFACT_SCOPE_PREFIX,
+  BOT_GRANT_TYPE,
+  EXTERNAL_LINK_VERIFICATION_PREFIX,
+  EXTERNAL_LINK_TTL_SECONDS,
+  BOT_ACCESS_TOKEN_TTL_SECONDS,
+  LINK_CODE_LENGTH,
+  LINK_CODE_ALPHABET,
+  BOT_COMMAND_LINK,
+  RESERVED_BOT_COMMANDS
 };

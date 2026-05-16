@@ -4,6 +4,7 @@ import {
   timestamp,
   json,
   index,
+  uniqueIndex,
   integer,
   primaryKey,
   boolean,
@@ -98,6 +99,132 @@ export const verification = pgTable(
       .$onUpdate(() => new Date())
   },
   table => [index('verification_identifier_idx').on(table.identifier)]
+);
+
+export const jwks = pgTable('jwks', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => uuid()),
+  publicKey: text('public_key').notNull(),
+  privateKey: text('private_key').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+  expiresAt: timestamp('expires_at', { mode: 'date' })
+});
+
+export const oauthApplication = pgTable(
+  'oauth_application',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => uuid()),
+    name: text('name').notNull(),
+    icon: text('icon'),
+    metadata: text('metadata'),
+    clientId: text('client_id').notNull().unique(),
+    clientSecret: text('client_secret'),
+    redirectUrls: text('redirect_urls').notNull(),
+    type: text('type').notNull(),
+    disabled: boolean('disabled').notNull().default(false),
+    userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+    organizationId: text('organization_id').references(() => organization.id, {
+      onDelete: 'cascade'
+    }),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
+  },
+  table => [
+    index('oauth_application_userId_idx').on(table.userId),
+    index('oauth_application_organizationId_idx').on(table.organizationId)
+  ]
+);
+
+export const oauthAccessToken = pgTable(
+  'oauth_access_token',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => uuid()),
+    accessToken: text('access_token').notNull().unique(),
+    refreshToken: text('refresh_token').notNull().unique(),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', {
+      mode: 'date'
+    }).notNull(),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
+      mode: 'date'
+    }).notNull(),
+    clientId: text('client_id')
+      .notNull()
+      .references(() => oauthApplication.clientId, { onDelete: 'cascade' }),
+    userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+    scopes: text('scopes').notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
+  },
+  table => [
+    index('oauth_access_token_clientId_idx').on(table.clientId),
+    index('oauth_access_token_userId_idx').on(table.userId)
+  ]
+);
+
+export const externalIdentity = pgTable(
+  'external_identity',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => uuid()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(),
+    externalId: text('external_id').notNull(),
+    displayName: text('display_name'),
+    metadata: json('metadata'),
+    linkedAt: timestamp('linked_at', { mode: 'date' }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
+  },
+  table => [
+    uniqueIndex('external_identity_provider_externalId_idx').on(
+      table.provider,
+      table.externalId
+    ),
+    index('external_identity_userId_idx').on(table.userId)
+  ]
+);
+
+export const oauthConsent = pgTable(
+  'oauth_consent',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => uuid()),
+    clientId: text('client_id')
+      .notNull()
+      .references(() => oauthApplication.clientId, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    scopes: text('scopes').notNull(),
+    consentGiven: boolean('consent_given').notNull().default(false),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
+  },
+  table => [
+    index('oauth_consent_clientId_idx').on(table.clientId),
+    index('oauth_consent_userId_idx').on(table.userId)
+  ]
 );
 
 export const organization = pgTable('organization', {

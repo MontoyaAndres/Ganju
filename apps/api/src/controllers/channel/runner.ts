@@ -5,15 +5,11 @@ import { utils } from '@anju/utils';
 
 import { collectSources } from './sources';
 import { extractToolText } from './toolText';
-import { createMcpClient, getLlmAdapter } from '../../utils';
+import { createMcpClient, getLlmAdapter, createAuth } from '../../utils';
 
 import type { LlmMessage, LlmToolCall, LlmToolDefinition } from '../../utils';
 import type { AppEnv } from '../../types';
-import type {
-  ChannelNotifier,
-  Source,
-  SourceButton
-} from '@anju/utils';
+import type { ChannelNotifier, Source, SourceButton } from '@anju/utils';
 import { Client } from '@modelcontextprotocol/sdk/client';
 
 type ArtifactResourceRow = InferSelectModel<typeof db.schema.artifactResource>;
@@ -112,6 +108,54 @@ interface RunResult {
   sourcesFooter: string | null;
   sourceButtons: SourceButton[];
 }
+
+interface BotTokenApi {
+  botToken: (args: {
+    body: {
+      grant_type: string;
+      provider: string;
+      external_id: string;
+      audience: string;
+      scope?: string;
+      client_id?: string;
+      client_secret?: string;
+    };
+  }) => Promise<{ access_token?: string }>;
+}
+
+// Mints a bot-on-behalf-of JWT so the channel can call MCP as the linked user.
+// Called in-process — a Worker self-fetch to its own hostname times out.
+// Returns undefined on any failure — the caller then falls back to the
+// channel's internal-secret access.
+const mintBotToken = async (
+  c: Context<AppEnv>,
+  provider: string,
+  externalId: string,
+  audience: string
+): Promise<string | undefined> => {
+  const clientId = utils.getEnv(c, 'BOT_OAUTH_CLIENT_ID');
+  const clientSecret = utils.getEnv(c, 'BOT_OAUTH_CLIENT_SECRET');
+  if (!clientId || !clientSecret) return undefined;
+
+  try {
+    const auth = createAuth(c);
+
+    const api = auth.api as unknown as BotTokenApi;
+    const result = await api.botToken({
+      body: {
+        grant_type: utils.constants.BOT_GRANT_TYPE,
+        provider,
+        external_id: externalId,
+        audience,
+        client_id: clientId,
+        client_secret: clientSecret
+      }
+    });
+    return result.access_token;
+  } catch {
+    return undefined;
+  }
+};
 
 export const runChannelTurn = async (
   c: Context<AppEnv>,
@@ -214,7 +258,57 @@ export const runChannelTurn = async (
     artifactResources.map(r => [r.uri, r.id])
   );
 
-  const mcp = await createMcpClient(c, artifactRow.slug);
+  // Resolve the participant's global account link (set by `/link`).
+  const [linkedIdentity] = await dbInstance
+    .select({ userId: db.schema.externalIdentity.userId })
+    .from(db.schema.externalIdentity)
+    .where(
+      and(
+        eq(db.schema.externalIdentity.provider, channelRow.platform),
+        eq(db.schema.externalIdentity.externalId, options.externalParticipantId)
+      )
+    )
+    .limit(1);
+
+  // Mirror the global link onto this channel's participant row — re-derived
+  // every turn, so it tracks linking, unlinking, and re-linking to another
+  // account without staleness.
+  const linkedUserId = linkedIdentity?.userId ?? null;
+  if (participant.linkedUserId !== linkedUserId) {
+    await dbInstance
+      .update(db.schema.channelParticipant)
+      .set({ linkedUserId })
+      .where(eq(db.schema.channelParticipant.id, participant.id));
+  }
+
+  // Call MCP on behalf of the participant only when they have linked their
+  // Anju account AND are a member of this project — projects are isolated, so
+  // org membership alone doesn't grant access. Otherwise fall back to the
+  // channel's internal-secret access, so linking never downgrades a user.
+  let mcpAuthToken: string | undefined;
+  if (linkedIdentity) {
+    const [projectMember] = await dbInstance
+      .select({ userId: db.schema.projectUser.userId })
+      .from(db.schema.projectUser)
+      .where(
+        and(
+          eq(db.schema.projectUser.projectId, artifactRow.projectId),
+          eq(db.schema.projectUser.userId, linkedIdentity.userId)
+        )
+      )
+      .limit(1);
+
+    if (projectMember) {
+      mcpAuthToken = await mintBotToken(
+        c,
+        channelRow.platform,
+        options.externalParticipantId,
+        artifactRow.slug
+      );
+    }
+  }
+
+  const mcp = await createMcpClient(c, artifactRow.slug, mcpAuthToken);
   let assistantText = '';
   let assistantMessageId = '';
   let totalLatency = 0;
