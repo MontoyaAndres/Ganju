@@ -1,0 +1,1 @@
+ALTER TABLE "artifact_resource" ALTER COLUMN "size" SET DATA TYPE bigint;

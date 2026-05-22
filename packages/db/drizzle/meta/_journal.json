@@ -274,6 +274,20 @@
       "when": 1778794239517,
       "tag": "0038_lucky_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1779455980932,
+      "tag": "0039_powerful_mister_sinister",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1779456494175,
+      "tag": "0040_new_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }

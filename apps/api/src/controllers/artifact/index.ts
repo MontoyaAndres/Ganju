@@ -1277,6 +1277,7 @@ const get = async (c: Context<AppEnv>) => {
       projectId: db.schema.artifact.projectId,
       artifactPromptCount: db.schema.artifact.artifactPromptCount,
       artifactResourceCount: db.schema.artifact.artifactResourceCount,
+      artifactResourceTotalSize: db.schema.artifact.artifactResourceTotalSize,
       artifactToolCount: db.schema.artifact.artifactToolCount,
       artifactCredentialCount: db.schema.artifact.artifactCredentialCount,
       channelCount: db.schema.artifact.channelCount,

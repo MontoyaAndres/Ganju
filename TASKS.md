@@ -1,10 +1,9 @@
-- In artifact table save the total of size for resources
 - invitations and roles on projects and organizations
 - Make more accessible projects and organizations, show mcp client url
 - When user using just the mcp for Claude Desktop, or any mcp client, save logs - save how the user uses the mcp server we create
 - make http endpoint generate types for apps
-- Create outlook, slack tool and search for the best ones out there
-- Create landing
+- Create outlook, slack tool and search for the best ones out there (Inspiration https://www.chatbase.co/)
+- Create landing (inspiration https://postiz.com/ I like how the show the images of how to use the product, it is more visual)
 - Create docs
   https://styles.refero.design/
 - implement evals in the code and for general use in mcps for users promptfoo

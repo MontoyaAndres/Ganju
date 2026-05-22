@@ -6,6 +6,7 @@ import {
   index,
   uniqueIndex,
   integer,
+  bigint,
   primaryKey,
   boolean,
   halfvec,
@@ -312,6 +313,11 @@ export const artifact = pgTable('artifact', {
   slug: text('slug').notNull().unique(),
   artifactPromptCount: integer('artifact_prompt_count').notNull().default(0),
   artifactResourceCount: integer('artifact_resource_count')
+    .notNull()
+    .default(0),
+  artifactResourceTotalSize: bigint('artifact_resource_total_size', {
+    mode: 'number'
+  })
     .notNull()
     .default(0),
   artifactToolCount: integer('artifact_tool_count').notNull().default(0),
@@ -649,7 +655,7 @@ export const artifactResource = pgTable(
     description: text('description'),
     mimeType: text('mime_type').notNull(),
     content: text('content'),
-    size: integer('size'),
+    size: bigint('size', { mode: 'number' }),
     encoding: text('encoding'),
     fileKey: text('file_key'),
     fileName: text('file_name'),
