@@ -1,13 +1,7 @@
-const escapeHtml = (s: string): string =>
-  s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+import { utils } from '@anju/utils';
 
 const renderInline = (text: string): string => {
-  let out = escapeHtml(text);
+  let out = utils.escapeHtml(text);
   out = out.replace(/`([^`]+)`/g, (_m, code) => `<code>${code}</code>`);
   out = out.replace(/\*\*([^*]+)\*\*/g, (_m, t) => `<strong>${t}</strong>`);
   out = out.replace(
@@ -41,7 +35,7 @@ export const renderMarkdown = (markdown: string): string => {
       }
       i++;
       parts.push(
-        `<pre data-lang="${escapeHtml(lang)}"><code>${escapeHtml(buf.join('\n'))}</code></pre>`
+        `<pre data-lang="${utils.escapeHtml(lang)}"><code>${utils.escapeHtml(buf.join('\n'))}</code></pre>`
       );
       continue;
     }

@@ -83,6 +83,70 @@ const PROJECT_GET = z.object({
   userId: z.uuid()
 });
 
+// Trim + lowercase before validating so invitations match regardless of how
+// the inviter typed the address (membership lookups compare lowercased email).
+const INVITATION_EMAIL = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(z.email({ message: 'Enter a valid email address' }).max(254));
+
+const ORGANIZATION_INVITATION_CREATE = z.object({
+  email: INVITATION_EMAIL,
+  userId: z.uuid(),
+  organizationId: z.uuid()
+});
+
+const ORGANIZATION_INVITATION_CREATE_VIEW = ORGANIZATION_INVITATION_CREATE.omit({
+  userId: true,
+  organizationId: true
+});
+
+const ORGANIZATION_INVITATION_LIST = z.object({
+  userId: z.uuid(),
+  organizationId: z.uuid()
+});
+
+const ORGANIZATION_INVITATION_REMOVE = z.object({
+  invitationId: z.uuid(),
+  userId: z.uuid(),
+  organizationId: z.uuid()
+});
+
+const PROJECT_INVITATION_CREATE = z.object({
+  email: INVITATION_EMAIL,
+  userId: z.uuid(),
+  organizationId: z.uuid(),
+  projectId: z.uuid()
+});
+
+const PROJECT_INVITATION_CREATE_VIEW = PROJECT_INVITATION_CREATE.omit({
+  userId: true,
+  organizationId: true,
+  projectId: true
+});
+
+const PROJECT_INVITATION_LIST = z.object({
+  userId: z.uuid(),
+  organizationId: z.uuid(),
+  projectId: z.uuid()
+});
+
+const PROJECT_INVITATION_REMOVE = z.object({
+  invitationId: z.uuid(),
+  userId: z.uuid(),
+  organizationId: z.uuid(),
+  projectId: z.uuid()
+});
+
+// Invitee acting on one of their own pending invitations. No org/project id —
+// the invitation is matched to the caller by id + session email.
+const INVITATION_RESPOND = z.object({
+  invitationId: z.uuid(),
+  userId: z.uuid(),
+  action: z.enum(constants.INVITATION_RESPONSES)
+});
+
 const ARTIFACT_CREATE_PROMPT = z.object({
   title: PROMPT_TITLE,
   description: z.string().max(1000).optional(),
@@ -617,6 +681,15 @@ export const Schema = {
   PROJECT_CREATE_VIEW,
   PROJECT_UPDATE,
   PROJECT_GET,
+  ORGANIZATION_INVITATION_CREATE,
+  ORGANIZATION_INVITATION_CREATE_VIEW,
+  ORGANIZATION_INVITATION_LIST,
+  ORGANIZATION_INVITATION_REMOVE,
+  PROJECT_INVITATION_CREATE,
+  PROJECT_INVITATION_CREATE_VIEW,
+  PROJECT_INVITATION_LIST,
+  PROJECT_INVITATION_REMOVE,
+  INVITATION_RESPOND,
   ARTIFACT_CREATE_PROMPT,
   ARTIFACT_CREATE_PROMPT_VIEW,
   ARTIFACT_UPDATE_PROMPT,

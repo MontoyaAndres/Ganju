@@ -6,6 +6,7 @@ import { utils as dbUtils } from '@anju/db';
 import {
   UserController,
   ArtifactController,
+  InvitationController,
   OrganizationController,
   OrganizationLlmController,
   ProjectController,
@@ -100,6 +101,14 @@ app
     return c.json({ user });
   })
 
+  // Invitation controller — invitee-facing (matched to the caller by email)
+  .get('/invitation', UserMiddleware.verify, InvitationController.listMine)
+  .post(
+    '/invitation/:invitationId/respond',
+    UserMiddleware.verify,
+    InvitationController.respond
+  )
+
   // User controller
   .post('/user/avatar', UserMiddleware.verify, UserController.uploadAvatar)
   .get('/user/:userId/avatar/:filename', UserController.downloadAvatar)
@@ -123,6 +132,23 @@ app
     OrganizationController.remove
   )
 
+  // Organization invitation controller
+  .get(
+    '/organization/:organizationId/invitation',
+    UserMiddleware.verify,
+    InvitationController.listForOrganization
+  )
+  .post(
+    '/organization/:organizationId/invitation',
+    UserMiddleware.verify,
+    InvitationController.createForOrganization
+  )
+  .delete(
+    '/organization/:organizationId/invitation/:invitationId',
+    UserMiddleware.verify,
+    InvitationController.removeForOrganization
+  )
+
   // Project controller
   .post(
     '/organization/:organizationId/project',
@@ -143,6 +169,23 @@ app
     '/organization/:organizationId/project/:projectId',
     UserMiddleware.verify,
     ProjectController.remove
+  )
+
+  // Project invitation controller
+  .get(
+    '/organization/:organizationId/project/:projectId/invitation',
+    UserMiddleware.verify,
+    InvitationController.listForProject
+  )
+  .post(
+    '/organization/:organizationId/project/:projectId/invitation',
+    UserMiddleware.verify,
+    InvitationController.createForProject
+  )
+  .delete(
+    '/organization/:organizationId/project/:projectId/invitation/:invitationId',
+    UserMiddleware.verify,
+    InvitationController.removeForProject
   )
 
   // Artifact controller

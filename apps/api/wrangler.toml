@@ -38,6 +38,8 @@ id = "20b38b96e12a4f45ac111fb7d8161edf"
 [[env.development.r2_buckets]]
 binding = "STORAGE_BUCKET"
 bucket_name = "anju-storage-development"
+[[env.development.send_email]]
+name = "SEND_EMAIL"
 [[env.development.queues.producers]]
 binding = "INDEX_QUEUE"
 queue = "anju-index-development"
@@ -146,6 +148,8 @@ id = "<YOUR_HYPERDRIVE_ID>"
 [[env.production.r2_buckets]]
 binding = "STORAGE_BUCKET"
 bucket_name = "anju-storage-production"
+[[env.production.send_email]]
+name = "SEND_EMAIL"
 [[env.production.queues.producers]]
 binding = "INDEX_QUEUE"
 queue = "anju-index-production"

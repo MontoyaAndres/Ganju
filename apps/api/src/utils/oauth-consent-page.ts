@@ -4,14 +4,6 @@
 
 import { utils } from '@anju/utils';
 
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-
 const SCOPE_LABELS: Record<string, string> = {
   openid: 'Verify your identity',
   profile: 'Read your basic profile',
@@ -37,14 +29,14 @@ export const oauthConsentHTML = (props: {
   code: string;
   scopes: string[];
 }): string => {
-  const name = escapeHtml(props.clientName || 'An application');
-  const initial = escapeHtml((props.clientName || 'A').trim().charAt(0).toUpperCase());
+  const name = utils.escapeHtml(props.clientName || 'An application');
+  const initial = utils.escapeHtml((props.clientName || 'A').trim().charAt(0).toUpperCase());
   const icon =
     props.clientIcon && /^https?:\/\//i.test(props.clientIcon)
-      ? `<img class="brand-icon" src="${escapeHtml(props.clientIcon)}" alt="" />`
+      ? `<img class="brand-icon" src="${utils.escapeHtml(props.clientIcon)}" alt="" />`
       : `<div class="brand-icon brand-icon--fallback">${initial}</div>`;
   const items = props.scopes
-    .map(scope => `<li>${escapeHtml(describeScope(scope))}</li>`)
+    .map(scope => `<li>${utils.escapeHtml(describeScope(scope))}</li>`)
     .join('');
 
   return `<!doctype html>

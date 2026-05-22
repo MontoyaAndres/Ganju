@@ -8,6 +8,17 @@ export const decodeEntities = (value: string): string =>
     .replace(/&apos;/g, "'")
     .replace(/&amp;/g, '&');
 
+// Escape a string for safe interpolation into HTML text or double-quoted
+// attribute values. The `&` replacement must run first so the entities added
+// by the later replacements are not double-escaped.
+export const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 export const parseOpenXmlProps = (xml: string): Record<string, string> => {
   const out: Record<string, string> = {};
   const re =

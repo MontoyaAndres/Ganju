@@ -1,4 +1,5 @@
 import { createAuth } from './better-auth';
+import { sendInvitationEmail } from './email';
 import { oauthState } from './oauthState';
 import { providers } from './providers';
 import { getLlmAdapter } from './llm';
@@ -40,6 +41,7 @@ import {
 
 export {
   createAuth,
+  sendInvitationEmail,
   oauthState,
   providers,
   getLlmAdapter,

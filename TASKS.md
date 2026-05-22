@@ -1,4 +1,3 @@
-- invitations and roles on projects and organizations
 - Make more accessible projects and organizations, show mcp client url
 - When user using just the mcp for Claude Desktop, or any mcp client, save logs - save how the user uses the mcp server we create
 - make http endpoint generate types for apps
@@ -13,10 +12,9 @@ Plans:
 Free:
 
 - User can upload only 24mb resource
-- User can create two orgs and three projects per org
-- User can invite two persons per project, can't in orgs
+- User can't create a new org/project, can only have 1 - so she can't invite no one
 - User uses mcp as https://mcp.anju.ai/<slug>
-- Limit tools, prompts and resources user can active/upload (don't know how many)
+- Limit tools, prompts and resources user can active/upload (5 tools, 5 prompts, (don't know how many resources can upload (limit size?)))
 - Some tools are premium (don't know which ones)
 - Community support
 
@@ -28,7 +26,7 @@ Paid:
 - User can add custom slug https://<mycompany>.mcp.anju.ai/ (We need to pay Cloudflare ACM (10USD/Month))
 - User no limits on tools, prompts, resources.
 - User can create custom tool (programming, don't know how yet)
-- Support for user specific problems.
+- Support 24/7
 
 Enterprise:
 

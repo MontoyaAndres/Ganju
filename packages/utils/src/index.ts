@@ -5,6 +5,7 @@ import { fetcher } from './fetcher';
 import { constants } from './constants';
 import {
   generateRandomSlug,
+  generateRandomToken,
   isReservedSlug,
   isValidSlugFormat
 } from './slug';
@@ -57,6 +58,7 @@ import { formatRelative } from './formatRelative';
 import { slugifyPromptTitle } from './slugifyPromptTitle';
 import {
   decodeEntities,
+  escapeHtml,
   parseOpenXmlProps,
   stripBase64Images,
   sanitizeMetadataString,
@@ -118,6 +120,7 @@ export const utils = {
   fetcher,
   constants,
   generateRandomSlug,
+  generateRandomToken,
   isReservedSlug,
   isValidSlugFormat,
   encryptString,
@@ -147,6 +150,7 @@ export const utils = {
   formatRelative,
   slugifyPromptTitle,
   decodeEntities,
+  escapeHtml,
   parseOpenXmlProps,
   stripBase64Images,
   sanitizeMetadataString,

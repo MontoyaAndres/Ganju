@@ -2,7 +2,8 @@ import type {
   Fetcher,
   Hyperdrive,
   Queue,
-  R2Bucket
+  R2Bucket,
+  SendEmail
 } from '@cloudflare/workers-types';
 import type { ResourceHandler } from '@anju/containers';
 
@@ -34,6 +35,7 @@ export type Bindings = {
   ONEDRIVE_FILE_QUEUE: Queue<OnedriveFileJob>;
   RESOURCE_HANDLER: DurableObjectNamespace<ResourceHandler>;
   RESOURCE_HANDLER_PORT: string;
+  SEND_EMAIL?: SendEmail;
   MCP: Fetcher;
   MCP_INTERNAL_SECRET?: string;
   BOT_OAUTH_CLIENT_ID?: string;

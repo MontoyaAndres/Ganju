@@ -306,6 +306,43 @@ export const projectUser = pgTable(
   table => [primaryKey({ columns: [table.projectId, table.userId] })]
 );
 
+export const invitation = pgTable(
+  'invitation',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => uuid()),
+    email: text('email').notNull(),
+    role: text('role').notNull().default(utils.constants.USER_ROLE_ADMIN),
+    status: text('status').notNull().default(utils.constants.STATUS_PENDING),
+    token: text('token').notNull().unique(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    projectId: text('project_id').references(() => project.id, {
+      onDelete: 'cascade'
+    }),
+    invitedById: text('invited_by_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    acceptedById: text('accepted_by_id').references(() => user.id, {
+      onDelete: 'set null'
+    }),
+    expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
+  },
+  table => [
+    index('invitation_email_idx').on(table.email),
+    index('invitation_organizationId_idx').on(table.organizationId),
+    index('invitation_projectId_idx').on(table.projectId),
+    index('invitation_status_idx').on(table.status)
+  ]
+);
+
 export const artifact = pgTable('artifact', {
   id: text('id')
     .primaryKey()
@@ -743,7 +780,8 @@ export const organizationRelations = relations(
     }),
     projects: many(project),
     organizationUsers: many(organizationUser),
-    organizationLlms: many(organizationLlm)
+    organizationLlms: many(organizationLlm),
+    invitations: many(invitation)
   })
 );
 
@@ -771,7 +809,8 @@ export const projectRelations = relations(project, ({ one, many }) => ({
     references: [organization.id]
   }),
   artifacts: many(artifact),
-  projectUsers: many(projectUser)
+  projectUsers: many(projectUser),
+  invitations: many(invitation)
 }));
 
 export const projectUserRelations = relations(projectUser, ({ one }) => ({
@@ -782,6 +821,27 @@ export const projectUserRelations = relations(projectUser, ({ one }) => ({
   user: one(user, {
     fields: [projectUser.userId],
     references: [user.id]
+  })
+}));
+
+export const invitationRelations = relations(invitation, ({ one }) => ({
+  organization: one(organization, {
+    fields: [invitation.organizationId],
+    references: [organization.id]
+  }),
+  project: one(project, {
+    fields: [invitation.projectId],
+    references: [project.id]
+  }),
+  invitedBy: one(user, {
+    fields: [invitation.invitedById],
+    references: [user.id],
+    relationName: 'invitation_invited_by'
+  }),
+  acceptedBy: one(user, {
+    fields: [invitation.acceptedById],
+    references: [user.id],
+    relationName: 'invitation_accepted_by'
   })
 }));
 

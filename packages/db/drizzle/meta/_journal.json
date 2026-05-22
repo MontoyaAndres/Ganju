@@ -288,6 +288,13 @@
       "when": 1779456494175,
       "tag": "0040_new_omega_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1779463289476,
+      "tag": "0041_pink_sister_grimm",
+      "breakpoints": true
     }
   ]
 }
