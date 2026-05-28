@@ -515,6 +515,14 @@ const ARTIFACT_REMOVE_CREDENTIAL = z.object({
   organizationId: z.uuid()
 });
 
+const ARTIFACT_CREATE_CREDENTIAL = z.object({
+  provider: z.enum(constants.API_KEY_PROVIDERS),
+  apiKey: z.string().min(1).max(500),
+  projectId: z.uuid(),
+  userId: z.uuid(),
+  organizationId: z.uuid()
+});
+
 const ORGANIZATION_LIST_LLM = z.object({
   userId: z.uuid(),
   organizationId: z.uuid()
@@ -740,6 +748,7 @@ export const Schema = {
   ARTIFACT_REMOVE_TOOL,
   ARTIFACT_GET_CREDENTIAL,
   ARTIFACT_REMOVE_CREDENTIAL,
+  ARTIFACT_CREATE_CREDENTIAL,
   ARTIFACT_GET,
   ARTIFACT_UPDATE_SLUG,
   ARTIFACT_UPDATE_SLUG_VIEW,

@@ -10,6 +10,7 @@ import { CatalogController } from './catalog';
 import { ChannelController } from './channel';
 import { GoogleDriveController } from './googleDrive';
 import { GoogleCalendarController } from './googleCalendar';
+import { CalcomController } from './calcom';
 import { OneDriveController } from './oneDrive';
 import { WellKnownController } from './wellKnown';
 
@@ -26,6 +27,7 @@ export {
   ChannelController,
   GoogleDriveController,
   GoogleCalendarController,
+  CalcomController,
   OneDriveController,
   WellKnownController
 };

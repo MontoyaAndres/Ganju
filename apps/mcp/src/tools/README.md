@@ -51,6 +51,10 @@ The default position: **proxy first, build only when there's no good MCP server 
 | `calendar-update-event` | google-calendar | `google-calendar` | `events.patch` (partial). Passing attendees replaces the list. |
 | `calendar-delete-event` | google-calendar | `google-calendar` | `events.delete`. Permanent; notifies attendees. |
 | `calendar-find-free-slots` | google-calendar | `google-calendar` | `freeBusy.query` → computed gaps; optional `durationMinutes` filter. |
+| `calcom-list-event-types` | calcom | `calcom` (API key) | `GET /v2/event-types` — discover the `eventTypeId` to lock as default. |
+| `calcom-list-available-slots` | calcom | `calcom` (API key) | `GET /v2/slots` — open slots for the default event type. |
+| `calcom-create-booking` | calcom | `calcom` (API key) | `POST /v2/bookings` against the default event type; attendee from the conversation. |
+| `calcom-cancel-booking` | calcom | `calcom` (API key) | `POST /v2/bookings/{uid}/cancel`. |
 
 Baseline pattern to copy when adding a new native provider: [gmail/index.ts](gmail/index.ts).
 
@@ -60,18 +64,14 @@ Build order reuses already-scaffolded OAuth providers first, then no-auth tools,
 
 ### Tier 1 — Free / default-discoverable
 
-> Google Calendar (`google-calendar`) is **shipped** — see the table above. Config UI is live on the Tools page: group-level **default calendar / time zone / attendee-notification** controls (fanned out to every calendar tool's `artifact_tool.config`, backed by `GET …/artifact/google-calendar/calendars`), plus per-tool forms for `list-events`, `create-event`, and `find-free-slots`. Unset values fall back to the `primary` calendar and the calendar's own zone.
+Both calendar integrations are **shipped** — see the table above:
 
-#### Cal.com
-- **Group:** `calcom` · **Provider:** `calcom` (API key, no OAuth)
-- **Tools:** `calcom-list-event-types`, `calcom-list-available-slots`, `calcom-create-booking`, `calcom-cancel-booking`
-- **API:** Cal.com v2
-- **Config:** API key per artifact (encrypted via `utils.encryptString`). Plus per-artifact tool config `{ defaultEventTypeId: number }` on `artifact_tool.config` — populated from `calcom-list-event-types` so the owner picks which event type (e.g. "30-min intro") the agent books against.
-- **NL booking flow:** same as Google Calendar — the model converts "7am tomorrow" to ISO, then `list-available-slots` → `create-booking` against `defaultEventTypeId`. Booking is created on Cal.com directly; the customer email/name come from the channel conversation participant.
-- **Notes:** Picked over Calendly for MVP — open-source, simpler auth, friendlier free tier.
+> **Google Calendar** (`google-calendar`, OAuth). Config UI on the Tools page: group-level **default calendar / time zone / attendee-notification** controls (fanned out to every calendar tool's `artifact_tool.config`, backed by `GET …/artifact/google-calendar/calendars`), plus per-tool forms for `list-events`, `create-event`, and `find-free-slots`.
 
-#### Default-calendar pattern (Google Calendar, Cal.com)
-Don't let the model pick the calendar/event-type per call — that's a footgun on multi-calendar accounts (work vs personal, multiple Cal.com event types). Lock it on `artifact_tool.config` via the Tools UI; expose an override arg in the tool schema only as an escape hatch, not the default. The agent's job is "book at 7am"; the artifact owner's job is "book where." This is exactly how the shipped Calendar tools resolve `calendarId`: `args.calendarId` → `config.defaultCalendarId` → `primary`.
+> **Cal.com** (`calcom`, **API key — no OAuth**). The key is stored as an `artifact_credential` (provider `calcom`, encrypted `accessToken`) and read by the handler via `credentials[0]` — the same plumbing OAuth tools use, minus refresh. Group-level config: `{ defaultEventTypeId: number, defaultTimeZone?: string }`. NL booking flow: the model converts "7am tomorrow" to ISO, then `calcom-list-available-slots` → `calcom-create-booking` against `defaultEventTypeId`; the attendee name/email come from the channel conversation participant. **Auth-entry UI is still owed** — Cal.com is the first API-key provider (`utils.constants.API_KEY_PROVIDERS`), so the Tools page needs an "Add API key" path (POST credential) instead of the OAuth "Connect" button, plus a `defaultEventTypeId` dropdown populated from `calcom-list-event-types`.
+
+#### Default-calendar / default-event-type pattern
+Don't let the model pick the calendar/event-type per call — that's a footgun on multi-calendar accounts (work vs personal, multiple Cal.com event types). Lock it on `artifact_tool.config` via the Tools UI; expose an override arg in the tool schema only as an escape hatch, not the default. The agent's job is "book at 7am"; the artifact owner's job is "book where." Both shipped integrations resolve this the same way: `args.<override>` → `config.<default>` → fallback (Calendar: `primary`; Cal.com: error if no event type).
 
 #### Web Search
 - **Group:** `web` · **Provider:** none

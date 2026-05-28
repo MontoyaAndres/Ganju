@@ -723,6 +723,29 @@ const CALENDAR_TOOL_FIELDS: Record<string, CalendarConfigField[]> = {
   ]
 };
 
+// Cal.com uses a personal API key (no OAuth). The key is stored like any other
+// credential (artifact_credential, provider 'calcom', encrypted accessToken).
+const API_KEY_PROVIDER_CALCOM = 'calcom' as 'calcom';
+const API_KEY_PROVIDERS = [API_KEY_PROVIDER_CALCOM];
+
+const CALCOM_API_BASE = 'https://api.cal.com/v2';
+// Cal.com pins behavior per endpoint with the `cal-api-version` header.
+const CALCOM_API_VERSION_EVENT_TYPES = '2024-06-14';
+const CALCOM_API_VERSION_SLOTS = '2024-09-04';
+const CALCOM_API_VERSION_BOOKINGS = '2026-02-25';
+
+const CALCOM_TOOL_KEY_PREFIX = 'calcom-';
+const CALCOM_TOOL_KEY_LIST_EVENT_TYPES = 'calcom-list-event-types';
+const CALCOM_TOOL_KEY_LIST_AVAILABLE_SLOTS = 'calcom-list-available-slots';
+const CALCOM_TOOL_KEY_CREATE_BOOKING = 'calcom-create-booking';
+const CALCOM_TOOL_KEY_CANCEL_BOOKING = 'calcom-cancel-booking';
+const CALCOM_TOOL_KEYS = [
+  CALCOM_TOOL_KEY_LIST_EVENT_TYPES,
+  CALCOM_TOOL_KEY_LIST_AVAILABLE_SLOTS,
+  CALCOM_TOOL_KEY_CREATE_BOOKING,
+  CALCOM_TOOL_KEY_CANCEL_BOOKING
+];
+
 const MCP_REQUEST_METHOD_INITIALIZE = 'initialize' as 'initialize';
 const MCP_REQUEST_METHOD_PING = 'ping' as 'ping';
 const MCP_REQUEST_METHOD_TOOLS_LIST = 'tools/list' as 'tools/list';
@@ -1064,6 +1087,18 @@ export const constants = {
   CALENDAR_DEFAULT_EVENT_DURATION_MINUTES,
   CALENDAR_CONFERENCE_TYPE_GOOGLE_MEET,
   CALENDAR_TOOL_FIELDS,
+  API_KEY_PROVIDER_CALCOM,
+  API_KEY_PROVIDERS,
+  CALCOM_API_BASE,
+  CALCOM_API_VERSION_EVENT_TYPES,
+  CALCOM_API_VERSION_SLOTS,
+  CALCOM_API_VERSION_BOOKINGS,
+  CALCOM_TOOL_KEY_PREFIX,
+  CALCOM_TOOL_KEY_LIST_EVENT_TYPES,
+  CALCOM_TOOL_KEY_LIST_AVAILABLE_SLOTS,
+  CALCOM_TOOL_KEY_CREATE_BOOKING,
+  CALCOM_TOOL_KEY_CANCEL_BOOKING,
+  CALCOM_TOOL_KEYS,
   RESERVED_SLUGS,
   MCP_INTERNAL_HEADER,
   MCP_CHANNEL_ID_HEADER,

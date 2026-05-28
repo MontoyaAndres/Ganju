@@ -16,6 +16,7 @@ import {
   ChannelController,
   GoogleDriveController,
   GoogleCalendarController,
+  CalcomController,
   OneDriveController,
   WellKnownController
 } from './controllers';
@@ -316,6 +317,13 @@ app
     GoogleCalendarController.calendars
   )
 
+  // Cal.com artifact controller
+  .get(
+    '/organization/:organizationId/project/:projectId/artifact/calcom/event-types',
+    UserMiddleware.verify,
+    CalcomController.eventTypes
+  )
+
   // OneDrive artifact controller
   .get(
     '/organization/:organizationId/project/:projectId/artifact/one-drive/token',
@@ -360,6 +368,11 @@ app
     '/organization/:organizationId/project/:projectId/artifact/credential',
     UserMiddleware.verify,
     ArtifactController.listCredentials
+  )
+  .post(
+    '/organization/:organizationId/project/:projectId/artifact/credential',
+    UserMiddleware.verify,
+    ArtifactController.createCredential
   )
   .delete(
     '/organization/:organizationId/project/:projectId/artifact/credential/:credentialId',

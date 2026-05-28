@@ -132,6 +132,15 @@ export const Tools = () => {
   >('idle');
   const [savingCalendar, setSavingCalendar] = useState(false);
   const [configForm, setConfigForm] = useState<Record<string, unknown>>({});
+  const [eventTypes, setEventTypes] = useState<
+    { id: number; title: string; lengthInMinutes: number | null }[]
+  >([]);
+  const [eventTypesStatus, setEventTypesStatus] = useState<
+    'idle' | 'pending' | 'resolved' | 'rejected'
+  >('idle');
+  const [apiKeyGroup, setApiKeyGroup] = useState<ToolGroup | null>(null);
+  const [apiKeyValue, setApiKeyValue] = useState('');
+  const [apiKeySubmitting, setApiKeySubmitting] = useState(false);
 
   const { id: organizationId, projectId } = router.query as {
     id: string;
@@ -184,6 +193,21 @@ export const Tools = () => {
     }
   };
 
+  const fetchEventTypes = async (signal?: AbortSignal) => {
+    setEventTypesStatus('pending');
+    try {
+      const data = await utils.fetcher({
+        url: `${apiBase}/calcom/event-types`,
+        config: { credentials: 'include', signal }
+      });
+      if (signal?.aborted) return;
+      setEventTypes(Array.isArray(data?.eventTypes) ? data.eventTypes : []);
+      setEventTypesStatus('resolved');
+    } catch {
+      if (!signal?.aborted) setEventTypesStatus('rejected');
+    }
+  };
+
   useEffect(() => {
     if (!organizationId || !projectId) return;
     const controller = new AbortController();
@@ -207,6 +231,20 @@ export const Tools = () => {
     }
     const controller = new AbortController();
     fetchCalendars(controller.signal);
+    return () => controller.abort();
+  }, [expandedGroupId, credentials, catalog]);
+
+  // Load Cal.com event types when the Cal.com group is open and connected —
+  // populates the default-event-type dropdown.
+  useEffect(() => {
+    if (!isCalcomGroup || !expandedGroup) {
+      setEventTypes([]);
+      setEventTypesStatus('idle');
+      return;
+    }
+    if (!credentialByProvider.has(expandedGroup.provider!)) return;
+    const controller = new AbortController();
+    fetchEventTypes(controller.signal);
     return () => controller.abort();
   }, [expandedGroupId, credentials, catalog]);
 
@@ -315,9 +353,14 @@ export const Tools = () => {
 
   const isCalendarGroup =
     expandedGroup?.provider === utils.constants.OAUTH_PROVIDER_GOOGLE_CALENDAR;
+  const isCalcomGroup =
+    expandedGroup?.provider === utils.constants.API_KEY_PROVIDER_CALCOM;
+  const isApiKeyProvider = (provider: string | null | undefined): boolean =>
+    !!provider &&
+    (utils.constants.API_KEY_PROVIDERS as readonly string[]).includes(provider);
 
   // Installed tools belonging to the open group — the fan-out targets for the
-  // group-level default calendar.
+  // group-level defaults.
   const expandedGroupInstalledTools = useMemo(() => {
     if (!expandedGroup) return [] as ArtifactTool[];
     const defIds = new Set(expandedGroup.toolDefinitions.map(d => d.id));
@@ -397,6 +440,35 @@ export const Tools = () => {
     return timeZoneOptions.some(o => o.value === desired) ? desired : '';
   }, [timeZoneOptions, groupDefaultTimeZone, calendars]);
 
+  // Cal.com group-level default event type — stored on each calcom tool's config.
+  const groupDefaultEventTypeId = useMemo(() => {
+    for (const t of expandedGroupInstalledTools) {
+      const value = t.config?.defaultEventTypeId;
+      if (typeof value === 'number') return String(value);
+      if (typeof value === 'string' && value) return value;
+    }
+    return '';
+  }, [expandedGroupInstalledTools]);
+
+  const eventTypeOptions = useMemo(
+    () =>
+      eventTypes.map(et => ({
+        value: String(et.id),
+        label: et.lengthInMinutes
+          ? `${et.title} (${et.lengthInMinutes} min)`
+          : et.title
+      })),
+    [eventTypes]
+  );
+
+  const selectedEventTypeId = useMemo(
+    () =>
+      eventTypeOptions.some(o => o.value === groupDefaultEventTypeId)
+        ? groupDefaultEventTypeId
+        : '',
+    [eventTypeOptions, groupDefaultEventTypeId]
+  );
+
   const renderGroupIcon = (group: ToolGroup) => {
     if (group.icon && /^https?:\/\//.test(group.icon)) {
       return <img src={group.icon} alt={group.title} />;
@@ -474,8 +546,8 @@ export const Tools = () => {
   };
 
   // Group-level settings are backed by per-tool config: merge the patch into
-  // every installed calendar tool so they all resolve to the same defaults.
-  const saveGroupCalendarConfig = async (
+  // every installed tool in the group so they all resolve to the same defaults.
+  const saveGroupToolConfig = async (
     patch: Record<string, unknown>,
     successMessage: string
   ) => {
@@ -501,9 +573,40 @@ export const Tools = () => {
       snackbar.success(successMessage);
       await fetchAll();
     } catch {
-      snackbar.error('Failed to update calendar settings');
+      snackbar.error('Failed to update settings');
     } finally {
       setSavingCalendar(false);
+    }
+  };
+
+  // API-key providers (e.g. Cal.com) have no OAuth flow — the key is POSTed and
+  // stored as a credential, then read by the tool handler like any other.
+  const handleAddApiKey = async () => {
+    if (!apiKeyGroup?.provider || apiKeySubmitting) return;
+    const key = apiKeyValue.trim();
+    if (!key) return;
+    setApiKeySubmitting(true);
+    try {
+      const data = await utils.fetcher({
+        url: credentialApiBase,
+        config: {
+          method: 'POST',
+          credentials: 'include',
+          body: JSON.stringify({ provider: apiKeyGroup.provider, apiKey: key })
+        }
+      });
+      if (data && data.error) {
+        snackbar.error(data.error);
+      } else {
+        snackbar.success('API key saved');
+        setApiKeyGroup(null);
+        setApiKeyValue('');
+        await fetchAll();
+      }
+    } catch {
+      snackbar.error('Failed to save API key');
+    } finally {
+      setApiKeySubmitting(false);
     }
   };
 
@@ -522,8 +625,8 @@ export const Tools = () => {
     try {
       let data: { error?: string } | undefined;
       if (enabled && !existing) {
-        // A new calendar tool inherits the group's already-chosen defaults so
-        // every calendar tool stays pointed at the same calendar / zone / policy.
+        // A new tool inherits the group's already-chosen defaults so every tool
+        // in the group stays pointed at the same calendar / event type / zone.
         const inheritedConfig: Record<string, unknown> = {};
         if (isCalendarGroup) {
           if (groupDefaultCalendarId) {
@@ -534,6 +637,14 @@ export const Tools = () => {
           }
           if (groupSendUpdates && groupSendUpdates !== 'all') {
             inheritedConfig.sendUpdates = groupSendUpdates;
+          }
+        }
+        if (isCalcomGroup) {
+          if (groupDefaultEventTypeId) {
+            inheritedConfig.defaultEventTypeId = Number(groupDefaultEventTypeId);
+          }
+          if (groupDefaultTimeZone) {
+            inheritedConfig.defaultTimeZone = groupDefaultTimeZone;
           }
         }
         data = await utils.fetcher({
@@ -1159,6 +1270,17 @@ export const Tools = () => {
                           Connected
                         </span>
                       )}
+                      {isApiKeyProvider(expandedGroup.provider) && (
+                        <UI.Button
+                          size="small"
+                          onClick={() => {
+                            setApiKeyGroup(expandedGroup);
+                            setApiKeyValue('');
+                          }}
+                        >
+                          <span className="button-text">Update API key</span>
+                        </UI.Button>
+                      )}
                       <UI.Button
                         size="small"
                         onClick={() =>
@@ -1174,6 +1296,20 @@ export const Tools = () => {
                         <span className="button-text">Disconnect</span>
                       </UI.Button>
                     </>
+                  ) : isApiKeyProvider(expandedGroup.provider) ? (
+                    <UI.Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => {
+                        setApiKeyGroup(expandedGroup);
+                        setApiKeyValue('');
+                      }}
+                    >
+                      <LinkIcon />
+                      <span className="button-text">
+                        Add {expandedGroup.title} API key
+                      </span>
+                    </UI.Button>
                   ) : (
                     <UI.Button
                       variant="contained"
@@ -1228,7 +1364,7 @@ export const Tools = () => {
                             : 'Events and free/busy lookups use this calendar unless a tool call overrides it.'
                       }
                       onChange={e =>
-                        saveGroupCalendarConfig(
+                        saveGroupToolConfig(
                           { defaultCalendarId: e.target.value },
                           'Default calendar updated'
                         )
@@ -1241,7 +1377,7 @@ export const Tools = () => {
                       disabled={savingCalendar || timeZoneOptions.length === 0}
                       helperText="Interprets event times and the working hours used by Find Free Slots."
                       onChange={e =>
-                        saveGroupCalendarConfig(
+                        saveGroupToolConfig(
                           { defaultTimeZone: e.target.value },
                           'Default time zone updated'
                         )
@@ -1254,9 +1390,59 @@ export const Tools = () => {
                       disabled={savingCalendar}
                       helperText="Whether Google emails guests when events are created, changed, or cancelled."
                       onChange={e =>
-                        saveGroupCalendarConfig(
+                        saveGroupToolConfig(
                           { sendUpdates: e.target.value },
                           'Notification setting updated'
+                        )
+                      }
+                    />
+                  </>
+                )}
+              </div>
+            )}
+            {isCalcomGroup && isGroupConnected(expandedGroup) && (
+              <div className="tools-group-detail-config">
+                {expandedGroupInstalledTools.length === 0 ? (
+                  <p className="tools-group-detail-config-hint">
+                    Enable a Cal.com tool below to set the default event type and
+                    time zone for this integration.
+                  </p>
+                ) : (
+                  <>
+                    <UI.Select
+                      label="Default event type"
+                      value={selectedEventTypeId}
+                      options={eventTypeOptions}
+                      disabled={
+                        eventTypesStatus === 'pending' ||
+                        savingCalendar ||
+                        eventTypeOptions.length === 0
+                      }
+                      error={eventTypesStatus === 'rejected'}
+                      helperText={
+                        eventTypesStatus === 'rejected'
+                          ? 'Could not load event types. Check the API key and try again.'
+                          : eventTypesStatus === 'pending'
+                            ? 'Loading event types…'
+                            : 'Bookings are created against this event type unless a tool call overrides it.'
+                      }
+                      onChange={e =>
+                        saveGroupToolConfig(
+                          { defaultEventTypeId: Number(e.target.value) },
+                          'Default event type updated'
+                        )
+                      }
+                    />
+                    <UI.Select
+                      label="Default time zone"
+                      value={selectedTimeZone}
+                      options={timeZoneOptions}
+                      disabled={savingCalendar || timeZoneOptions.length === 0}
+                      helperText="Used for availability lookups and the attendee's booking time zone."
+                      onChange={e =>
+                        saveGroupToolConfig(
+                          { defaultTimeZone: e.target.value },
+                          'Default time zone updated'
                         )
                       }
                     />
@@ -1325,9 +1511,12 @@ export const Tools = () => {
                   const editFields = editKey
                     ? utils.constants.CALENDAR_TOOL_FIELDS[editKey]
                     : undefined;
-                  const editIsCalendar =
-                    editTool.toolDefinition?.group?.provider ===
-                    utils.constants.OAUTH_PROVIDER_GOOGLE_CALENDAR;
+                  const editProvider =
+                    editTool.toolDefinition?.group?.provider;
+                  const editIsGroupManaged =
+                    editProvider ===
+                      utils.constants.OAUTH_PROVIDER_GOOGLE_CALENDAR ||
+                    editProvider === utils.constants.API_KEY_PROVIDER_CALCOM;
 
                   if (editFields) {
                     return (
@@ -1337,12 +1526,13 @@ export const Tools = () => {
                     );
                   }
 
-                  if (editIsCalendar) {
+                  if (editIsGroupManaged) {
                     return (
                       <p className="tools-configure-help">
-                        This tool has no per-tool settings. The calendar, time
-                        zone, and notification defaults are managed for the whole
-                        integration from the Calendar header on the Catalog page.
+                        This tool has no per-tool settings. Its defaults (calendar
+                        / event type, time zone, notifications) are managed for
+                        the whole integration from the group header on the Catalog
+                        page.
                       </p>
                     );
                   }
@@ -1388,6 +1578,61 @@ export const Tools = () => {
                   onClick={handleUpdateSubmit}
                 >
                   {submitting ? 'Saving...' : 'Save'}
+                </UI.Button>
+              </div>
+            </ModalDialog>
+          </ModalOverlay>
+        </UI.Portal>
+      )}
+      {apiKeyGroup && (
+        <UI.Portal>
+          <ModalOverlay
+            onClick={() => {
+              if (!apiKeySubmitting) setApiKeyGroup(null);
+            }}
+          >
+            <ModalDialog role="dialog" onClick={e => e.stopPropagation()}>
+              <div className="tools-modal-header">
+                <h2 className="tools-modal-title">
+                  Connect {apiKeyGroup.title}
+                </h2>
+                <IconButton
+                  size="small"
+                  onClick={() => setApiKeyGroup(null)}
+                  disabled={apiKeySubmitting}
+                >
+                  <Close />
+                </IconButton>
+              </div>
+              <div className="tools-modal-body">
+                <p className="tools-configure-help">
+                  Paste your {apiKeyGroup.title} API key. It is encrypted at rest
+                  and never shown again.
+                </p>
+                <UI.Input
+                  label="API key"
+                  type="password"
+                  value={apiKeyValue}
+                  disabled={apiKeySubmitting}
+                  autoFocus
+                  onChange={e => setApiKeyValue(e.target.value)}
+                />
+              </div>
+              <div className="tools-modal-actions">
+                <UI.Button
+                  size="small"
+                  disabled={apiKeySubmitting}
+                  onClick={() => setApiKeyGroup(null)}
+                >
+                  Cancel
+                </UI.Button>
+                <UI.Button
+                  variant="contained"
+                  size="small"
+                  disabled={apiKeySubmitting || !apiKeyValue.trim()}
+                  onClick={handleAddApiKey}
+                >
+                  {apiKeySubmitting ? 'Saving...' : 'Save'}
                 </UI.Button>
               </div>
             </ModalDialog>

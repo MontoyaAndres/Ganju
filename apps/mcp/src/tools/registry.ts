@@ -55,6 +55,12 @@ import {
   findFreeSlots as calendarFindFreeSlots
 } from './calendar';
 import {
+  listEventTypes as calcomListEventTypes,
+  listAvailableSlots as calcomListAvailableSlots,
+  createBooking as calcomCreateBooking,
+  cancelBooking as calcomCancelBooking
+} from './calcom';
+import {
   listResources,
   readResource,
   sendResource,
@@ -116,5 +122,9 @@ export const toolRegistry = new Map<string, ToolDefinition>([
   ['calendar-create-event', calendarCreateEvent],
   ['calendar-update-event', calendarUpdateEvent],
   ['calendar-delete-event', calendarDeleteEvent],
-  ['calendar-find-free-slots', calendarFindFreeSlots]
+  ['calendar-find-free-slots', calendarFindFreeSlots],
+  ['calcom-list-event-types', calcomListEventTypes],
+  ['calcom-list-available-slots', calcomListAvailableSlots],
+  ['calcom-create-booking', calcomCreateBooking],
+  ['calcom-cancel-booking', calcomCancelBooking]
 ]);

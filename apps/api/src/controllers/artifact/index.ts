@@ -3,7 +3,11 @@ import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { utils } from '@anju/utils';
 import { db } from '@anju/db';
 
-import { enqueueIndex, enqueueCrawlDiscover } from '../../utils';
+import {
+  enqueueIndex,
+  enqueueCrawlDiscover,
+  validateCalcomApiKey
+} from '../../utils';
 
 // types
 import { AppEnv } from '../../types';
@@ -1156,6 +1160,103 @@ const removeCredential = async (c: Context<AppEnv>) => {
   return c.json(currentValues);
 };
 
+const createCredential = async (c: Context<AppEnv>) => {
+  const body = await c.req.json();
+  const currentValues =
+    await utils.Schema.ARTIFACT_CREATE_CREDENTIAL.parseAsync({
+      ...body,
+      projectId: c.req.param('projectId'),
+      userId: c.get('user').id,
+      organizationId: c.req.param('organizationId')
+    });
+
+  // Verify the key works before persisting, so we never store a dead key.
+  if (currentValues.provider === utils.constants.API_KEY_PROVIDER_CALCOM) {
+    const valid = await validateCalcomApiKey(currentValues.apiKey);
+    if (!valid) {
+      throw new Error(
+        'Invalid Cal.com API key (or Cal.com could not be reached). Double-check the key and try again.'
+      );
+    }
+  }
+
+  const dbInstance = db.create(c);
+  const encryptionKey = utils.getCredentialEncryptionKey(c);
+  const encryptedAccessToken = utils.encryptString(
+    currentValues.apiKey,
+    encryptionKey
+  );
+
+  await dbInstance.transaction(async tx => {
+    const [project] = await tx
+      .select()
+      .from(db.schema.project)
+      .where(
+        and(
+          eq(db.schema.project.id, currentValues.projectId),
+          eq(db.schema.project.organizationId, currentValues.organizationId)
+        )
+      )
+      .limit(1);
+
+    if (!project) {
+      throw new Error('Project not found');
+    }
+
+    const [currentArtifactByProject] = await tx
+      .select()
+      .from(db.schema.artifact)
+      .where(eq(db.schema.artifact.projectId, currentValues.projectId))
+      .limit(1);
+
+    if (!currentArtifactByProject) {
+      throw new Error('Artifact not found for the project');
+    }
+
+    const [existingCredential] = await tx
+      .select({ id: db.schema.artifactCredential.id })
+      .from(db.schema.artifactCredential)
+      .where(
+        and(
+          eq(
+            db.schema.artifactCredential.artifactId,
+            currentArtifactByProject.id
+          ),
+          eq(db.schema.artifactCredential.provider, currentValues.provider)
+        )
+      )
+      .limit(1);
+
+    if (existingCredential) {
+      await tx
+        .update(db.schema.artifactCredential)
+        .set({
+          accessToken: encryptedAccessToken,
+          refreshToken: null,
+          expiresAt: null,
+          scopes: null,
+          metadata: null
+        })
+        .where(eq(db.schema.artifactCredential.id, existingCredential.id));
+    } else {
+      await tx.insert(db.schema.artifactCredential).values({
+        provider: currentValues.provider,
+        accessToken: encryptedAccessToken,
+        artifactId: currentArtifactByProject.id
+      });
+
+      await tx
+        .update(db.schema.artifact)
+        .set({
+          artifactCredentialCount: sql`(${db.schema.artifact.artifactCredentialCount}::int + 1)::int`
+        })
+        .where(eq(db.schema.artifact.id, currentArtifactByProject.id));
+    }
+  });
+
+  return c.json({ provider: currentValues.provider, status: 'ok' });
+};
+
 const downloadResourceFile = async (c: Context<AppEnv>) => {
   const currentValues =
     await utils.Schema.ARTIFACT_DOWNLOAD_RESOURCE_FILE.parseAsync({
@@ -1356,6 +1457,7 @@ export const ArtifactController = {
   listTools,
   removeCredential,
   listCredentials,
+  createCredential,
   get,
   updateSlug
 };
