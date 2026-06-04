@@ -16,12 +16,17 @@ export type Variables = {
   };
 };
 
+export interface RateLimitBinding {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
 export type Bindings = {
   HYPERDRIVE: Hyperdrive;
   STORAGE_BUCKET: R2Bucket;
   JWKS_CACHE: KVNamespace;
   RESOURCE_HANDLER: DurableObjectNamespace<ResourceHandler>;
   API: Fetcher;
+  HTTP_ENDPOINT_RATE_LIMITER?: RateLimitBinding;
   DATABASE_URL?: string;
   NODE_ENV?: string;
   NEXT_PUBLIC_API_URL?: string;

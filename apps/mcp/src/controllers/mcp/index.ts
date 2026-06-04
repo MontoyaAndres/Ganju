@@ -8,12 +8,17 @@ import { JsonSchema, utils } from '@anju/utils';
 import { db } from '@anju/db';
 import { eq } from 'drizzle-orm';
 
-import { toolRegistry } from '../../tools';
+import {
+  toolRegistry,
+  parseHttpEndpointConfig,
+  executeHttpEndpoint
+} from '../../tools';
 import {
   readResourceContent,
   refreshCredentialIfNeeded,
   generateEmbedding,
   resolveArtifactSlug,
+  allowHttpEndpointCall,
   parseJsonRpcMessages,
   collectBodyOnlyRequests,
   parseClient,
@@ -277,12 +282,114 @@ const business = async (c: Context<AppEnv>) => {
     );
   }
 
+  // http-endpoint auth references a credential by id; index the already-
+  // refreshed (decrypted) credentials so the dispatcher can resolve its secret.
+  const credentialById = new Map(refreshedCredentials.map(cred => [cred.id, cred]));
+  // Guard against two rows claiming the same MCP tool name (native key or a
+  // user-chosen http-endpoint name) — duplicate registration would throw.
+  const registeredToolNames = new Set<string>();
+
   for (const artifactTool of artifact.artifactTools) {
     const toolDef = artifactTool.toolDefinition;
     if (!toolDef) continue;
 
+    // `http-endpoint` is a proxied definition: each installed row registers one
+    // named tool derived from its config, dispatched against a user HTTP API.
+    if (toolDef.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT) {
+      const endpointConfig = parseHttpEndpointConfig(artifactTool.config);
+      if (!endpointConfig) continue;
+      if (registeredToolNames.has(endpointConfig.name)) continue;
+      registeredToolNames.add(endpointConfig.name);
+
+      const endpointSchema = utils.jsonSchemaToZodShape(
+        endpointConfig.inputSchema as JsonSchema
+      );
+      const credentialId =
+        endpointConfig.auth.kind !==
+        utils.constants.HTTP_ENDPOINT_AUTH_KIND_NONE
+          ? endpointConfig.auth.credentialId
+          : undefined;
+      const resolved = credentialId
+        ? credentialById.get(credentialId)
+        : undefined;
+      const resolvedCredential = resolved
+        ? {
+            secret: resolved.accessToken,
+            needsReauth: resolved.needsReauth === true
+          }
+        : null;
+
+      mcpServer.registerTool(
+        endpointConfig.name,
+        {
+          title: endpointConfig.title,
+          description: endpointConfig.description,
+          inputSchema: endpointSchema
+        },
+        async args => {
+          const startedAt = Date.now();
+          // Per-tool rate limit: stop the model from hammering one customer
+          // backend in a tight loop. Keyed by artifactTool.id so each endpoint
+          // has its own budget.
+          const allowed = await allowHttpEndpointCall(c.env, artifactTool.id);
+          if (!allowed) {
+            const result = {
+              content: [
+                {
+                  type: 'text' as const,
+                  text: `Error: rate limit exceeded for "${endpointConfig.name}". Wait a moment before calling it again.`
+                }
+              ]
+            };
+            pendingRequests.push({
+              method: utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL,
+              toolName: endpointConfig.name,
+              artifactToolId: artifactTool.id,
+              input: args,
+              output: result,
+              latencyMs: Date.now() - startedAt,
+              errorMessage: 'rate limit exceeded'
+            });
+            return result;
+          }
+          try {
+            const result = await executeHttpEndpoint(
+              endpointConfig,
+              args,
+              resolvedCredential
+            );
+            pendingRequests.push({
+              method: utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL,
+              toolName: endpointConfig.name,
+              artifactToolId: artifactTool.id,
+              input: args,
+              output: result,
+              latencyMs: Date.now() - startedAt
+            });
+            return result;
+          } catch (error) {
+            pendingRequests.push({
+              method: utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL,
+              toolName: endpointConfig.name,
+              artifactToolId: artifactTool.id,
+              input: args,
+              output: null,
+              latencyMs: Date.now() - startedAt,
+              errorMessage:
+                error instanceof Error ? error.message : String(error)
+            });
+            throw error;
+          }
+        }
+      );
+
+      continue;
+    }
+
     const handler = toolRegistry.get(toolDef.key);
     if (!handler) continue;
+    if (registeredToolNames.has(toolDef.key)) continue;
+    registeredToolNames.add(toolDef.key);
 
     const schema = utils.jsonSchemaToZodShape(handler.schema);
     const toolConfig = (artifactTool.config as Record<string, unknown>) || {};

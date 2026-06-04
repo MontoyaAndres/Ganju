@@ -227,8 +227,8 @@ export const Wrapper = styled.div<IProps>`
             letter-spacing: 0.5px;
 
             &.is-active {
-              color: #1f7a3a;
-              background-color: #1f7a3a18;
+              color: ${theme.colors.salem};
+              background-color: ${theme.colors.salem}18;
             }
 
             &.is-disabled {

@@ -68,20 +68,20 @@ export const Wrapper = styled.div`
       }
 
       &.tools-banner-success {
-        background-color: #e8f5e9;
-        color: #1b5e20;
+        background-color: ${theme.colors.peppermint};
+        color: ${theme.colors.parsley};
 
         & > svg {
-          color: #2e7d32;
+          color: ${theme.colors.japaneseLaurel};
         }
       }
 
       &.tools-banner-warning {
-        background-color: #fff8e1;
-        color: #795548;
+        background-color: ${theme.colors.earlyDawn};
+        color: ${theme.colors.romanCoffee};
 
         & > svg {
-          color: #f57c00;
+          color: ${theme.colors.tahitiGold};
         }
       }
     }
@@ -638,13 +638,13 @@ export const Wrapper = styled.div`
       }
 
       .tools-catalog-group-connected {
-        color: #2e7d32;
-        background-color: #e8f5e9;
+        color: ${theme.colors.japaneseLaurel};
+        background-color: ${theme.colors.peppermint};
       }
 
       .tools-catalog-group-expired {
-        color: #c62828;
-        background-color: #ffebee;
+        color: ${theme.colors.thunderbird};
+        background-color: ${theme.colors.fairPink};
       }
 
       .tools-catalog-group-description {
@@ -776,8 +776,8 @@ export const Wrapper = styled.div`
           gap: 4px;
           font-size: ${theme.fonts.xs};
           font-weight: 700;
-          color: #2e7d32;
-          background-color: #e8f5e9;
+          color: ${theme.colors.japaneseLaurel};
+          background-color: ${theme.colors.peppermint};
           padding: 6px 10px;
           border-radius: 8px;
           text-transform: uppercase;
@@ -795,8 +795,8 @@ export const Wrapper = styled.div`
           gap: 4px;
           font-size: ${theme.fonts.xs};
           font-weight: 700;
-          color: #c62828;
-          background-color: #ffebee;
+          color: ${theme.colors.thunderbird};
+          background-color: ${theme.colors.fairPink};
           padding: 6px 10px;
           border-radius: 8px;
           text-transform: uppercase;
@@ -828,6 +828,101 @@ export const Wrapper = styled.div`
       display: flex;
       flex-direction: column;
       gap: 8px;
+    }
+
+    .tools-http-endpoints {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .tools-http-endpoints-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+
+        .tools-http-endpoints-hint {
+          font-size: ${theme.fonts.sm};
+          color: ${theme.colors.bastille}99;
+          margin: 0;
+          line-height: 1.4;
+        }
+
+        .MuiButtonBase-root {
+          font-size: ${theme.fonts.sm};
+          padding: 6px 14px;
+          border-radius: 8px;
+          text-transform: none;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          & > svg {
+            width: 16px;
+            height: 16px;
+          }
+
+          .button-text {
+            font-weight: 600;
+          }
+        }
+      }
+    }
+
+    .tools-http-endpoints-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tools-http-endpoint-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1px solid ${theme.colors.alto};
+      border-radius: 8px;
+
+      .tools-http-endpoint-item-main {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .tools-http-endpoint-item-title {
+        font-size: ${theme.fonts.base};
+        font-weight: 600;
+        color: ${theme.colors.bastille};
+        margin: 0;
+      }
+
+      .tools-http-endpoint-item-url {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: ${theme.fonts.sm};
+        color: ${theme.colors.bastille}99;
+        margin: 4px 0 0 0;
+        word-break: break-all;
+
+        .tools-http-endpoint-method {
+          font-size: ${theme.fonts.xs};
+          font-weight: 700;
+          color: ${theme.colors.bastille};
+          background-color: ${theme.colors.bastille}0A;
+          padding: 2px 6px;
+          border-radius: 4px;
+          flex-shrink: 0;
+        }
+      }
+
+      .tools-http-endpoint-item-description {
+        font-size: ${theme.fonts.sm};
+        color: ${theme.colors.bastille}99;
+        margin: 4px 0 0 0;
+        line-height: 1.4;
+      }
     }
 
     .tools-group-detail-item {
@@ -894,6 +989,10 @@ export const ModalOverlay = styled.div`
   justify-content: center;
   z-index: 100;
   padding: 16px;
+
+  @media (max-width: 768px) {
+    padding: 0;
+  }
 `;
 
 export const ModalDialog = styled.div`
@@ -906,6 +1005,10 @@ export const ModalDialog = styled.div`
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+
+    &.http-endpoint-dialog {
+      max-width: 720px;
+    }
 
     .tools-modal-header {
       display: flex;
@@ -923,6 +1026,54 @@ export const ModalDialog = styled.div`
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+
+      .http-endpoint-mode-toggle {
+        display: flex;
+        border: 1px solid ${theme.colors.alto};
+        border-radius: 6px;
+        overflow: hidden;
+        margin-right: 4px;
+
+        .http-endpoint-mode-btn {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px 10px;
+          border: none;
+          background: none;
+          cursor: pointer;
+          font-size: ${theme.fonts.xs};
+          font-weight: 500;
+          color: ${theme.colors.saltBox};
+          transition:
+            background-color 0.15s ease,
+            color 0.15s ease;
+
+          & > svg {
+            width: 14px;
+            height: 14px;
+          }
+
+          &:hover:not(:disabled) {
+            background-color: ${theme.colors.bastille}05;
+          }
+
+          &.active {
+            background-color: ${theme.colors.bastille}0A;
+            color: ${theme.colors.bastille};
+            font-weight: 600;
+          }
+
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+
+          & + .http-endpoint-mode-btn {
+            border-left: 1px solid ${theme.colors.alto};
+          }
+        }
       }
     }
 
@@ -1010,6 +1161,210 @@ export const ModalDialog = styled.div`
           cursor: not-allowed;
         }
       }
+
+      .http-endpoint-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .http-endpoint-section {
+          margin: 0;
+        }
+      }
+
+      .http-endpoint-section {
+        font-size: ${theme.fonts.sm};
+        font-weight: 600;
+        color: ${theme.colors.bastille};
+        margin: 10px 0 20px 0;
+      }
+
+      .http-endpoint-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+
+        > * {
+          flex: 1;
+        }
+      }
+
+      .http-endpoint-method {
+        max-width: 160px;
+        flex: 0 0 160px;
+      }
+
+      .http-endpoint-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .http-endpoint-list-hint {
+        font-size: ${theme.fonts.xs};
+        color: ${theme.colors.saltBox};
+        margin: -2px 0 2px 0;
+        line-height: 1.4;
+      }
+
+      .http-endpoint-list-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        span {
+          font-size: ${theme.fonts.sm};
+          font-weight: 600;
+          color: ${theme.colors.bastille};
+        }
+
+        .MuiButtonBase-root {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: ${theme.fonts.sm};
+          padding: 6px 16px;
+          border-radius: 6px;
+          text-transform: none;
+
+          & > svg {
+            width: 14px;
+            height: 14px;
+          }
+        }
+      }
+
+      .http-endpoint-kv {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        > div:first-of-type {
+          flex: 0 0 38%;
+        }
+        > div {
+          flex: 1;
+        }
+      }
+
+      .http-endpoint-arg {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid ${theme.colors.alto};
+        border-radius: 8px;
+      }
+
+      .http-endpoint-arg-header {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        > div:first-of-type {
+          flex: 1;
+        }
+      }
+
+      .http-endpoint-arg-required {
+        flex-shrink: 0;
+        white-space: nowrap;
+        margin: 0;
+
+        .MuiFormControlLabel-label {
+          font-size: ${theme.fonts.sm};
+          color: ${theme.colors.bastille};
+        }
+      }
+
+      .http-endpoint-arg-fields {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 10px;
+      }
+
+      .http-endpoint-add-secret.MuiButtonBase-root {
+        width: auto;
+        align-self: flex-start;
+        min-height: 0;
+        font-size: ${theme.fonts.xs};
+        padding: 12px;
+        border-radius: 8px;
+        text-transform: none;
+        color: ${theme.colors.bastille};
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: background-color 0.15s ease;
+
+        & > svg {
+          width: 14px;
+          height: 14px;
+        }
+
+        .button-text {
+          font-weight: 600;
+        }
+
+        &:hover {
+          background-color: ${theme.colors.bastille}12;
+        }
+      }
+
+      .http-endpoint-new-secret {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
+        border: 1px dashed ${theme.colors.alto};
+        border-radius: 8px;
+      }
+
+      .http-endpoint-advanced {
+        border: 1px solid ${theme.colors.alto};
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 10px;
+
+        .http-endpoint-advanced-toggle {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 12px;
+          border: none;
+          background: none;
+          cursor: pointer;
+          font-size: ${theme.fonts.sm};
+          font-weight: 600;
+          color: ${theme.colors.saltBox};
+          transition: background-color 0.15s ease;
+
+          & > svg {
+            width: 18px;
+            height: 18px;
+          }
+
+          &:hover {
+            background-color: ${theme.colors.bastille}05;
+          }
+        }
+
+        .http-endpoint-advanced-content {
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          border-top: 1px solid ${theme.colors.alto};
+        }
+      }
+
+      .http-endpoint-error {
+        font-size: ${theme.fonts.sm};
+        color: ${theme.colors.red};
+        margin: 0;
+      }
     }
 
     .tools-modal-actions {
@@ -1024,6 +1379,44 @@ export const ModalDialog = styled.div`
         padding: 6px 16px;
         border-radius: 6px;
         text-transform: none;
+      }
+    }
+
+    @media (max-width: ${theme.screens.md}) {
+      &.http-endpoint-dialog {
+        max-width: 100%;
+        width: 100%;
+        max-height: 100%;
+        height: 100%;
+        border-radius: 0;
+      }
+
+      .tools-modal-header .http-endpoint-mode-toggle {
+        margin-right: 0;
+      }
+
+      .tools-modal-body .http-endpoint-form {
+        .http-endpoint-row {
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        .http-endpoint-method {
+          max-width: 100%;
+          flex: 1;
+        }
+
+        .http-endpoint-kv > div:first-of-type {
+          flex: 1;
+        }
+
+        .http-endpoint-arg-header {
+          flex-wrap: wrap;
+        }
+
+        .http-endpoint-arg-fields {
+          grid-template-columns: 1fr;
+        }
       }
     }
   `}

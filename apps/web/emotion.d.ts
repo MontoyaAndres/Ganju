@@ -50,6 +50,15 @@ declare module '@emotion/react' {
       alto: string;
       fernGreen: string;
       saltBox: string;
+      peppermint: string;
+      parsley: string;
+      japaneseLaurel: string;
+      earlyDawn: string;
+      romanCoffee: string;
+      tahitiGold: string;
+      thunderbird: string;
+      fairPink: string;
+      salem: string;
     };
     fonts: {
       xs: string;

@@ -10,6 +10,15 @@ const basicConfig = {
     alto: '#D4D4D4',
     fernGreen: '#417741',
     saltBox: '#6E6B73',
+    peppermint: '#E8F5E9',
+    parsley: '#1B5E20',
+    japaneseLaurel: '#2E7D32',
+    earlyDawn: '#FFF8E1',
+    romanCoffee: '#795548',
+    tahitiGold: '#F57C00',
+    thunderbird: '#C62828',
+    fairPink: '#FFEBEE',
+    salem: '#1F7A3A'
   },
   fonts: {
     xs: '12px',
@@ -24,34 +33,34 @@ const basicConfig = {
     '6xl': '60px',
     '7xl': '70px',
     '8xl': '90px',
-    '9xl': '100px',
+    '9xl': '100px'
   },
   'custom-shadows': {
     smallest: '0px 10px 50px #00000029',
-    small: '0px 3px 20px #00000040',
+    small: '0px 3px 20px #00000040'
   },
   screens: {
     sm: '640px',
     md: '768px',
     lg: '1024px',
     xl: '1280px',
-    '2xl': '1536px',
-  },
+    '2xl': '1536px'
+  }
 };
 
 export const materialConfig = {
   ...basicConfig,
   palette: {
     primary: {
-      main: '#1C1825',
+      main: '#1C1825'
     },
     secondary: {
-      main: '#FFFFFF',
-    },
+      main: '#FFFFFF'
+    }
   },
   typography: {
-    fontFamily: 'Fustat',
-  },
+    fontFamily: 'Fustat'
+  }
 };
 
 export const materialTheme = createTheme(materialConfig);

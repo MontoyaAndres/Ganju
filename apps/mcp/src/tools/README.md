@@ -82,6 +82,7 @@ Handlers resolve every setting the same way: **`args.<override>` → `config.<de
 | `calcom-cancel-booking` | calcom | `calcom` (API key) | `POST /v2/bookings/{uid}/cancel`. |
 | `web-search` | web | `tavily` (API key) | `POST /search` — top-N results + synthesized `answer`; `topic=news` with `days` window. |
 | `web-extract` | web | `tavily` (API key) | `POST /extract` — full cleaned page text for known URL(s). |
+| `http-endpoint` | (per-instance) | per-endpoint secret | **Proxied definition** — one installed row = one named tool against a user HTTP API. Config builder + raw-JSON editor in the Tools UI. See [the http-endpoint section](#the-http-endpoint-tool-definition). |
 
 Baseline pattern to copy when adding a new native provider: [gmail/index.ts](gmail/index.ts).
 
@@ -200,7 +201,7 @@ In [controllers/mcp/index.ts](../controllers/mcp/index.ts), after the local prom
 
 ## The `http-endpoint` tool definition
 
-One `tool_definition` (`key = 'http-endpoint'`) that produces *one* named MCP tool per `artifact_tool` row. Lets users expose their own HTTP endpoints to the agent without writing TypeScript.
+**Shipped end-to-end** (dispatcher + boot registration + config UI). One `tool_definition` (`key = 'http-endpoint'`) that produces *one* named MCP tool per `artifact_tool` row. Lets users expose their own HTTP endpoints to the agent without writing TypeScript.
 
 Each `artifact_tool` of this kind = one named tool the model can call. So one artifact might have three rows: `lookup-order`, `create-refund`, `check-stock` — three concrete MCP tools, all backed by this same definition.
 
@@ -261,18 +262,22 @@ Each `artifact_tool` of this kind = one named tool the model can call. So one ar
 
 ### Security
 
-- `url` host validated: never `localhost`, `127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, or `::1`. Resolve before fetch; reject if DNS returns a private range (defense against rebinding).
-- `allowedHosts`, if set on the artifact (or org-wide), takes precedence — any host outside the list is rejected.
-- Body size cap on the request (1MB default), response cap on `maxBytes`.
-- Credentials referenced by `credentialId` only — never inlined in headers. Stored encrypted in `artifact_credential` like every other secret.
-- Rate-limit per `artifact_tool` (e.g. 60/min) to prevent the model from hammering a customer's backend in a loop.
+- `url` host screened against private/loopback/link-local ranges (`localhost`, `127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `::1`, IPv6 link-local/unique-local). Only the final URL is checked, and only **literal** hosts/IPs — the Workers runtime can't resolve DNS, so DNS-rebinding isn't defended against here (noted inline in [httpEndpoint/index.ts](httpEndpoint/index.ts)).
+- `allowedHosts`, if set on the config, takes precedence — any host outside the list is rejected (private ranges are rejected regardless).
+- Request body capped at 1MB (`HTTP_ENDPOINT_MAX_REQUEST_BYTES`); response capped at `response.maxBytes`, itself clamped to the 256KB default ceiling.
+- Credentials referenced by `credentialId` only — never inlined in headers. Stored encrypted in `artifact_credential` like every other secret; applied just before the fetch and never logged.
+- Config is re-validated server-side on write (`HTTP_ENDPOINT_CONFIG.safeParse` in [ArtifactController.createTool / updateTool](../../../api/src/controllers/artifact/index.ts)), so a hand-crafted POST can't store a config that bypasses the schema. The MCP boot loop also skips any row that fails to parse.
+- Per-`artifact_tool` rate limit (60 req / 60s) via the Cloudflare native rate-limiting binding `HTTP_ENDPOINT_RATE_LIMITER`, keyed by tool id — a loop guard so the model can't hammer a backend. See [allowHttpEndpointCall](../utils/rateLimit.ts) and the `[[unsafe.bindings]]` block in [wrangler.toml](../../wrangler.toml). A missing binding (local dev / inspector) degrades to "allow". Over-limit calls return `Error: rate limit exceeded …` text and are still recorded in `mcp_request`.
 
-### Required code changes
+### As built
 
-- New `http-endpoint` entry in [registry.ts](registry.ts) (handler unused; registration at boot).
-- Boot-time hook in [controllers/mcp/index.ts](../controllers/mcp/index.ts) that walks `http-endpoint` rows and registers a tool per row, sharing the same dispatch helper.
-- Shared interpolation helper in [apps/mcp/src/utils/](../utils/) that handles `{{arg}}` substitution with HTML/URL/JSON escaping per context (don't naively `replaceAll` — interpolating into a JSON body without escaping is an injection vector).
-- UI in [apps/web](../../../web/) for the config form: name, description, method, URL, headers list, body editor, input schema builder, auth picker, host allowlist. This is the user-facing surface — without a clean form, the feature is unusable.
+- `http-endpoint` entry in [registry.ts](registry.ts) — a parent definition whose handler rejects direct calls; real dispatch happens at boot.
+- Shared zod schema `HTTP_ENDPOINT_CONFIG` in [packages/utils schema.ts](../../../../packages/utils/src/schema.ts) (fills defaults, clamps `timeoutMs`/`maxBytes`, validates the auth discriminated union); constants in [constants.ts](../../../../packages/utils/src/constants.ts) (`TOOL_DEFINITION_KEY_HTTP_ENDPOINT`, methods/body-kinds/auth-kinds, limits, `CREDENTIAL_PROVIDER_HTTP_ENDPOINT`).
+- Dispatcher [httpEndpoint/index.ts](httpEndpoint/index.ts): `parseHttpEndpointConfig` + `executeHttpEndpoint` (SSRF screen, auth application, body shaping, timeout/abort, response cap + `jsonPath` extraction). Errors return as `Error: …` text per the convention.
+- Per-context `{{arg}}` interpolation in [utils/interpolate.ts](../utils/interpolate.ts) — `url`/`json`/`header`/`raw` escaping so a value can't inject into the wrong context.
+- Boot-time hook in [controllers/mcp/index.ts](../controllers/mcp/index.ts) that registers one named tool per `http-endpoint` row, resolves its `auth.credentialId` against the refreshed credentials, dedupes tool names, and records each call in `mcp_request`.
+- Tools UI: [HttpEndpointModal.tsx](../../../web/src/components/views/tools/HttpEndpointModal.tsx) (guided form + raw-JSON mode, inline per-endpoint secret creation) and the endpoint-list rendering in the [tools view](../../../web/src/components/views/tools/index.tsx).
+- Per-endpoint secrets are their own `artifact_credential` rows (provider `http-endpoint`, labelled in `metadata`), created via [ArtifactController.createCredential](../../../api/src/controllers/artifact/index.ts). Removing an endpoint deletes its secret in `removeTool` — but only when no other endpoint references the same `credentialId` and only for `http-endpoint`-provider rows (a shared OAuth/api-key credential is never touched).
 
 ## Conventions
 

@@ -35,6 +35,11 @@ bucket_name = "anju-storage-development"
 [[env.development.kv_namespaces]]
 binding = "JWKS_CACHE"
 id = "970ea5ba5ff948c587803b33c594e5bc"
+[[env.development.unsafe.bindings]]
+name = "HTTP_ENDPOINT_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 60, period = 60 }
 [[env.development.durable_objects.bindings]]
 name = "RESOURCE_HANDLER"
 class_name = "ResourceHandler"
@@ -71,6 +76,11 @@ bucket_name = "anju-storage-production"
 [[env.production.kv_namespaces]]
 binding = "JWKS_CACHE"
 id = "<JWKS_CACHE_KV_ID_PROD>"
+[[env.production.unsafe.bindings]]
+name = "HTTP_ENDPOINT_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 60, period = 60 }
 [[env.production.durable_objects.bindings]]
 name = "RESOURCE_HANDLER"
 class_name = "ResourceHandler"

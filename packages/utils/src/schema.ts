@@ -516,8 +516,9 @@ const ARTIFACT_REMOVE_CREDENTIAL = z.object({
 });
 
 const ARTIFACT_CREATE_CREDENTIAL = z.object({
-  provider: z.enum(constants.API_KEY_PROVIDERS),
-  apiKey: z.string().min(1).max(500),
+  provider: z.enum(constants.CREDENTIAL_PROVIDERS),
+  apiKey: z.string().min(1),
+  label: z.string().trim().min(1).max(100).optional(),
   projectId: z.uuid(),
   userId: z.uuid(),
   organizationId: z.uuid()
@@ -590,6 +591,121 @@ const CHANNEL_UPDATE = z.object({
   userId: z.uuid(),
   organizationId: z.uuid()
 });
+
+// Validates one artifact_tool.config of definition `http-endpoint`. Each row of
+// this kind registers one named MCP tool at server boot (see apps/mcp tools
+// README). Defaults are filled here so the dispatcher receives a fully-resolved
+// config. Secrets are never inlined — auth references an artifact_credential by
+// id (credentialId), validated as a uuid.
+const HTTP_ENDPOINT_KEY_VALUE = z.object({
+  name: z.string().min(1).max(256),
+  value: z.string().max(8192)
+});
+
+const HTTP_ENDPOINT_AUTH = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal(constants.HTTP_ENDPOINT_AUTH_KIND_NONE) }),
+  z.object({
+    kind: z.literal(constants.HTTP_ENDPOINT_AUTH_KIND_BEARER),
+    credentialId: z.uuid()
+  }),
+  z.object({
+    kind: z.literal(constants.HTTP_ENDPOINT_AUTH_KIND_BASIC),
+    credentialId: z.uuid()
+  }),
+  z.object({
+    kind: z.literal(constants.HTTP_ENDPOINT_AUTH_KIND_OAUTH),
+    credentialId: z.uuid()
+  }),
+  z.object({
+    kind: z.literal(constants.HTTP_ENDPOINT_AUTH_KIND_API_KEY),
+    in: z.enum(['header', 'query']),
+    name: z.string().min(1).max(256),
+    credentialId: z.uuid()
+  })
+]);
+
+const HTTP_ENDPOINT_CONFIG = z
+  .object({
+    // Identity — surfaced to the model. `name` becomes the MCP tool key.
+    name: z
+      .string()
+      .regex(
+        /^[a-zA-Z0-9_-]{1,64}$/,
+        'Tool name must be 1-64 chars: letters, digits, underscore or hyphen'
+      ),
+    title: z.string().min(1).max(200).optional(),
+    description: z.string().max(2000).optional(),
+    // Request.
+    method: z.preprocess(
+      v => (typeof v === 'string' ? v.toUpperCase() : v),
+      z.enum(constants.HTTP_ENDPOINT_METHODS)
+    ),
+    url: z.string().min(1).max(2048),
+    headers: z.array(HTTP_ENDPOINT_KEY_VALUE).max(50).default([]),
+    query: z.array(HTTP_ENDPOINT_KEY_VALUE).max(50).default([]),
+    body: z
+      .object({
+        kind: z.enum(constants.HTTP_ENDPOINT_BODY_KINDS),
+        template: z.string().max(100_000).default('')
+      })
+      .default({ kind: constants.HTTP_ENDPOINT_BODY_KIND_NONE, template: '' }),
+    // Input schema the model fills in (reuses the shared JSON-schema shape).
+    inputSchema: SCHEMA_DEFINITION.default({
+      type: 'object',
+      properties: {}
+    }),
+    // Response handling.
+    response: z
+      .object({
+        contentType: z
+          .enum([
+            constants.HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_AUTO,
+            constants.HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_JSON,
+            constants.HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_TEXT
+          ])
+          .default(constants.HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_AUTO),
+        // Clamp to the hard cap rather than reject an over-large request.
+        maxBytes: z
+          .number()
+          .int()
+          .positive()
+          .default(constants.HTTP_ENDPOINT_DEFAULT_MAX_BYTES)
+          .transform(n =>
+            Math.min(n, constants.HTTP_ENDPOINT_DEFAULT_MAX_BYTES)
+          ),
+        jsonPath: z.string().max(256).optional(),
+        successStatus: z
+          .array(z.number().int().min(100).max(599))
+          .max(20)
+          .optional()
+      })
+      .default({
+        contentType: constants.HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_AUTO,
+        maxBytes: constants.HTTP_ENDPOINT_DEFAULT_MAX_BYTES
+      }),
+    // Auth — credentials referenced by id, never inlined.
+    auth: HTTP_ENDPOINT_AUTH.default({
+      kind: constants.HTTP_ENDPOINT_AUTH_KIND_NONE
+    }),
+    // Safety.
+    timeoutMs: z
+      .number()
+      .int()
+      .positive()
+      .default(constants.HTTP_ENDPOINT_DEFAULT_TIMEOUT_MS)
+      .transform(n => Math.min(n, constants.HTTP_ENDPOINT_MAX_TIMEOUT_MS)),
+    allowedHosts: z
+      .array(z.string().min(1).max(253).toLowerCase())
+      .max(50)
+      .optional()
+  })
+  .transform(cfg => ({
+    ...cfg,
+    title: cfg.title || cfg.name,
+    description:
+      cfg.description ||
+      `Call the configured ${cfg.method} ${cfg.url} endpoint.`
+  }));
 
 const ARTIFACT_UPDATE_RESOURCE_SHOW_SOURCE = z.object({
   resourceId: z.uuid(),
@@ -766,5 +882,9 @@ export const Schema = {
   CHANNEL_REMOVE,
   CHANNEL_LIST_CONVERSATIONS,
   CHANNEL_LIST_MESSAGES,
-  ARTIFACT_UPDATE_RESOURCE_SHOW_SOURCE
+  ARTIFACT_UPDATE_RESOURCE_SHOW_SOURCE,
+  HTTP_ENDPOINT_CONFIG
 };
+
+// Fully-resolved http-endpoint config (post-parse, defaults applied).
+export type HttpEndpointToolConfig = z.infer<typeof HTTP_ENDPOINT_CONFIG>;

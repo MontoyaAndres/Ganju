@@ -14,6 +14,18 @@ import {
 import { AppEnv } from '../../types';
 import type { ReadableStream as WorkersReadableStream } from '@cloudflare/workers-types';
 
+const validateHttpEndpointConfig = (
+  config: unknown
+): Record<string, unknown> => {
+  const parsed = utils.Schema.HTTP_ENDPOINT_CONFIG.safeParse(config ?? {});
+  if (!parsed.success) {
+    throw new Error(
+      parsed.error.issues[0]?.message || 'Invalid HTTP endpoint configuration'
+    );
+  }
+  return parsed.data as Record<string, unknown>;
+};
+
 const createPrompt = async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const currentValues = await utils.Schema.ARTIFACT_CREATE_PROMPT.parseAsync({
@@ -432,9 +444,7 @@ const updateResource = async (c: Context<AppEnv>) => {
       throw new Error('Resource not found');
     }
 
-    if (
-      existing.sourceType === utils.constants.RESOURCE_SOURCE_TYPE_WEBSITE
-    ) {
+    if (existing.sourceType === utils.constants.RESOURCE_SOURCE_TYPE_WEBSITE) {
       const websiteValues =
         await utils.Schema.ARTIFACT_UPDATE_WEBSITE.parseAsync({
           ...body,
@@ -597,10 +607,7 @@ const listResources = async (c: Context<AppEnv>) => {
       and(
         eq(db.schema.artifactResource.artifactId, artifactRow.id),
         parentResourceId
-          ? eq(
-              db.schema.artifactResource.parentResourceId,
-              parentResourceId
-            )
+          ? eq(db.schema.artifactResource.parentResourceId, parentResourceId)
           : isNull(db.schema.artifactResource.parentResourceId)
       )
     );
@@ -655,10 +662,7 @@ const removeResource = async (c: Context<AppEnv>) => {
       .where(
         and(
           eq(db.schema.artifactResource.id, currentValues.resourceId),
-          eq(
-            db.schema.artifactResource.artifactId,
-            currentArtifactByProject.id
-          )
+          eq(db.schema.artifactResource.artifactId, currentArtifactByProject.id)
         )
       )
       .limit(1);
@@ -678,9 +682,7 @@ const removeResource = async (c: Context<AppEnv>) => {
           fileKey: db.schema.artifactResource.fileKey
         })
         .from(db.schema.artifactResource)
-        .where(
-          inArray(db.schema.artifactResource.parentResourceId, frontier)
-        );
+        .where(inArray(db.schema.artifactResource.parentResourceId, frontier));
 
       const nextFrontier: string[] = [];
       for (const child of children) {
@@ -709,9 +711,7 @@ const removeResource = async (c: Context<AppEnv>) => {
         .set({
           childResourceCount: sql`GREATEST(${db.schema.artifactResource.childResourceCount}::int - 1, 0)`
         })
-        .where(
-          eq(db.schema.artifactResource.id, seed.parentResourceId)
-        );
+        .where(eq(db.schema.artifactResource.id, seed.parentResourceId));
     }
   });
 
@@ -775,11 +775,20 @@ const createTool = async (c: Context<AppEnv>) => {
       throw new Error('Tool definition not found');
     }
 
+    // http-endpoint config is user-authored and drives an outbound request at
+    // runtime, so re-validate (and normalize/default) it server-side rather
+    // than trusting the client. The MCP boot loop also skips malformed rows,
+    // but rejecting here keeps the stored config canonical.
+    const resolvedConfig =
+      toolDef.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
+        ? validateHttpEndpointConfig(currentValues.config)
+        : currentValues.config || null;
+
     const artifactTool = await tx
       .insert(db.schema.artifactTool)
       .values({
         toolDefinitionId: currentValues.toolDefinitionId,
-        config: currentValues.config || null,
+        config: resolvedConfig,
         metadata: currentValues.metadata || null,
         artifactId: currentArtifactByProject.id
       })
@@ -836,10 +845,36 @@ const updateTool = async (c: Context<AppEnv>) => {
       throw new Error('Artifact not found for the project');
     }
 
+    // Resolve the definition key so http-endpoint configs are re-validated and
+    // normalized server-side (same reasoning as createTool).
+    const [existing] = await tx
+      .select({ key: db.schema.toolDefinition.key })
+      .from(db.schema.artifactTool)
+      .innerJoin(
+        db.schema.toolDefinition,
+        eq(db.schema.artifactTool.toolDefinitionId, db.schema.toolDefinition.id)
+      )
+      .where(
+        and(
+          eq(db.schema.artifactTool.id, currentValues.toolId),
+          eq(db.schema.artifactTool.artifactId, currentArtifactByProject.id)
+        )
+      )
+      .limit(1);
+
+    if (!existing) {
+      throw new Error('Tool not found');
+    }
+
+    const resolvedConfig =
+      existing.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
+        ? validateHttpEndpointConfig(currentValues.config)
+        : currentValues.config || null;
+
     const artifactTool = await tx
       .update(db.schema.artifactTool)
       .set({
-        config: currentValues.config || null,
+        config: resolvedConfig,
         metadata: currentValues.metadata || null
       })
       .where(
@@ -947,6 +982,58 @@ const removeTool = async (c: Context<AppEnv>) => {
         artifactToolCount: sql`(${db.schema.artifact.artifactToolCount}::int - 1)::int`
       })
       .where(eq(db.schema.artifact.id, currentArtifactByProject.id));
+
+    // http-endpoint tools own a per-endpoint secret (artifact_credential)
+    // referenced by id from their auth config. Removing the tool would orphan
+    // that secret, so delete it too — but only when no other endpoint on the
+    // artifact still references it, and only if it's an http-endpoint secret
+    // (never a shared OAuth/api-key credential bound to a native tool).
+    const removedConfig = deleteTool[0].config as {
+      auth?: { credentialId?: string };
+    } | null;
+    const credentialId = removedConfig?.auth?.credentialId;
+
+    if (credentialId) {
+      const remainingTools = await tx
+        .select({ config: db.schema.artifactTool.config })
+        .from(db.schema.artifactTool)
+        .where(
+          eq(db.schema.artifactTool.artifactId, currentArtifactByProject.id)
+        );
+
+      const stillReferenced = remainingTools.some(t => {
+        const cfg = t.config as { auth?: { credentialId?: string } } | null;
+        return cfg?.auth?.credentialId === credentialId;
+      });
+
+      if (!stillReferenced) {
+        const deletedCredential = await tx
+          .delete(db.schema.artifactCredential)
+          .where(
+            and(
+              eq(db.schema.artifactCredential.id, credentialId),
+              eq(
+                db.schema.artifactCredential.artifactId,
+                currentArtifactByProject.id
+              ),
+              eq(
+                db.schema.artifactCredential.provider,
+                utils.constants.CREDENTIAL_PROVIDER_HTTP_ENDPOINT
+              )
+            )
+          )
+          .returning({ id: db.schema.artifactCredential.id });
+
+        if (deletedCredential.length > 0) {
+          await tx
+            .update(db.schema.artifact)
+            .set({
+              artifactCredentialCount: sql`(${db.schema.artifact.artifactCredentialCount}::int - 1)::int`
+            })
+            .where(eq(db.schema.artifact.id, currentArtifactByProject.id));
+        }
+      }
+    }
   });
 
   return c.json(currentValues);
@@ -1171,7 +1258,12 @@ const createCredential = async (c: Context<AppEnv>) => {
       organizationId: c.req.param('organizationId')
     });
 
+  const isHttpEndpoint =
+    currentValues.provider ===
+    utils.constants.CREDENTIAL_PROVIDER_HTTP_ENDPOINT;
+
   // Verify the key works before persisting, so we never store a dead key.
+  // http-endpoint secrets have no vendor to validate against, so they skip this.
   if (currentValues.provider === utils.constants.API_KEY_PROVIDER_CALCOM) {
     const valid = await validateCalcomApiKey(currentValues.apiKey);
     if (!valid) {
@@ -1195,6 +1287,8 @@ const createCredential = async (c: Context<AppEnv>) => {
     currentValues.apiKey,
     encryptionKey
   );
+
+  let createdId: string | undefined;
 
   await dbInstance.transaction(async tx => {
     const [project] = await tx
@@ -1222,6 +1316,32 @@ const createCredential = async (c: Context<AppEnv>) => {
       throw new Error('Artifact not found for the project');
     }
 
+    // http-endpoint credentials aren't unique per provider — one artifact can
+    // hold many endpoint secrets, each referenced by id from a tool's auth
+    // config and labelled so the user can tell them apart. Always insert a
+    // fresh row instead of overwriting the existing provider credential.
+    if (isHttpEndpoint) {
+      const [inserted] = await tx
+        .insert(db.schema.artifactCredential)
+        .values({
+          provider: currentValues.provider,
+          accessToken: encryptedAccessToken,
+          metadata: currentValues.label ? { label: currentValues.label } : null,
+          artifactId: currentArtifactByProject.id
+        })
+        .returning({ id: db.schema.artifactCredential.id });
+      createdId = inserted?.id;
+
+      await tx
+        .update(db.schema.artifact)
+        .set({
+          artifactCredentialCount: sql`(${db.schema.artifact.artifactCredentialCount}::int + 1)::int`
+        })
+        .where(eq(db.schema.artifact.id, currentArtifactByProject.id));
+
+      return;
+    }
+
     const [existingCredential] = await tx
       .select({ id: db.schema.artifactCredential.id })
       .from(db.schema.artifactCredential)
@@ -1247,12 +1367,17 @@ const createCredential = async (c: Context<AppEnv>) => {
           metadata: null
         })
         .where(eq(db.schema.artifactCredential.id, existingCredential.id));
+      createdId = existingCredential.id;
     } else {
-      await tx.insert(db.schema.artifactCredential).values({
-        provider: currentValues.provider,
-        accessToken: encryptedAccessToken,
-        artifactId: currentArtifactByProject.id
-      });
+      const [inserted] = await tx
+        .insert(db.schema.artifactCredential)
+        .values({
+          provider: currentValues.provider,
+          accessToken: encryptedAccessToken,
+          artifactId: currentArtifactByProject.id
+        })
+        .returning({ id: db.schema.artifactCredential.id });
+      createdId = inserted?.id;
 
       await tx
         .update(db.schema.artifact)
@@ -1263,7 +1388,11 @@ const createCredential = async (c: Context<AppEnv>) => {
     }
   });
 
-  return c.json({ provider: currentValues.provider, status: 'ok' });
+  return c.json({
+    provider: currentValues.provider,
+    status: 'ok',
+    id: createdId
+  });
 };
 
 const downloadResourceFile = async (c: Context<AppEnv>) => {
@@ -1318,7 +1447,9 @@ const downloadResourceFile = async (c: Context<AppEnv>) => {
   }
 
   const fileName = resource.fileKey.split('/').pop() || resource.title;
-  const asciiFileName = fileName.replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '');
+  const asciiFileName = fileName
+    .replace(/[^\x20-\x7E]/g, '_')
+    .replace(/"/g, '');
   const encodedFileName = encodeURIComponent(fileName);
 
   return new Response(object.body as unknown as ReadableStream, {
@@ -1445,7 +1576,6 @@ const updateSlug = async (c: Context<AppEnv>) => {
     throw error;
   }
 };
-
 
 export const ArtifactController = {
   createPrompt,

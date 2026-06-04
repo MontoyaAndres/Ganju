@@ -719,7 +719,23 @@ const CALENDAR_TOOL_FIELDS: Record<string, CalendarConfigField[]> = {
 const API_KEY_PROVIDER_CALCOM = 'calcom' as 'calcom';
 // Tavily web search uses a personal API key (no OAuth), same storage pattern.
 const API_KEY_PROVIDER_TAVILY = 'tavily' as 'tavily';
+// API-key providers surfaced in the Tools UI's "Add API key" affordance (one
+// key per provider, validated against the vendor before storage).
 const API_KEY_PROVIDERS = [API_KEY_PROVIDER_CALCOM, API_KEY_PROVIDER_TAVILY];
+
+// http-endpoint secrets are stored as artifact_credential rows too, but unlike
+// the API-key providers above a single artifact can hold MANY of them (one per
+// endpoint), each referenced by id from a tool's auth config and carrying a
+// human label in metadata. There's no vendor to validate against. This is kept
+// out of API_KEY_PROVIDERS so the catalog UI doesn't treat it as a one-key
+// "Add API key" integration.
+const CREDENTIAL_PROVIDER_HTTP_ENDPOINT = 'http-endpoint' as 'http-endpoint';
+// Every provider the generic credential create endpoint accepts.
+const CREDENTIAL_PROVIDERS = [
+  API_KEY_PROVIDER_CALCOM,
+  API_KEY_PROVIDER_TAVILY,
+  CREDENTIAL_PROVIDER_HTTP_ENDPOINT
+];
 
 const CALCOM_API_BASE = 'https://api.cal.com/v2';
 // Cal.com pins behavior per endpoint with the `cal-api-version` header.
@@ -749,6 +765,61 @@ const WEB_TOOL_KEY_PREFIX = 'web-';
 const WEB_TOOL_KEY_SEARCH = 'web-search';
 const WEB_TOOL_KEY_EXTRACT = 'web-extract';
 const WEB_TOOL_KEYS = [WEB_TOOL_KEY_SEARCH, WEB_TOOL_KEY_EXTRACT];
+
+// `http-endpoint` is a proxied tool definition: a single tool_definition row
+// (key below) whose installed artifact_tool rows each describe one HTTP call.
+// At MCP server boot, every such row registers one named MCP tool derived from
+// its config (name/title/description/inputSchema). It lets users expose their
+// own backends to the agent without a TypeScript handler.
+const TOOL_DEFINITION_KEY_HTTP_ENDPOINT = 'http-endpoint';
+
+const HTTP_ENDPOINT_METHOD_GET = 'GET' as 'GET';
+const HTTP_ENDPOINT_METHOD_POST = 'POST' as 'POST';
+const HTTP_ENDPOINT_METHOD_PUT = 'PUT' as 'PUT';
+const HTTP_ENDPOINT_METHOD_PATCH = 'PATCH' as 'PATCH';
+const HTTP_ENDPOINT_METHOD_DELETE = 'DELETE' as 'DELETE';
+const HTTP_ENDPOINT_METHODS = [
+  HTTP_ENDPOINT_METHOD_GET,
+  HTTP_ENDPOINT_METHOD_POST,
+  HTTP_ENDPOINT_METHOD_PUT,
+  HTTP_ENDPOINT_METHOD_PATCH,
+  HTTP_ENDPOINT_METHOD_DELETE
+];
+
+const HTTP_ENDPOINT_BODY_KIND_NONE = 'none' as 'none';
+const HTTP_ENDPOINT_BODY_KIND_JSON = 'json' as 'json';
+const HTTP_ENDPOINT_BODY_KIND_FORM = 'form' as 'form';
+const HTTP_ENDPOINT_BODY_KIND_TEXT = 'text' as 'text';
+const HTTP_ENDPOINT_BODY_KINDS = [
+  HTTP_ENDPOINT_BODY_KIND_NONE,
+  HTTP_ENDPOINT_BODY_KIND_JSON,
+  HTTP_ENDPOINT_BODY_KIND_FORM,
+  HTTP_ENDPOINT_BODY_KIND_TEXT
+];
+
+const HTTP_ENDPOINT_AUTH_KIND_NONE = 'none' as 'none';
+const HTTP_ENDPOINT_AUTH_KIND_BEARER = 'bearer' as 'bearer';
+const HTTP_ENDPOINT_AUTH_KIND_BASIC = 'basic' as 'basic';
+const HTTP_ENDPOINT_AUTH_KIND_API_KEY = 'api-key' as 'api-key';
+const HTTP_ENDPOINT_AUTH_KIND_OAUTH = 'oauth' as 'oauth';
+const HTTP_ENDPOINT_AUTH_KINDS = [
+  HTTP_ENDPOINT_AUTH_KIND_NONE,
+  HTTP_ENDPOINT_AUTH_KIND_BEARER,
+  HTTP_ENDPOINT_AUTH_KIND_BASIC,
+  HTTP_ENDPOINT_AUTH_KIND_API_KEY,
+  HTTP_ENDPOINT_AUTH_KIND_OAUTH
+];
+
+const HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_AUTO = 'auto' as 'auto';
+const HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_JSON = 'json' as 'json';
+const HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_TEXT = 'text' as 'text';
+
+const HTTP_ENDPOINT_DEFAULT_TIMEOUT_MS = 10_000;
+const HTTP_ENDPOINT_MAX_TIMEOUT_MS = 30_000;
+// Response body cap returned to the model; truncated past this with a marker.
+const HTTP_ENDPOINT_DEFAULT_MAX_BYTES = 256 * 1024;
+// Hard ceiling on the outgoing request body, regardless of config.
+const HTTP_ENDPOINT_MAX_REQUEST_BYTES = 1024 * 1024;
 
 const MCP_REQUEST_METHOD_INITIALIZE = 'initialize' as 'initialize';
 const MCP_REQUEST_METHOD_PING = 'ping' as 'ping';
@@ -1087,6 +1158,8 @@ export const constants = {
   API_KEY_PROVIDER_CALCOM,
   API_KEY_PROVIDER_TAVILY,
   API_KEY_PROVIDERS,
+  CREDENTIAL_PROVIDER_HTTP_ENDPOINT,
+  CREDENTIAL_PROVIDERS,
   CALCOM_API_BASE,
   CALCOM_API_VERSION_EVENT_TYPES,
   CALCOM_API_VERSION_SLOTS,
@@ -1105,6 +1178,31 @@ export const constants = {
   WEB_TOOL_KEY_SEARCH,
   WEB_TOOL_KEY_EXTRACT,
   WEB_TOOL_KEYS,
+  TOOL_DEFINITION_KEY_HTTP_ENDPOINT,
+  HTTP_ENDPOINT_METHOD_GET,
+  HTTP_ENDPOINT_METHOD_POST,
+  HTTP_ENDPOINT_METHOD_PUT,
+  HTTP_ENDPOINT_METHOD_PATCH,
+  HTTP_ENDPOINT_METHOD_DELETE,
+  HTTP_ENDPOINT_METHODS,
+  HTTP_ENDPOINT_BODY_KIND_NONE,
+  HTTP_ENDPOINT_BODY_KIND_JSON,
+  HTTP_ENDPOINT_BODY_KIND_FORM,
+  HTTP_ENDPOINT_BODY_KIND_TEXT,
+  HTTP_ENDPOINT_BODY_KINDS,
+  HTTP_ENDPOINT_AUTH_KIND_NONE,
+  HTTP_ENDPOINT_AUTH_KIND_BEARER,
+  HTTP_ENDPOINT_AUTH_KIND_BASIC,
+  HTTP_ENDPOINT_AUTH_KIND_API_KEY,
+  HTTP_ENDPOINT_AUTH_KIND_OAUTH,
+  HTTP_ENDPOINT_AUTH_KINDS,
+  HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_AUTO,
+  HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_JSON,
+  HTTP_ENDPOINT_RESPONSE_CONTENT_TYPE_TEXT,
+  HTTP_ENDPOINT_DEFAULT_TIMEOUT_MS,
+  HTTP_ENDPOINT_MAX_TIMEOUT_MS,
+  HTTP_ENDPOINT_DEFAULT_MAX_BYTES,
+  HTTP_ENDPOINT_MAX_REQUEST_BYTES,
   RESERVED_SLUGS,
   MCP_INTERNAL_HEADER,
   MCP_CHANNEL_ID_HEADER,

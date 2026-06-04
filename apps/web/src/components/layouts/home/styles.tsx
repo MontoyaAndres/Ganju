@@ -965,8 +965,8 @@ export const ModalDialog = styled.div`
             .profile-linked-badge {
               font-size: 10px;
               font-weight: 700;
-              color: #2e7d32;
-              background-color: #e8f5e9;
+              color: ${theme.colors.japaneseLaurel};
+              background-color: ${theme.colors.peppermint};
               padding: 2px 6px;
               border-radius: 8px;
               text-transform: uppercase;

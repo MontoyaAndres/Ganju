@@ -17,9 +17,11 @@ import {
   Warning,
   ExtensionOutlined,
   ArrowBack,
-  ExpandMore
+  ExpandMore,
+  Add
 } from '@mui/icons-material';
 
+import { HttpEndpointModal } from './HttpEndpointModal';
 import { ModalDialog, ModalOverlay, Wrapper } from './styles';
 
 interface ToolDefinition {
@@ -69,7 +71,10 @@ interface ArtifactCredential {
 const EXPANDED_GROUP_KEY = 'anju:expandedToolGroupId';
 
 const SEND_UPDATES_OPTIONS = [
-  { value: utils.constants.CALENDAR_SEND_UPDATES_ALL, label: 'Notify everyone' },
+  {
+    value: utils.constants.CALENDAR_SEND_UPDATES_ALL,
+    label: 'Notify everyone'
+  },
   {
     value: utils.constants.CALENDAR_SEND_UPDATES_EXTERNAL_ONLY,
     label: 'Notify external guests only'
@@ -141,6 +146,9 @@ export const Tools = () => {
   const [apiKeyGroup, setApiKeyGroup] = useState<ToolGroup | null>(null);
   const [apiKeyValue, setApiKeyValue] = useState('');
   const [apiKeySubmitting, setApiKeySubmitting] = useState(false);
+  const [httpEndpointEditor, setHttpEndpointEditor] = useState<{
+    tool: ArtifactTool | null;
+  } | null>(null);
 
   const { id: organizationId, projectId } = router.query as {
     id: string;
@@ -358,6 +366,33 @@ export const Tools = () => {
   const isApiKeyProvider = (provider: string | null | undefined): boolean =>
     !!provider &&
     (utils.constants.API_KEY_PROVIDERS as readonly string[]).includes(provider);
+
+  // The http-endpoint definition is special: one definition the user installs
+  // many times, each instance a distinct named tool with its own config. Detect
+  // it by key so the group renders an endpoint list instead of on/off toggles.
+  const httpEndpointDef = useMemo(
+    () =>
+      catalog
+        .flatMap(g => g.toolDefinitions)
+        .find(
+          d => d.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
+        ) || null,
+    [catalog]
+  );
+  const isHttpEndpointGroup = (group: ToolGroup | null | undefined): boolean =>
+    !!group &&
+    group.toolDefinitions.some(
+      d => d.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
+    );
+  const httpEndpointInstances = useMemo(
+    () =>
+      installed.filter(
+        t =>
+          t.toolDefinition?.key ===
+          utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
+      ),
+    [installed]
+  );
 
   // Installed tools belonging to the open group — the fan-out targets for the
   // group-level defaults.
@@ -641,7 +676,9 @@ export const Tools = () => {
         }
         if (isCalcomGroup) {
           if (groupDefaultEventTypeId) {
-            inheritedConfig.defaultEventTypeId = Number(groupDefaultEventTypeId);
+            inheritedConfig.defaultEventTypeId = Number(
+              groupDefaultEventTypeId
+            );
           }
           if (groupDefaultTimeZone) {
             inheritedConfig.defaultTimeZone = groupDefaultTimeZone;
@@ -684,7 +721,16 @@ export const Tools = () => {
     setEditTool(tool);
   };
 
-  const handleEdit = (tool: ArtifactTool) => openEditor(tool);
+  const handleEdit = (tool: ArtifactTool) => {
+    if (
+      tool.toolDefinition?.key ===
+      utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
+    ) {
+      setHttpEndpointEditor({ tool });
+      return;
+    }
+    openEditor(tool);
+  };
 
   const handleCloseEdit = () => {
     setEditTool(null);
@@ -843,7 +889,9 @@ export const Tools = () => {
     if (!editTool || submitting) return;
 
     const editKey = editTool.toolDefinition?.key;
-    const editFields = editKey ? utils.constants.CALENDAR_TOOL_FIELDS[editKey] : undefined;
+    const editFields = editKey
+      ? utils.constants.CALENDAR_TOOL_FIELDS[editKey]
+      : undefined;
 
     let config: Record<string, unknown> | null;
     if (editFields) {
@@ -988,22 +1036,10 @@ export const Tools = () => {
                   <div key={i} className="tools-accordion">
                     <div className="tools-accordion-header">
                       <div className="tools-accordion-header-info">
-                        <UI.Skeleton
-                          variant="rounded"
-                          width={44}
-                          height={44}
-                        />
+                        <UI.Skeleton variant="rounded" width={44} height={44} />
                         <div className="tools-accordion-header-texts">
-                          <UI.Skeleton
-                            variant="text"
-                            width={140}
-                            height={18}
-                          />
-                          <UI.Skeleton
-                            variant="text"
-                            width={80}
-                            height={12}
-                          />
+                          <UI.Skeleton variant="text" width={140} height={18} />
+                          <UI.Skeleton variant="text" width={80} height={12} />
                         </div>
                       </div>
                     </div>
@@ -1099,6 +1135,9 @@ export const Tools = () => {
                         <div className="tools-installed-list">
                           {tools.map(t => {
                             const def = t.toolDefinition;
+                            const isHttpEndpoint =
+                              def?.key ===
+                              utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT;
                             const configKeys = t.config
                               ? Object.keys(t.config).length
                               : 0;
@@ -1106,7 +1145,10 @@ export const Tools = () => {
                               <div key={t.id} className="tools-installed-item">
                                 <div className="tools-installed-item-main">
                                   <p className="tools-installed-item-title">
-                                    {def?.title || t.toolDefinitionId}
+                                    {isHttpEndpoint
+                                      ? (t.config?.name as string) ||
+                                        'HTTP endpoint'
+                                      : def?.title || t.toolDefinitionId}
                                   </p>
                                   {def?.description && (
                                     <p className="tools-installed-item-description">
@@ -1404,8 +1446,8 @@ export const Tools = () => {
               <div className="tools-group-detail-config">
                 {expandedGroupInstalledTools.length === 0 ? (
                   <p className="tools-group-detail-config-hint">
-                    Enable a Cal.com tool below to set the default event type and
-                    time zone for this integration.
+                    Enable a Cal.com tool below to set the default event type
+                    and time zone for this integration.
                   </p>
                 ) : (
                   <>
@@ -1450,46 +1492,122 @@ export const Tools = () => {
                 )}
               </div>
             )}
-            <div className="tools-group-detail-list">
-              {expandedGroup.toolDefinitions.map(def => {
-                const isInstalled = installedByDefId.has(def.id);
-                const connected = isGroupConnected(expandedGroup);
-                const disabled =
-                  !connected ||
-                  (togglingDefId !== null && togglingDefId !== def.id);
-                return (
-                  <div
-                    key={def.id}
-                    className={`tools-group-detail-item ${!connected ? 'disabled' : ''}`}
+            {isHttpEndpointGroup(expandedGroup) ? (
+              <div className="tools-http-endpoints">
+                <div className="tools-http-endpoints-head">
+                  <p className="tools-http-endpoints-hint">
+                    Each endpoint becomes its own named tool the assistant can
+                    call. Add as many as you need.
+                  </p>
+                  <UI.Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => setHttpEndpointEditor({ tool: null })}
                   >
-                    <div className="tools-group-detail-item-main">
-                      <p className="tools-group-detail-item-title">
-                        {def.title}
-                      </p>
-                      {def.description && (
-                        <p className="tools-group-detail-item-description">
-                          {def.description}
-                        </p>
-                      )}
-                      {def.requiredScopes && (
-                        <Tooltip
-                          title={`Required scopes: ${def.requiredScopes}`}
-                        >
-                          <span className="tools-group-detail-item-scopes">
-                            Scopes
-                          </span>
-                        </Tooltip>
-                      )}
-                    </div>
-                    <Switch
-                      checked={isInstalled}
-                      disabled={disabled}
-                      onChange={e => handleToggleTool(def, e.target.checked)}
-                    />
+                    <Add fontSize="small" />
+                    <span className="button-text">Add endpoint</span>
+                  </UI.Button>
+                </div>
+                {httpEndpointInstances.length === 0 ? (
+                  <p className="tools-empty">
+                    No endpoints yet. Add one to expose an HTTP API to the
+                    assistant.
+                  </p>
+                ) : (
+                  <div className="tools-http-endpoints-list">
+                    {httpEndpointInstances.map(t => {
+                      const c = (t.config || {}) as {
+                        name?: string;
+                        method?: string;
+                        url?: string;
+                        description?: string;
+                      };
+                      return (
+                        <div key={t.id} className="tools-http-endpoint-item">
+                          <div className="tools-http-endpoint-item-main">
+                            <p className="tools-http-endpoint-item-title">
+                              {c.name || 'Untitled endpoint'}
+                            </p>
+                            <p className="tools-http-endpoint-item-url">
+                              <span className="tools-http-endpoint-method">
+                                {c.method || 'GET'}
+                              </span>
+                              {c.url || ''}
+                            </p>
+                            {c.description && (
+                              <p className="tools-http-endpoint-item-description">
+                                {c.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="tools-installed-item-actions">
+                            <Tooltip title="Edit">
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  setHttpEndpointEditor({ tool: t })
+                                }
+                              >
+                                <EditOutlined />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Remove">
+                              <IconButton
+                                size="small"
+                                onClick={() => setRemoveAlert(t)}
+                              >
+                                <DeleteOutline />
+                              </IconButton>
+                            </Tooltip>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                )}
+              </div>
+            ) : (
+              <div className="tools-group-detail-list">
+                {expandedGroup.toolDefinitions.map(def => {
+                  const isInstalled = installedByDefId.has(def.id);
+                  const connected = isGroupConnected(expandedGroup);
+                  const disabled =
+                    !connected ||
+                    (togglingDefId !== null && togglingDefId !== def.id);
+                  return (
+                    <div
+                      key={def.id}
+                      className={`tools-group-detail-item ${!connected ? 'disabled' : ''}`}
+                    >
+                      <div className="tools-group-detail-item-main">
+                        <p className="tools-group-detail-item-title">
+                          {def.title}
+                        </p>
+                        {def.description && (
+                          <p className="tools-group-detail-item-description">
+                            {def.description}
+                          </p>
+                        )}
+                        {def.requiredScopes && (
+                          <Tooltip
+                            title={`Required scopes: ${def.requiredScopes}`}
+                          >
+                            <span className="tools-group-detail-item-scopes">
+                              Scopes
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
+                      <Switch
+                        checked={isInstalled}
+                        disabled={disabled}
+                        onChange={e => handleToggleTool(def, e.target.checked)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1511,8 +1629,7 @@ export const Tools = () => {
                   const editFields = editKey
                     ? utils.constants.CALENDAR_TOOL_FIELDS[editKey]
                     : undefined;
-                  const editProvider =
-                    editTool.toolDefinition?.group?.provider;
+                  const editProvider = editTool.toolDefinition?.group?.provider;
                   const editIsGroupManaged =
                     editProvider ===
                       utils.constants.OAUTH_PROVIDER_GOOGLE_CALENDAR ||
@@ -1529,10 +1646,10 @@ export const Tools = () => {
                   if (editIsGroupManaged) {
                     return (
                       <p className="tools-configure-help">
-                        This tool has no per-tool settings. Its defaults (calendar
-                        / event type, time zone, notifications) are managed for
-                        the whole integration from the group header on the Catalog
-                        page.
+                        This tool has no per-tool settings. Its defaults
+                        (calendar / event type, time zone, notifications) are
+                        managed for the whole integration from the group header
+                        on the Catalog page.
                       </p>
                     );
                   }
@@ -1606,8 +1723,8 @@ export const Tools = () => {
               </div>
               <div className="tools-modal-body">
                 <p className="tools-configure-help">
-                  Paste your {apiKeyGroup.title} API key. It is encrypted at rest
-                  and never shown again.
+                  Paste your {apiKeyGroup.title} API key. It is encrypted at
+                  rest and never shown again.
                 </p>
                 <UI.Input
                   label="API key"
@@ -1638,6 +1755,18 @@ export const Tools = () => {
             </ModalDialog>
           </ModalOverlay>
         </UI.Portal>
+      )}
+      {httpEndpointEditor && httpEndpointDef && (
+        <HttpEndpointModal
+          tool={httpEndpointEditor.tool}
+          toolDefinitionId={httpEndpointDef.id}
+          credentials={credentials}
+          toolApiBase={toolApiBase}
+          credentialApiBase={credentialApiBase}
+          snackbar={snackbar}
+          onClose={() => setHttpEndpointEditor(null)}
+          onSaved={fetchAll}
+        />
       )}
       <UI.Alert
         open={!!removeAlert}

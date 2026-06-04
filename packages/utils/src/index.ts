@@ -1,4 +1,5 @@
 import { Schema } from './schema';
+import type { HttpEndpointToolConfig } from './schema';
 import { getEnv } from './getEnv';
 import type { EnvSource } from './getEnv';
 import type { CalendarConfigField } from './constants';
@@ -226,5 +227,6 @@ export type {
   ResourceUrlContext,
   SourceButton,
   RefreshOAuthTokenInput,
-  RefreshedOAuthToken
+  RefreshedOAuthToken,
+  HttpEndpointToolConfig
 };
