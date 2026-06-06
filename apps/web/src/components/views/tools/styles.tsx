@@ -1365,6 +1365,73 @@ export const ModalDialog = styled.div`
         color: ${theme.colors.red};
         margin: 0;
       }
+
+      .mcp-proxy-list-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+
+        .http-endpoint-section {
+          margin: 0;
+        }
+
+        .mcp-proxy-list-actions {
+          display: flex;
+          gap: 4px;
+
+          .MuiButtonBase-root {
+            font-size: ${theme.fonts.sm};
+            padding: 6px 16px;
+            border-radius: 6px;
+            text-transform: none;
+          }
+        }
+      }
+
+      .mcp-proxy-tool-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding-right: 2px;
+      }
+
+      .mcp-proxy-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid ${theme.colors.alto};
+        border-radius: 8px;
+        background-color: ${theme.colors.white};
+
+        .mcp-proxy-item-main {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .mcp-proxy-item-title {
+          font-size: ${theme.fonts.base};
+          font-weight: 600;
+          color: ${theme.colors.bastille};
+          margin: 0;
+          word-break: break-word;
+        }
+
+        .mcp-proxy-item-description {
+          font-size: ${theme.fonts.sm};
+          color: ${theme.colors.bastille}99;
+          margin: 4px 0 0 0;
+          line-height: 1.4;
+        }
+      }
+
+      .mcp-proxy-disconnect {
+        margin-right: auto;
+      }
     }
 
     .tools-modal-actions {

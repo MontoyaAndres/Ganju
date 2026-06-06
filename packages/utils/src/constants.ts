@@ -99,6 +99,11 @@ const OAUTH_TOKEN_URLS: Record<string, string> = {
   [OAUTH_PROVIDER_SLACK_USER]: SLACK_OAUTH_TOKEN_URL
 };
 
+// Refresh an OAuth token when less than this remains, so a long call doesn't
+// expire mid-flight. Shared by every credential-refresh path (native OAuth and
+// MCP-proxy OAuth, in both apps/api and apps/mcp).
+const CREDENTIAL_REFRESH_BUFFER_MS = 60 * 1000;
+
 const GOOGLE_CALENDAR_API_BASE = 'https://www.googleapis.com/calendar/v3';
 
 const GOOGLE_DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
@@ -262,10 +267,12 @@ const LANGUAGES = [LANGUAGE_EN, LANGUAGE_ES];
 const MIMETYPE_TEXT = 'text/plain' as 'text/plain';
 const MIMETYPE_TEXT_CSV = 'text/csv' as 'text/csv';
 const MIMETYPE_TEXT_HTML = 'text/html' as 'text/html';
+const MIMETYPE_TEXT_MARKDOWN = 'text/markdown' as 'text/markdown';
 const MIMETYPE_IMAGE_PNG = 'image/png' as 'image/png';
 const MIMETYPE_IMAGE_GIF = 'image/gif' as 'image/gif';
 const MIMETYPE_IMAGE_JPEG = 'image/jpeg' as 'image/jpeg';
 const MIMETYPE_IMAGE_WEBP = 'image/webp' as 'image/webp';
+const MIMETYPE_IMAGE_SVG_XML = 'image/svg+xml' as 'image/svg+xml';
 const MIMETYPE_APPLICATION_PDF = 'application/pdf' as 'application/pdf';
 const MIMETYPE_APPLICATION_JSON = 'application/json' as 'application/json';
 const MIMETYPE_APPLICATION_MSWORD =
@@ -320,10 +327,12 @@ const MIMETYPES = [
   MIMETYPE_TEXT,
   MIMETYPE_TEXT_CSV,
   MIMETYPE_TEXT_HTML,
+  MIMETYPE_TEXT_MARKDOWN,
   MIMETYPE_IMAGE_PNG,
   MIMETYPE_IMAGE_GIF,
   MIMETYPE_IMAGE_JPEG,
   MIMETYPE_IMAGE_WEBP,
+  MIMETYPE_IMAGE_SVG_XML,
   MIMETYPE_APPLICATION_PDF,
   MIMETYPE_APPLICATION_JSON,
   MIMETYPE_APPLICATION_MSWORD,
@@ -354,6 +363,23 @@ const MIMETYPES = [
   MIMETYPE_APPLICATION_X_PERL,
   MIMETYPE_APPLICATION_OCTET_STREAM
 ];
+// Sensible file extension for a mime type, used to name a downloaded/forwarded
+// file (e.g. a proxied MCP resource sent into a channel) when the source has no
+// usable filename. Not exhaustive — callers fall back to .bin / .txt.
+const EXTENSION_BY_MIME: Record<string, string> = {
+  [MIMETYPE_TEXT]: 'txt',
+  [MIMETYPE_TEXT_CSV]: 'csv',
+  [MIMETYPE_TEXT_HTML]: 'html',
+  [MIMETYPE_TEXT_MARKDOWN]: 'md',
+  [MIMETYPE_APPLICATION_JSON]: 'json',
+  [MIMETYPE_APPLICATION_PDF]: 'pdf',
+  [MIMETYPE_APPLICATION_XML]: 'xml',
+  [MIMETYPE_IMAGE_PNG]: 'png',
+  [MIMETYPE_IMAGE_JPEG]: 'jpg',
+  [MIMETYPE_IMAGE_GIF]: 'gif',
+  [MIMETYPE_IMAGE_WEBP]: 'webp',
+  [MIMETYPE_IMAGE_SVG_XML]: 'svg'
+};
 const TEXT_MIME_TYPES = [
   MIMETYPE_TEXT,
   MIMETYPE_TEXT_CSV,
@@ -730,11 +756,24 @@ const API_KEY_PROVIDERS = [API_KEY_PROVIDER_CALCOM, API_KEY_PROVIDER_TAVILY];
 // out of API_KEY_PROVIDERS so the catalog UI doesn't treat it as a one-key
 // "Add API key" integration.
 const CREDENTIAL_PROVIDER_HTTP_ENDPOINT = 'http-endpoint' as 'http-endpoint';
+// mcp-proxy secrets behave exactly like http-endpoint ones: many per artifact
+// (one per proxied server), referenced by id from a tool's auth config and
+// labelled in metadata, with no vendor to validate against. Same multi-row,
+// per-tool storage — kept out of API_KEY_PROVIDERS for the same reason.
+const CREDENTIAL_PROVIDER_MCP_PROXY = 'mcp-proxy' as 'mcp-proxy';
+// Providers whose secrets are per-tool (many rows per artifact, deleted with the
+// tool that owns them) rather than one-per-provider. See createCredential /
+// removeTool in apps/api ArtifactController.
+const PER_TOOL_CREDENTIAL_PROVIDERS = [
+  CREDENTIAL_PROVIDER_HTTP_ENDPOINT,
+  CREDENTIAL_PROVIDER_MCP_PROXY
+];
 // Every provider the generic credential create endpoint accepts.
 const CREDENTIAL_PROVIDERS = [
   API_KEY_PROVIDER_CALCOM,
   API_KEY_PROVIDER_TAVILY,
-  CREDENTIAL_PROVIDER_HTTP_ENDPOINT
+  CREDENTIAL_PROVIDER_HTTP_ENDPOINT,
+  CREDENTIAL_PROVIDER_MCP_PROXY
 ];
 
 const CALCOM_API_BASE = 'https://api.cal.com/v2';
@@ -820,6 +859,50 @@ const HTTP_ENDPOINT_MAX_TIMEOUT_MS = 30_000;
 const HTTP_ENDPOINT_DEFAULT_MAX_BYTES = 256 * 1024;
 // Hard ceiling on the outgoing request body, regardless of config.
 const HTTP_ENDPOINT_MAX_REQUEST_BYTES = 1024 * 1024;
+
+// `mcp-proxy` is the second proxied tool definition: a single tool_definition
+// row (key below) whose installed artifact_tool rows each describe one remote
+// MCP server (a vendor's official server — GitHub, Notion, …). Unlike
+// http-endpoint (one row → one tool), one mcp-proxy row produces MANY MCP tools,
+// one per remote tool discovered from that server. Discovery happens once at
+// configure-time (apps/api) and the tool list is stored in
+// artifact_tool.metadata.discovery so the stateless MCP boot loop can register
+// the tools without a remote round-trip; only tools/call connects to the remote.
+const TOOL_DEFINITION_KEY_MCP_PROXY = 'mcp-proxy';
+
+const MCP_PROXY_TRANSPORT_STREAMABLE_HTTP =
+  'streamable-http' as 'streamable-http';
+const MCP_PROXY_TRANSPORT_SSE = 'sse' as 'sse';
+const MCP_PROXY_TRANSPORTS = [
+  MCP_PROXY_TRANSPORT_STREAMABLE_HTTP,
+  MCP_PROXY_TRANSPORT_SSE
+];
+
+const MCP_PROXY_AUTH_KIND_NONE = 'none' as 'none';
+const MCP_PROXY_AUTH_KIND_BEARER = 'bearer' as 'bearer';
+const MCP_PROXY_AUTH_KIND_HEADER = 'header' as 'header';
+const MCP_PROXY_AUTH_KIND_OAUTH = 'oauth' as 'oauth';
+const MCP_PROXY_AUTH_KINDS = [
+  MCP_PROXY_AUTH_KIND_NONE,
+  MCP_PROXY_AUTH_KIND_BEARER,
+  MCP_PROXY_AUTH_KIND_HEADER,
+  MCP_PROXY_AUTH_KIND_OAUTH
+];
+
+const MCP_PROXY_DEFAULT_TIMEOUT_MS = 10_000;
+const MCP_PROXY_MAX_TIMEOUT_MS = 30_000;
+// Cap on how many remote tools a single proxied server may register, so a
+// chatty vendor can't flood the artifact's tool list.
+const MCP_PROXY_MAX_TOOLS = 100;
+// Response cap returned to the model from a proxied tools/call; truncated past
+// this with a marker (same ceiling as http-endpoint).
+const MCP_PROXY_MAX_RESPONSE_BYTES = 256 * 1024;
+// Proxied tools register as `<prefix><sep><remoteKey>` so the vendor prefix is
+// visually distinct from native `<group>-<verb>-<object>` names.
+const MCP_PROXY_TOOL_NAME_SEP = '__';
+// Max length of the composed local tool name. Remote names are untrusted; the
+// cap matches the tool-name limit MCP clients (incl. the Anthropic API) enforce.
+const MCP_PROXY_TOOL_NAME_MAX = 64;
 
 const MCP_REQUEST_METHOD_INITIALIZE = 'initialize' as 'initialize';
 const MCP_REQUEST_METHOD_PING = 'ping' as 'ping';
@@ -975,6 +1058,7 @@ export const constants = {
   MICROSOFT_OAUTH_TOKEN_URL,
   SLACK_OAUTH_TOKEN_URL,
   OAUTH_TOKEN_URLS,
+  CREDENTIAL_REFRESH_BUFFER_MS,
   GOOGLE_CALENDAR_API_BASE,
   GOOGLE_DRIVE_API_BASE,
   GOOGLE_DRIVE_DEFAULT_PAGE_SIZE,
@@ -1028,10 +1112,12 @@ export const constants = {
   MIMETYPE_TEXT,
   MIMETYPE_TEXT_CSV,
   MIMETYPE_TEXT_HTML,
+  MIMETYPE_TEXT_MARKDOWN,
   MIMETYPE_IMAGE_PNG,
   MIMETYPE_IMAGE_GIF,
   MIMETYPE_IMAGE_JPEG,
   MIMETYPE_IMAGE_WEBP,
+  MIMETYPE_IMAGE_SVG_XML,
   MIMETYPE_APPLICATION_PDF,
   MIMETYPE_APPLICATION_JSON,
   MIMETYPE_APPLICATION_MSWORD,
@@ -1062,6 +1148,7 @@ export const constants = {
   MIMETYPE_APPLICATION_X_PERL,
   MIMETYPE_APPLICATION_OCTET_STREAM,
   MIMETYPES,
+  EXTENSION_BY_MIME,
   TEXT_MIME_TYPES,
   EMBEDDABLE_MIME_TYPES,
   USER_AVATAR_MIME_TYPES,
@@ -1159,6 +1246,8 @@ export const constants = {
   API_KEY_PROVIDER_TAVILY,
   API_KEY_PROVIDERS,
   CREDENTIAL_PROVIDER_HTTP_ENDPOINT,
+  CREDENTIAL_PROVIDER_MCP_PROXY,
+  PER_TOOL_CREDENTIAL_PROVIDERS,
   CREDENTIAL_PROVIDERS,
   CALCOM_API_BASE,
   CALCOM_API_VERSION_EVENT_TYPES,
@@ -1203,6 +1292,21 @@ export const constants = {
   HTTP_ENDPOINT_MAX_TIMEOUT_MS,
   HTTP_ENDPOINT_DEFAULT_MAX_BYTES,
   HTTP_ENDPOINT_MAX_REQUEST_BYTES,
+  TOOL_DEFINITION_KEY_MCP_PROXY,
+  MCP_PROXY_TRANSPORT_STREAMABLE_HTTP,
+  MCP_PROXY_TRANSPORT_SSE,
+  MCP_PROXY_TRANSPORTS,
+  MCP_PROXY_AUTH_KIND_NONE,
+  MCP_PROXY_AUTH_KIND_BEARER,
+  MCP_PROXY_AUTH_KIND_HEADER,
+  MCP_PROXY_AUTH_KIND_OAUTH,
+  MCP_PROXY_AUTH_KINDS,
+  MCP_PROXY_DEFAULT_TIMEOUT_MS,
+  MCP_PROXY_MAX_TIMEOUT_MS,
+  MCP_PROXY_MAX_TOOLS,
+  MCP_PROXY_MAX_RESPONSE_BYTES,
+  MCP_PROXY_TOOL_NAME_SEP,
+  MCP_PROXY_TOOL_NAME_MAX,
   RESERVED_SLUGS,
   MCP_INTERNAL_HEADER,
   MCP_CHANNEL_ID_HEADER,

@@ -5,11 +5,13 @@ import { utils } from '@anju/utils';
 import type {
   ChannelNotifier,
   SourceButton,
-  TelegramSendRequest
+  TelegramSendRequest,
+  TelegramSendRemoteResourceRequest
 } from '@anju/utils';
 import { getResourceHandler } from '@anju/containers';
 
 import { runChannelTurn } from './runner';
+import { loadProxiedPrompts } from './proxiedPrompts';
 import { markdownToTelegramHtml, createAuth } from '../../utils';
 
 import type { ChannelAttachment } from './runner';
@@ -168,6 +170,7 @@ export const handleTelegramWebhook = async (c: Context<AppEnv>) => {
       externalMessageId: String(message.message_id),
       userText: cleanText,
       promptId: promptMatch?.promptId || null,
+      promptArtifactId: promptMatch?.artifactPromptId ?? null,
       promptArgs: promptMatch?.args || undefined,
       notifier
     });
@@ -225,7 +228,10 @@ export const handleTelegramWebhook = async (c: Context<AppEnv>) => {
           channelId: channelRow.id,
           chatId: message.chat.id,
           messageId: message.message_id,
-          resourceId: attachment.resource.id
+          resourceId:
+            attachment.kind === 'artifact'
+              ? attachment.resource.id
+              : attachment.uri
         }
       })
     );
@@ -279,10 +285,49 @@ const sendTelegramAttachment = async (
   attachment: ChannelAttachment,
   env: Bindings
 ) => {
-  const { resource, caption } = attachment;
+  const caption = attachment.caption;
+  const metadata: TelegramSendRequest = {
+    botToken,
+    chatId,
+    replyToMessageId,
+    caption: caption
+      ? markdownToTelegramHtml(caption).slice(0, 1024)
+      : undefined,
+    parseMode: caption ? 'HTML' : undefined
+  };
+
+  const handler = getResourceHandler(env);
+
+  if (attachment.kind === 'remote-resource') {
+    // A proxied (remote) resource: hand the container only the connection
+    // details + resolved auth header. It reads, decodes, and sends the file
+    // itself, so the bytes never transit this worker (no 128 MiB ceiling).
+    const payload: TelegramSendRemoteResourceRequest = {
+      telegram: metadata,
+      remote: { ...attachment.remote, uri: attachment.uri }
+    };
+    const response = await handler.fetch(
+      'http://resource-handler/telegram/send-remote-resource',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      }
+    );
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      throw new Error(
+        `Telegram remote-resource send via container failed: ${response.status} ${body}`
+      );
+    }
+    return;
+  }
+
+  // An artifact resource: the worker holds the bytes (R2 object or row content)
+  // and posts them as multipart. These are owner-uploaded and already bounded.
+  const { resource } = attachment;
   const mime =
     resource.mimeType || utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM;
-
   let arrayBuffer: ArrayBuffer;
   let filename: string;
   if (resource.fileKey) {
@@ -306,21 +351,10 @@ const sendTelegramAttachment = async (
     throw new Error(`Resource has no content or fileKey: ${resource.uri}`);
   }
 
-  const metadata: TelegramSendRequest = {
-    botToken,
-    chatId,
-    replyToMessageId,
-    caption: caption
-      ? markdownToTelegramHtml(caption).slice(0, 1024)
-      : undefined,
-    parseMode: caption ? 'HTML' : undefined
-  };
-
   const form = new FormData();
   form.append('metadata', JSON.stringify(metadata));
   form.append('file', new Blob([arrayBuffer], { type: mime }), filename);
 
-  const handler = getResourceHandler(env);
   const response = await handler.fetch(
     'http://resource-handler/telegram/send',
     { method: 'POST', body: form }
@@ -415,7 +449,14 @@ const resolveSlashPrompt = async (
   c: Context<AppEnv>,
   artifactId: string,
   command: ParsedSlashCommand
-): Promise<{ promptId: string; args: Record<string, string> } | null> => {
+): Promise<{
+  // The name the runner passes to getPrompt (artifact_prompt id, or a proxied
+  // MCP prompt name `<prefix>__<remote>`).
+  promptId: string;
+  // The artifact_prompt FK to record on usage — null for proxied prompts.
+  artifactPromptId: string | null;
+  args: Record<string, string>;
+} | null> => {
   const dbInstance = db.create(c);
   const prompts = await dbInstance
     .select()
@@ -425,20 +466,39 @@ const resolveSlashPrompt = async (
   const match = prompts.find(
     p => utils.slugifyPromptTitle(p.title) === command.name
   );
-  if (!match) return null;
-
-  const schema = match.schema as {
-    properties?: Record<string, { type: string }>;
-  } | null;
-  const args: Record<string, string> = {};
-  const firstProp = schema?.properties
-    ? Object.keys(schema.properties)[0]
-    : null;
-  if (firstProp && command.trailingText) {
-    args[firstProp] = command.trailingText;
+  if (match) {
+    const schema = match.schema as {
+      properties?: Record<string, { type: string }>;
+    } | null;
+    const args: Record<string, string> = {};
+    const firstProp = schema?.properties
+      ? Object.keys(schema.properties)[0]
+      : null;
+    if (firstProp && command.trailingText) {
+      args[firstProp] = command.trailingText;
+    }
+    return { promptId: match.id, artifactPromptId: match.id, args };
   }
 
-  return { promptId: match.id, args };
+  // Fall back to proxied (mcp-proxy) prompts, invoked by their MCP name.
+  const proxied = await loadProxiedPrompts(dbInstance, artifactId);
+  const proxiedMatch = proxied.find(
+    p => utils.slugifyPromptTitle(p.title) === command.name
+  );
+  if (proxiedMatch) {
+    const args: Record<string, string> = {};
+    const firstArg = proxiedMatch.argumentNames[0];
+    if (firstArg && command.trailingText) {
+      args[firstArg] = command.trailingText;
+    }
+    return {
+      promptId: proxiedMatch.mcpName,
+      artifactPromptId: null,
+      args
+    };
+  }
+
+  return null;
 };
 
 interface ExternalLinkApi {
@@ -589,32 +649,6 @@ const chunkMessage = (text: string): string[] => {
 
   if (remaining.length) chunks.push(remaining);
   return chunks;
-};
-
-export const registerTelegramBotCommands = async (
-  botToken: string,
-  prompts: Array<{ title: string; description: string | null }>
-) => {
-  const commands = prompts
-    .map(p => ({
-      command: utils.slugifyPromptTitle(p.title).slice(0, 32),
-      description: (p.description || p.title).slice(0, 256)
-    }))
-    .filter(
-      c =>
-        /^[a-z][a-z0-9_]*$/.test(c.command) &&
-        !utils.constants.RESERVED_BOT_COMMANDS.includes(c.command)
-    )
-    .slice(0, 100);
-
-  await fetch(
-    `${utils.constants.TELEGRAM_API_BASE}/bot${botToken}/setMyCommands`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ commands })
-    }
-  ).catch(() => undefined);
 };
 
 export const registerTelegramWebhook = async (

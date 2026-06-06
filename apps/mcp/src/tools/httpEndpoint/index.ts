@@ -28,39 +28,6 @@ export const parseHttpEndpointConfig = (
   return result.success ? result.data : null;
 };
 
-// The Workers runtime can't resolve DNS, so we can only screen literal hosts
-// and IPs (not DNS rebinding). Private/loopback/link-local ranges are always
-// rejected; an org-set allowedHosts list further narrows what's reachable.
-const ipv4InPrivateRange = (host: string): boolean => {
-  const parts = host.split('.');
-  if (parts.length !== 4) return false;
-  const octets = parts.map(p => Number(p));
-  if (octets.some(o => !Number.isInteger(o) || o < 0 || o > 255)) return false;
-  const [a, b] = octets;
-  if (a === 127 || a === 10 || a === 0) return true; // loopback / private / "this host"
-  if (a === 169 && b === 254) return true; // link-local (incl. cloud metadata)
-  if (a === 192 && b === 168) return true; // private
-  if (a === 172 && b >= 16 && b <= 31) return true; // private
-  return false;
-};
-
-const isBlockedHost = (hostname: string): boolean => {
-  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
-  if (!host) return true;
-  if (host === 'localhost' || host.endsWith('.localhost')) return true;
-  if (host === '::1' || host === '::') return true;
-  // IPv6 link-local (fe80::/10) and unique-local (fc00::/7).
-  if (
-    host.startsWith('fe80:') ||
-    host.startsWith('fc') ||
-    host.startsWith('fd')
-  ) {
-    return true;
-  }
-  if (ipv4InPrivateRange(host)) return true;
-  return false;
-};
-
 const hostAllowed = (hostname: string, allowedHosts?: string[]): boolean => {
   if (!allowedHosts || allowedHosts.length === 0) return true;
   const host = hostname.toLowerCase();
@@ -135,7 +102,7 @@ export const executeHttpEndpoint = async (
   if (!hostAllowed(url.hostname, config.allowedHosts)) {
     return text(`Error: host "${url.hostname}" is not in the allowed list.`);
   }
-  if (isBlockedHost(url.hostname)) {
+  if (utils.isBlockedHost(url.hostname)) {
     return text(
       `Error: host "${url.hostname}" is not allowed (private or loopback address).`
     );

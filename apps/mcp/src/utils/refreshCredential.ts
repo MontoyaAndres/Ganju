@@ -3,6 +3,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '@anju/db';
 import { utils } from '@anju/utils';
 
+import { readStoredMcpOauth, refreshMcpOauthRuntime } from './mcpOauth';
+
 import { AppEnv } from '../types';
 
 interface RefreshableCredential {
@@ -50,13 +52,16 @@ const ENV_NAMES: Record<
   }
 };
 
-// Refresh if less than 60s remain, so a long tool call doesn't expire mid-flight.
-const EXPIRY_BUFFER_MS = 60 * 1000;
-
 export const refreshCredentialIfNeeded = async (
   ctx: Context<AppEnv>,
   credential: RefreshableCredential
 ): Promise<RefreshableCredential> => {
+  // MCP-OAuth credentials (mcp-proxy oauth servers) refresh against the MCP
+  // server's own auth server, not the native provider token URLs.
+  if (readStoredMcpOauth(credential.metadata)) {
+    return refreshMcpOauthRuntime(ctx, credential);
+  }
+
   const encryptionKey = utils.getCredentialEncryptionKey(ctx);
   const accessTokenPlain = utils.decryptString(
     credential.accessToken,
@@ -82,7 +87,11 @@ export const refreshCredentialIfNeeded = async (
   if (alreadyNeedsReauth) return decrypted;
   if (!refreshTokenPlain) return decrypted;
   if (!credential.expiresAt) return decrypted;
-  if (credential.expiresAt.getTime() - EXPIRY_BUFFER_MS > Date.now()) {
+  if (
+    credential.expiresAt.getTime() -
+      utils.constants.CREDENTIAL_REFRESH_BUFFER_MS >
+    Date.now()
+  ) {
     return decrypted;
   }
 

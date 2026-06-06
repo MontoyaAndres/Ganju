@@ -1,5 +1,12 @@
 import { Schema } from './schema';
-import type { HttpEndpointToolConfig } from './schema';
+import type {
+  HttpEndpointToolConfig,
+  McpProxyToolConfig,
+  McpProxyDiscoveredTool,
+  McpProxyDiscoveredResource,
+  McpProxyDiscoveredPrompt,
+  McpProxyDiscovery
+} from './schema';
 import { getEnv } from './getEnv';
 import type { EnvSource } from './getEnv';
 import type { CalendarConfigField } from './constants';
@@ -39,10 +46,7 @@ import {
   formatFilenameHeader,
   chunkBase64
 } from './mimeMessage';
-import type {
-  MimeAttachment,
-  MimeMessageInput
-} from './mimeMessage';
+import type { MimeAttachment, MimeMessageInput } from './mimeMessage';
 import type {
   GmailOperation,
   GmailSendRequest,
@@ -50,7 +54,8 @@ import type {
 } from './gmailSend';
 import type {
   TelegramSendRequest,
-  TelegramSendResponse
+  TelegramSendResponse,
+  TelegramSendRemoteResourceRequest
 } from './telegramSend';
 import type {
   OutlookOperation,
@@ -67,6 +72,8 @@ import { isApiError, getApiErrorMessage } from './apiError';
 import { toStringArray } from './coerce';
 import { validateMessageVariables } from './validateMessageVariables';
 import { JsonSchema, jsonSchemaToZodShape } from './jsonSchemaToZodShape';
+import { buildProxyToolName } from './mcpProxy';
+import { ipv4InPrivateRange, isBlockedHost } from './ssrf';
 import { formatRelative } from './formatRelative';
 import { slugifyPromptTitle } from './slugifyPromptTitle';
 import { formatFilename } from './formatFilename';
@@ -100,10 +107,7 @@ import type {
   ExtractedDocumentSource
 } from './extractedDocument';
 import { getToolStatusMessage } from './channelNotifier';
-import type {
-  ChannelNotifier,
-  ToolStatusEvent
-} from './channelNotifier';
+import type { ChannelNotifier, ToolStatusEvent } from './channelNotifier';
 import {
   isResourceSourceEnabled,
   safeHostname,
@@ -111,11 +115,7 @@ import {
   formatSourcesAsMarkdown,
   formatSourcesAsButtons
 } from './sources';
-import type {
-  Source,
-  ResourceUrlContext,
-  SourceButton
-} from './sources';
+import type { Source, ResourceUrlContext, SourceButton } from './sources';
 import {
   refreshOAuthToken,
   OAuthReauthRequiredError,
@@ -123,10 +123,7 @@ import {
   clearReauthMetadata,
   isCredentialNeedingReauth
 } from './oauth';
-import type {
-  RefreshOAuthTokenInput,
-  RefreshedOAuthToken
-} from './oauth';
+import type { RefreshOAuthTokenInput, RefreshedOAuthToken } from './oauth';
 
 export const utils = {
   Schema,
@@ -162,6 +159,9 @@ export const utils = {
   getApiErrorMessage,
   toStringArray,
   jsonSchemaToZodShape,
+  buildProxyToolName,
+  ipv4InPrivateRange,
+  isBlockedHost,
   validateMessageVariables,
   formatRelative,
   slugifyPromptTitle,
@@ -210,6 +210,7 @@ export type {
   SlackSendResponse,
   TelegramSendRequest,
   TelegramSendResponse,
+  TelegramSendRemoteResourceRequest,
   EnvSource,
   Separator,
   ChunkMetadata,
@@ -228,5 +229,10 @@ export type {
   SourceButton,
   RefreshOAuthTokenInput,
   RefreshedOAuthToken,
-  HttpEndpointToolConfig
+  HttpEndpointToolConfig,
+  McpProxyToolConfig,
+  McpProxyDiscoveredTool,
+  McpProxyDiscoveredResource,
+  McpProxyDiscoveredPrompt,
+  McpProxyDiscovery
 };

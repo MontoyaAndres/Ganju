@@ -45,6 +45,18 @@ import {
   validateCalcomApiKey
 } from './calcom';
 import { validateTavilyApiKey } from './tavily';
+import { discoverRemoteMcpTools } from './remoteMcpClient';
+import { refreshArtifactCredential } from './refreshArtifactCredential';
+import {
+  beginMcpProxyOauth,
+  completeMcpProxyOauth,
+  resolveMcpProxyOauthSecret,
+  readStoredMcpOauth
+} from './mcpProxyOauth';
+import {
+  registerTelegramBotCommands,
+  syncTelegramCommandsForArtifact
+} from './telegramCommands';
 
 export {
   createAuth,
@@ -84,7 +96,15 @@ export {
   getCalcomApiKey,
   listCalcomEventTypes,
   validateCalcomApiKey,
-  validateTavilyApiKey
+  validateTavilyApiKey,
+  discoverRemoteMcpTools,
+  refreshArtifactCredential,
+  beginMcpProxyOauth,
+  completeMcpProxyOauth,
+  resolveMcpProxyOauthSecret,
+  readStoredMcpOauth,
+  registerTelegramBotCommands,
+  syncTelegramCommandsForArtifact
 };
 
 export type { McpClientHandle } from './mcpClient';

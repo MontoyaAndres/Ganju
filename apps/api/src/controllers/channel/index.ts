@@ -7,11 +7,12 @@ import { utils } from '@anju/utils';
 import {
   handleTelegramWebhook,
   registerTelegramWebhook,
-  registerTelegramBotCommands,
   getTelegramBotInfo
 } from './telegram';
 
 import type { TelegramBotInfo } from './telegram';
+import { loadProxiedPrompts } from './proxiedPrompts';
+import { registerTelegramBotCommands } from '../../utils';
 
 import type { AppEnv } from '../../types';
 
@@ -213,10 +214,20 @@ const create = async (c: Context<AppEnv>) => {
         .from(db.schema.artifactPrompt)
         .where(eq(db.schema.artifactPrompt.artifactId, artifactRow.id));
 
-      await registerTelegramBotCommands(
-        currentValues.credentials.botToken,
-        prompts
+      // Proxied (GitHub/Notion) prompts are slash commands too — same shape, so
+      // they appear in the bot's command menu alongside artifact prompts.
+      const proxiedPrompts = await loadProxiedPrompts(
+        db.create(c),
+        artifactRow.id
       );
+
+      await registerTelegramBotCommands(currentValues.credentials.botToken, [
+        ...prompts,
+        ...proxiedPrompts.map(p => ({
+          title: p.title,
+          description: p.description
+        }))
+      ]);
     }
 
     return channelRow;

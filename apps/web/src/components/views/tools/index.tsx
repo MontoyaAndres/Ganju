@@ -22,7 +22,19 @@ import {
 } from '@mui/icons-material';
 
 import { HttpEndpointModal } from './HttpEndpointModal';
+import { McpProxyModal } from './McpProxyModal';
 import { ModalDialog, ModalOverlay, Wrapper } from './styles';
+
+interface McpServer {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  transport: string;
+  authKind: string;
+  defaultScopes: string | null;
+}
 
 interface ToolDefinition {
   id: string;
@@ -48,6 +60,7 @@ interface ArtifactTool {
   config: Record<string, unknown> | null;
   metadata: Record<string, unknown> | null;
   toolDefinitionId: string;
+  mcpServerCatalogId?: string | null;
   artifactId: string;
   createdAt: string;
   updatedAt: string;
@@ -100,6 +113,7 @@ export const Tools = () => {
   const snackbar = UI.Alert.useSnackbar();
   const [tab, setTab] = useState<'installed' | 'catalog'>('installed');
   const [catalog, setCatalog] = useState<ToolGroup[]>([]);
+  const [mcpServers, setMcpServers] = useState<McpServer[]>([]);
   const [installed, setInstalled] = useState<ArtifactTool[]>([]);
   const [credentials, setCredentials] = useState<ArtifactCredential[]>([]);
   const [search, setSearch] = useState('');
@@ -149,6 +163,15 @@ export const Tools = () => {
   const [httpEndpointEditor, setHttpEndpointEditor] = useState<{
     tool: ArtifactTool | null;
   } | null>(null);
+  const [mcpProxyEditor, setMcpProxyEditor] = useState<{
+    server: McpServer;
+    existingTool: ArtifactTool | null;
+  } | null>(null);
+  // After an oauth-server OAuth redirect (?connected=<slug>), the catalog isn't
+  // loaded yet — stash the slug and re-open that server's modal once it is.
+  const [pendingMcpServerSlug, setPendingMcpServerSlug] = useState<
+    string | null
+  >(null);
 
   const { id: organizationId, projectId } = router.query as {
     id: string;
@@ -162,22 +185,28 @@ export const Tools = () => {
     if (!organizationId || !projectId) return;
     setStatus('pending');
     try {
-      const [catalogData, installedData, credentialData] = await Promise.all([
-        utils.fetcher({
-          url: '/catalog/tools',
-          config: { credentials: 'include', signal }
-        }),
-        utils.fetcher({
-          url: toolApiBase,
-          config: { credentials: 'include', signal }
-        }),
-        utils.fetcher({
-          url: credentialApiBase,
-          config: { credentials: 'include', signal }
-        })
-      ]);
+      const [catalogData, mcpServerData, installedData, credentialData] =
+        await Promise.all([
+          utils.fetcher({
+            url: '/catalog/tools',
+            config: { credentials: 'include', signal }
+          }),
+          utils.fetcher({
+            url: '/catalog/mcp-servers',
+            config: { credentials: 'include', signal }
+          }),
+          utils.fetcher({
+            url: toolApiBase,
+            config: { credentials: 'include', signal }
+          }),
+          utils.fetcher({
+            url: credentialApiBase,
+            config: { credentials: 'include', signal }
+          })
+        ]);
       if (signal?.aborted) return;
       if (Array.isArray(catalogData)) setCatalog(catalogData);
+      if (Array.isArray(mcpServerData)) setMcpServers(mcpServerData);
       if (Array.isArray(installedData)) setInstalled(installedData);
       if (Array.isArray(credentialData)) setCredentials(credentialData);
       setStatus('resolved');
@@ -262,11 +291,30 @@ export const Tools = () => {
     if (!connected) return;
     setConnectedBanner(connected);
     setTab('catalog');
+    setPendingMcpServerSlug(connected);
     const { connected: _c, ...rest } = router.query;
     router.replace({ pathname: router.pathname, query: rest }, undefined, {
       shallow: true
     });
   }, [router.isReady]);
+
+  // Re-open the mcp-proxy modal for a server the user just connected via OAuth.
+  // Waits for the catalog; a non-matching slug (a native provider) is ignored.
+  useEffect(() => {
+    if (!pendingMcpServerSlug || mcpServers.length === 0) return;
+    const server = mcpServers.find(s => s.slug === pendingMcpServerSlug);
+    setPendingMcpServerSlug(null);
+    if (!server) return;
+    const install =
+      installed.find(
+        t =>
+          (t.mcpServerCatalogId ||
+            (t.config as { curatedServerId?: string } | null)
+              ?.curatedServerId) === server.id
+      ) || null;
+    setTab('catalog');
+    setMcpProxyEditor({ server, existingTool: install });
+  }, [pendingMcpServerSlug, mcpServers, installed]);
 
   useEffect(() => {
     if (status !== 'resolved') return;
@@ -343,9 +391,16 @@ export const Tools = () => {
   }, [credentials]);
 
   const filteredCatalog = useMemo(() => {
+    // The mcp-proxy group is hidden — its servers render as their own cards.
+    const visible = catalog.filter(
+      g =>
+        !g.toolDefinitions.some(
+          d => d.key === utils.constants.TOOL_DEFINITION_KEY_MCP_PROXY
+        )
+    );
     const q = search.trim().toLowerCase();
-    if (!q) return catalog;
-    return catalog.filter(
+    if (!q) return visible;
+    return visible.filter(
       g =>
         g.title.toLowerCase().includes(q) ||
         (g.description || '').toLowerCase().includes(q) ||
@@ -384,6 +439,44 @@ export const Tools = () => {
     group.toolDefinitions.some(
       d => d.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
     );
+
+  // The mcp-proxy definition is plumbing: each curated server installs against
+  // it, but we present the servers themselves as cards (from mcp_server_catalog)
+  // — so the generic "MCP Servers" group is hidden from the catalog grid.
+  const mcpProxyDef = useMemo(
+    () =>
+      catalog
+        .flatMap(g => g.toolDefinitions)
+        .find(d => d.key === utils.constants.TOOL_DEFINITION_KEY_MCP_PROXY) ||
+      null,
+    [catalog]
+  );
+  // One installed artifact_tool per connected server, keyed by the catalog id
+  // (with the in-config curatedServerId as a fallback).
+  const installedByServerId = useMemo(() => {
+    const map = new Map<string, ArtifactTool>();
+    for (const t of installed) {
+      if (
+        t.toolDefinition?.key !== utils.constants.TOOL_DEFINITION_KEY_MCP_PROXY
+      )
+        continue;
+      const id =
+        t.mcpServerCatalogId ||
+        (t.config?.curatedServerId as string | undefined);
+      if (id) map.set(id, t);
+    }
+    return map;
+  }, [installed]);
+
+  const filteredMcpServers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return mcpServers;
+    return mcpServers.filter(
+      s =>
+        s.name.toLowerCase().includes(q) ||
+        (s.description || '').toLowerCase().includes(q)
+    );
+  }, [mcpServers, search]);
   const httpEndpointInstances = useMemo(
     () =>
       installed.filter(
@@ -513,7 +606,10 @@ export const Tools = () => {
 
   const getProviderLabel = (provider: string) => {
     const g = catalog.find(g => g.provider === provider);
-    return g?.title || provider;
+    if (g?.title) return g.title;
+    // oauth mcp-proxy servers connect by slug (e.g. 'notion'); show their name.
+    const server = mcpServers.find(s => s.slug === provider);
+    return server?.name || provider;
   };
 
   const handleConnectGroup = async (group: ToolGroup) => {
@@ -727,6 +823,16 @@ export const Tools = () => {
       utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
     ) {
       setHttpEndpointEditor({ tool });
+      return;
+    }
+    if (
+      tool.toolDefinition?.key === utils.constants.TOOL_DEFINITION_KEY_MCP_PROXY
+    ) {
+      const serverId =
+        tool.mcpServerCatalogId ||
+        (tool.config?.curatedServerId as string | undefined);
+      const server = mcpServers.find(s => s.id === serverId);
+      if (server) setMcpProxyEditor({ server, existingTool: tool });
       return;
     }
     openEditor(tool);
@@ -1138,6 +1244,19 @@ export const Tools = () => {
                             const isHttpEndpoint =
                               def?.key ===
                               utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT;
+                            const isMcpProxy =
+                              def?.key ===
+                              utils.constants.TOOL_DEFINITION_KEY_MCP_PROXY;
+                            const mcpServerName = isMcpProxy
+                              ? mcpServers.find(
+                                  s =>
+                                    s.id ===
+                                    (t.mcpServerCatalogId ||
+                                      (t.config?.curatedServerId as
+                                        | string
+                                        | undefined))
+                                )?.name
+                              : undefined;
                             const configKeys = t.config
                               ? Object.keys(t.config).length
                               : 0;
@@ -1148,7 +1267,9 @@ export const Tools = () => {
                                     {isHttpEndpoint
                                       ? (t.config?.name as string) ||
                                         'HTTP endpoint'
-                                      : def?.title || t.toolDefinitionId}
+                                      : isMcpProxy
+                                        ? mcpServerName || 'MCP server'
+                                        : def?.title || t.toolDefinitionId}
                                   </p>
                                   {def?.description && (
                                     <p className="tools-installed-item-description">
@@ -1218,9 +1339,13 @@ export const Tools = () => {
                 ))}
               </div>
             )}
-            {filteredCatalog.length === 0 && status === 'resolved' && (
-              <p className="tools-empty">No integrations match your search.</p>
-            )}
+            {filteredCatalog.length === 0 &&
+              filteredMcpServers.length === 0 &&
+              status === 'resolved' && (
+                <p className="tools-empty">
+                  No integrations match your search.
+                </p>
+              )}
             <div className="tools-catalog-groups">
               {filteredCatalog.map(group => {
                 const installedCount = group.toolDefinitions.filter(d =>
@@ -1265,6 +1390,61 @@ export const Tools = () => {
                       <p className="tools-catalog-group-meta">
                         {installedCount}/{group.toolDefinitions.length} tools
                         enabled
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+              {filteredMcpServers.map(s => {
+                const install = installedByServerId.get(s.id);
+                const enabledCount = install
+                  ? (() => {
+                      const allow = install.config?.allowedTools;
+                      if (Array.isArray(allow)) return allow.length;
+                      const disc = install.metadata as {
+                        discovery?: { tools?: unknown[] };
+                      } | null;
+                      return disc?.discovery?.tools?.length || 0;
+                    })()
+                  : 0;
+                return (
+                  <button
+                    type="button"
+                    key={`mcp-${s.id}`}
+                    className="tools-catalog-group-card"
+                    onClick={() =>
+                      setMcpProxyEditor({
+                        server: s,
+                        existingTool: install || null
+                      })
+                    }
+                  >
+                    <div className="tools-catalog-group-icon">
+                      {s.icon && /^https?:\/\//.test(s.icon) ? (
+                        <img src={s.icon} alt={s.name} />
+                      ) : (
+                        <span>{s.name.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="tools-catalog-group-body">
+                      <div className="tools-catalog-group-title-row">
+                        <p className="tools-catalog-group-title">{s.name}</p>
+                        {install && (
+                          <span className="tools-catalog-group-connected">
+                            <CheckCircle />
+                            Connected
+                          </span>
+                        )}
+                      </div>
+                      {s.description && (
+                        <p className="tools-catalog-group-description">
+                          {s.description}
+                        </p>
+                      )}
+                      <p className="tools-catalog-group-meta">
+                        {install
+                          ? `${enabledCount} tool${enabledCount === 1 ? '' : 's'} enabled`
+                          : 'Remote MCP server · connect to enable tools'}
                       </p>
                     </div>
                   </button>
@@ -1765,6 +1945,19 @@ export const Tools = () => {
           credentialApiBase={credentialApiBase}
           snackbar={snackbar}
           onClose={() => setHttpEndpointEditor(null)}
+          onSaved={fetchAll}
+        />
+      )}
+      {mcpProxyEditor && mcpProxyDef && (
+        <McpProxyModal
+          server={mcpProxyEditor.server}
+          toolDefinitionId={mcpProxyDef.id}
+          existingTool={mcpProxyEditor.existingTool}
+          apiBase={apiBase}
+          toolApiBase={toolApiBase}
+          credentialApiBase={credentialApiBase}
+          snackbar={snackbar}
+          onClose={() => setMcpProxyEditor(null)}
           onSaved={fetchAll}
         />
       )}

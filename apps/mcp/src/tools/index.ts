@@ -1,6 +1,11 @@
 export { toolRegistry } from './registry';
+export { parseHttpEndpointConfig, executeHttpEndpoint } from './httpEndpoint';
 export {
-  parseHttpEndpointConfig,
-  executeHttpEndpoint
-} from './httpEndpoint';
+  parseMcpProxyConfig,
+  parseMcpProxyDiscovery,
+  executeMcpProxyCall,
+  executeMcpProxyResourceRead,
+  executeMcpProxyPromptGet,
+  type ResolvedProxyCredential
+} from './mcpProxy';
 export type { ToolDefinition } from './types';

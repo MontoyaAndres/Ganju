@@ -707,6 +707,67 @@ const HTTP_ENDPOINT_CONFIG = z
       `Call the configured ${cfg.method} ${cfg.url} endpoint.`
   }));
 
+// Validates one artifact_tool.config of definition `mcp-proxy`. Each row of this
+// kind connects a remote MCP server (a vendor's official server) and registers
+// one local MCP tool per discovered remote tool at boot. `url`/`transport` are
+// resolved server-side from the curated mcp_server_catalog row referenced by
+// `curatedServerId` (the client never picks an arbitrary URL for now), then
+// re-validated here. Secrets are never inlined — auth references an
+// artifact_credential by id, same as http-endpoint.
+const MCP_PROXY_AUTH = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal(constants.MCP_PROXY_AUTH_KIND_NONE) }),
+  z.object({
+    kind: z.literal(constants.MCP_PROXY_AUTH_KIND_BEARER),
+    credentialId: z.uuid()
+  }),
+  z.object({
+    kind: z.literal(constants.MCP_PROXY_AUTH_KIND_HEADER),
+    name: z.string().min(1).max(256),
+    credentialId: z.uuid()
+  }),
+  z.object({
+    kind: z.literal(constants.MCP_PROXY_AUTH_KIND_OAUTH),
+    credentialId: z.uuid()
+  })
+]);
+
+const MCP_PROXY_CONFIG = z.object({
+  // Which curated server this row connects. url/transport are filled from the
+  // catalog server-side; included here so the stored config is self-contained
+  // for the boot loop (which never re-reads the catalog).
+  curatedServerId: z.uuid(),
+  url: z.string().min(1).max(2048).default(''),
+  transport: z
+    .enum(constants.MCP_PROXY_TRANSPORTS)
+    .default(constants.MCP_PROXY_TRANSPORT_STREAMABLE_HTTP),
+  // Tools register as `<prefix>__<remoteKey>`. Optional — the API defaults it to
+  // the catalog slug when unset.
+  prefix: z
+    .string()
+    .regex(
+      /^[a-zA-Z0-9_-]{1,40}$/,
+      'Prefix must be 1-40 chars: letters, digits, underscore or hyphen'
+    )
+    .optional(),
+  // Per-item enable lists; the full available set lives on metadata.discovery so
+  // the UI can render toggles without re-hitting the remote. The empty/absent
+  // semantics differ by kind, matching the UI defaults:
+  //   - allowedTools: absent/empty = ALL tools enabled (UI defaults them on).
+  //   - allowedResources / allowedPrompts: opt-in — ONLY the listed items
+  //     register; absent/empty = none (UI defaults them off).
+  // All three are filtered at boot.
+  allowedTools: z.array(z.string().min(1).max(256)).max(500).optional(),
+  allowedResources: z.array(z.string().min(1).max(2048)).max(500).optional(),
+  allowedPrompts: z.array(z.string().min(1).max(256)).max(500).optional(),
+  auth: MCP_PROXY_AUTH.default({ kind: constants.MCP_PROXY_AUTH_KIND_NONE }),
+  timeoutMs: z
+    .number()
+    .int()
+    .positive()
+    .default(constants.MCP_PROXY_DEFAULT_TIMEOUT_MS)
+    .transform(n => Math.min(n, constants.MCP_PROXY_MAX_TIMEOUT_MS))
+});
+
 const ARTIFACT_UPDATE_RESOURCE_SHOW_SOURCE = z.object({
   resourceId: z.uuid(),
   showSource: z.enum(constants.CHANNEL_STATUS),
@@ -883,8 +944,55 @@ export const Schema = {
   CHANNEL_LIST_CONVERSATIONS,
   CHANNEL_LIST_MESSAGES,
   ARTIFACT_UPDATE_RESOURCE_SHOW_SOURCE,
-  HTTP_ENDPOINT_CONFIG
+  HTTP_ENDPOINT_CONFIG,
+  MCP_PROXY_CONFIG
 };
 
 // Fully-resolved http-endpoint config (post-parse, defaults applied).
 export type HttpEndpointToolConfig = z.infer<typeof HTTP_ENDPOINT_CONFIG>;
+
+// Fully-resolved mcp-proxy config (post-parse, defaults applied).
+export type McpProxyToolConfig = z.infer<typeof MCP_PROXY_CONFIG>;
+
+// One remote tool discovered from a proxied MCP server. Stored on
+// artifact_tool.metadata.discovery at configure-time so the stateless MCP boot
+// loop can register the tool without a remote round-trip.
+export interface McpProxyDiscoveredTool {
+  name: string;
+  title?: string;
+  description?: string;
+  inputSchema: unknown;
+}
+
+// One remote resource discovered from a proxied MCP server. Identified by uri;
+// registration is deferred, so this is currently only surfaced to the UI for
+// enable/disable selection.
+export interface McpProxyDiscoveredResource {
+  uri: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  mimeType?: string;
+}
+
+// One remote prompt discovered from a proxied MCP server. Identified by name.
+// `arguments` (from the remote's prompts/list) drives the local prompt's
+// argument schema at boot — MCP prompt arguments are always strings.
+export interface McpProxyDiscoveredPrompt {
+  name: string;
+  title?: string;
+  description?: string;
+  arguments?: { name: string; description?: string; required?: boolean }[];
+}
+
+// The discovery payload persisted on artifact_tool.metadata.discovery — the
+// FULL set of items the remote exposes (the enabled subset lives in config's
+// allowed* lists). Tools, resources, and prompts are all registered at boot
+// (resources/prompts only for the opt-in subset named in the allow-lists).
+export interface McpProxyDiscovery {
+  discoveredAt: string;
+  serverInfo?: { name?: string; version?: string };
+  tools: McpProxyDiscoveredTool[];
+  resources?: McpProxyDiscoveredResource[];
+  prompts?: McpProxyDiscoveredPrompt[];
+}

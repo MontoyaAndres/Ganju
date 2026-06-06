@@ -7,7 +7,13 @@ import {
   enqueueIndex,
   enqueueCrawlDiscover,
   validateCalcomApiKey,
-  validateTavilyApiKey
+  validateTavilyApiKey,
+  discoverRemoteMcpTools,
+  refreshArtifactCredential,
+  beginMcpProxyOauth,
+  resolveMcpProxyOauthSecret,
+  readStoredMcpOauth,
+  syncTelegramCommandsForArtifact
 } from '../../utils';
 
 // types
@@ -24,6 +30,189 @@ const validateHttpEndpointConfig = (
     );
   }
   return parsed.data as Record<string, unknown>;
+};
+
+const validateMcpProxyConfig = (config: unknown) => {
+  const parsed = utils.Schema.MCP_PROXY_CONFIG.safeParse(config ?? {});
+  if (!parsed.success) {
+    throw new Error(
+      parsed.error.issues[0]?.message || 'Invalid MCP proxy configuration'
+    );
+  }
+  return parsed.data;
+};
+
+// Resolve an mcp-proxy config against the curated catalog (rejecting unknown/
+// unverified servers — arbitrary URLs are deferred) and connect to the remote
+// MCP server once to list everything it exposes. Shared by the write-path and
+// the preview endpoint. Makes a network call, so callers run it BEFORE any DB
+// transaction (same pattern as createCredential's key validation).
+const discoverMcpProxy = async (
+  c: Context<AppEnv>,
+  dbInstance: ReturnType<typeof db.create>,
+  artifactId: string,
+  rawConfig: unknown
+) => {
+  const config = validateMcpProxyConfig(rawConfig);
+
+  const [server] = await dbInstance
+    .select()
+    .from(db.schema.mcpServerCatalog)
+    .where(eq(db.schema.mcpServerCatalog.id, config.curatedServerId))
+    .limit(1);
+
+  if (!server || !server.verified) {
+    throw new Error(
+      'Unknown or unverified MCP server. Pick one from the catalog.'
+    );
+  }
+
+  const prefix = config.prefix || server.slug;
+
+  // Resolve auth into a single header to inject on the remote connection.
+  let authHeader: { name: string; value: string } | null = null;
+  if (config.auth.kind !== utils.constants.MCP_PROXY_AUTH_KIND_NONE) {
+    const [credential] = await dbInstance
+      .select()
+      .from(db.schema.artifactCredential)
+      .where(
+        and(
+          eq(db.schema.artifactCredential.id, config.auth.credentialId),
+          eq(db.schema.artifactCredential.artifactId, artifactId)
+        )
+      )
+      .limit(1);
+    if (!credential) {
+      throw new Error(
+        'The selected credential was not found for this artifact.'
+      );
+    }
+
+    // Guard the credential type: bearer/header use a per-tool mcp-proxy secret;
+    // oauth binds an MCP-OAuth connection (token issued by the MCP server, kept
+    // on metadata.mcpOauth). This stops a config from pointing, say, a raw
+    // bearer at an unrelated Gmail token, or oauth at a per-tool secret.
+    if (config.auth.kind === utils.constants.MCP_PROXY_AUTH_KIND_OAUTH) {
+      if (!readStoredMcpOauth(credential.metadata)) {
+        throw new Error(
+          'The selected credential is not an MCP OAuth connection.'
+        );
+      }
+      // Decrypt (refreshing the MCP token in place) so discovery never connects
+      // with a stale token; surface a clear message if it needs reconnecting.
+      const { secret, needsReauth } = await resolveMcpProxyOauthSecret({
+        c,
+        dbInstance,
+        credential
+      });
+      if (needsReauth || !secret) {
+        throw new Error(
+          `The credential for "${server.name}" needs to be reconnected. Reconnect it and try again.`
+        );
+      }
+      authHeader = { name: 'Authorization', value: `Bearer ${secret}` };
+    } else {
+      if (
+        credential.provider !== utils.constants.CREDENTIAL_PROVIDER_MCP_PROXY
+      ) {
+        throw new Error('The selected credential is not an MCP server secret.');
+      }
+      // Per-tool secrets have no refresh; decrypt as-is.
+      const { secret, needsReauth } = await refreshArtifactCredential(
+        c,
+        dbInstance,
+        credential
+      );
+      if (needsReauth) {
+        throw new Error(
+          `The credential for "${server.name}" needs to be re-authorized. Reconnect it and try again.`
+        );
+      }
+      authHeader =
+        config.auth.kind === utils.constants.MCP_PROXY_AUTH_KIND_HEADER
+          ? { name: config.auth.name, value: secret }
+          : { name: 'Authorization', value: `Bearer ${secret}` };
+    }
+  }
+
+  const discovery = await discoverRemoteMcpTools({
+    url: server.url,
+    transport: server.transport,
+    authHeader,
+    timeoutMs: config.timeoutMs,
+    maxItems: utils.constants.MCP_PROXY_MAX_TOOLS
+  });
+
+  // Drop any remote tool whose name can't be safely surfaced (bad charset, or
+  // the `<prefix>__<name>` composite exceeds the tool-name limit) so the UI
+  // never offers — and the boot loop never attempts — a tool it can't register.
+  const safeTools = discovery.tools.filter(
+    t => utils.buildProxyToolName(prefix, t.name) !== null
+  );
+  if (safeTools.length !== discovery.tools.length) {
+    console.warn(
+      `mcp-proxy ${server.slug}: dropped ${
+        discovery.tools.length - safeTools.length
+      } tool(s) with unsafe names`
+    );
+  }
+
+  return {
+    server,
+    config,
+    prefix,
+    discovery: { ...discovery, tools: safeTools }
+  };
+};
+
+// Build the persisted config + metadata for an mcp-proxy install. The FULL
+// discovered set is stored on metadata.discovery (so the UI can render
+// enable/disable toggles without re-hitting the remote); the enabled subset
+// lives in config's allow-lists. Returns the curated server id for the FK
+// column too.
+const buildMcpProxyToolData = async (
+  c: Context<AppEnv>,
+  dbInstance: ReturnType<typeof db.create>,
+  artifactId: string,
+  rawConfig: unknown,
+  clientMetadata: Record<string, unknown> | null
+): Promise<{
+  config: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  mcpServerCatalogId: string;
+}> => {
+  const { server, config, prefix, discovery } = await discoverMcpProxy(
+    c,
+    dbInstance,
+    artifactId,
+    rawConfig
+  );
+
+  if (discovery.tools.length === 0) {
+    throw new Error(
+      'The remote MCP server returned no tools. Check the credential and try again.'
+    );
+  }
+
+  return {
+    config: {
+      ...config,
+      url: server.url,
+      transport: server.transport,
+      prefix
+    } as Record<string, unknown>,
+    metadata: {
+      ...(clientMetadata || {}),
+      discovery: {
+        discoveredAt: new Date().toISOString(),
+        serverInfo: discovery.serverInfo,
+        tools: discovery.tools,
+        resources: discovery.resources,
+        prompts: discovery.prompts
+      }
+    },
+    mcpServerCatalogId: server.id
+  };
 };
 
 const createPrompt = async (c: Context<AppEnv>) => {
@@ -85,6 +274,9 @@ const createPrompt = async (c: Context<AppEnv>) => {
 
     return artifactPrompt[0];
   });
+
+  // A new prompt is a new slash command; refresh the Telegram command menu.
+  await syncTelegramCommandsForArtifact(c, dbInstance, result.artifactId);
 
   return c.json(result);
 };
@@ -152,6 +344,9 @@ const updatePrompt = async (c: Context<AppEnv>) => {
     return artifactPrompt[0];
   });
 
+  // Title/description may have changed; refresh the Telegram command menu.
+  await syncTelegramCommandsForArtifact(c, dbInstance, result.artifactId);
+
   return c.json(result);
 };
 
@@ -188,7 +383,7 @@ const removePrompt = async (c: Context<AppEnv>) => {
 
   const dbInstance = db.create(c);
 
-  await dbInstance.transaction(async tx => {
+  const artifactId = await dbInstance.transaction(async tx => {
     const [project] = await tx
       .select()
       .from(db.schema.project)
@@ -234,7 +429,12 @@ const removePrompt = async (c: Context<AppEnv>) => {
         artifactPromptCount: sql`(${db.schema.artifact.artifactPromptCount}::int - 1)::int`
       })
       .where(eq(db.schema.artifact.id, currentArtifactByProject.id));
+
+    return currentArtifactByProject.id;
   });
+
+  // The removed prompt's slash command should drop out of the Telegram menu.
+  await syncTelegramCommandsForArtifact(c, dbInstance, artifactId);
 
   return c.json(currentValues);
 };
@@ -739,6 +939,39 @@ const createTool = async (c: Context<AppEnv>) => {
 
   const dbInstance = db.create(c);
 
+  // mcp-proxy discovery is a network round-trip (connect remote + listTools),
+  // so resolve it BEFORE the transaction (same pattern as createCredential's
+  // key validation). For other definitions this stays null.
+  let proxyData: {
+    config: Record<string, unknown>;
+    metadata: Record<string, unknown>;
+    mcpServerCatalogId: string;
+  } | null = null;
+  {
+    const [toolDef] = await dbInstance
+      .select({ key: db.schema.toolDefinition.key })
+      .from(db.schema.toolDefinition)
+      .where(eq(db.schema.toolDefinition.id, currentValues.toolDefinitionId))
+      .limit(1);
+    if (toolDef?.key === utils.constants.TOOL_DEFINITION_KEY_MCP_PROXY) {
+      const [artifactRow] = await dbInstance
+        .select({ id: db.schema.artifact.id })
+        .from(db.schema.artifact)
+        .where(eq(db.schema.artifact.projectId, currentValues.projectId))
+        .limit(1);
+      if (!artifactRow) {
+        throw new Error('Artifact not found for the project');
+      }
+      proxyData = await buildMcpProxyToolData(
+        c,
+        dbInstance,
+        artifactRow.id,
+        currentValues.config,
+        currentValues.metadata || null
+      );
+    }
+  }
+
   const result = await dbInstance.transaction(async tx => {
     const [project] = await tx
       .select()
@@ -777,10 +1010,12 @@ const createTool = async (c: Context<AppEnv>) => {
 
     // http-endpoint config is user-authored and drives an outbound request at
     // runtime, so re-validate (and normalize/default) it server-side rather
-    // than trusting the client. The MCP boot loop also skips malformed rows,
-    // but rejecting here keeps the stored config canonical.
-    const resolvedConfig =
-      toolDef.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
+    // than trusting the client. mcp-proxy was resolved + discovered above. The
+    // MCP boot loop also skips malformed rows, but rejecting here keeps the
+    // stored config canonical.
+    const resolvedConfig = proxyData
+      ? proxyData.config
+      : toolDef.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
         ? validateHttpEndpointConfig(currentValues.config)
         : currentValues.config || null;
 
@@ -789,7 +1024,10 @@ const createTool = async (c: Context<AppEnv>) => {
       .values({
         toolDefinitionId: currentValues.toolDefinitionId,
         config: resolvedConfig,
-        metadata: currentValues.metadata || null,
+        metadata: proxyData
+          ? proxyData.metadata
+          : currentValues.metadata || null,
+        mcpServerCatalogId: proxyData ? proxyData.mcpServerCatalogId : null,
         artifactId: currentArtifactByProject.id
       })
       .returning();
@@ -803,6 +1041,12 @@ const createTool = async (c: Context<AppEnv>) => {
 
     return artifactTool[0];
   });
+
+  // An mcp-proxy install can enable proxied prompts (slash commands); refresh
+  // the Telegram menu. Other tool kinds don't affect prompts.
+  if (proxyData) {
+    await syncTelegramCommandsForArtifact(c, dbInstance, result.artifactId);
+  }
 
   return c.json(result);
 };
@@ -818,6 +1062,50 @@ const updateTool = async (c: Context<AppEnv>) => {
   });
 
   const dbInstance = db.create(c);
+
+  // Re-discovery for mcp-proxy is a network round-trip; resolve it before the
+  // transaction (same as createTool). An update re-runs discovery so a changed
+  // credential / allowed-tools list refreshes the stored tool schemas.
+  let proxyData: {
+    config: Record<string, unknown>;
+    metadata: Record<string, unknown>;
+    mcpServerCatalogId: string;
+  } | null = null;
+  {
+    const [artifactRow] = await dbInstance
+      .select({ id: db.schema.artifact.id })
+      .from(db.schema.artifact)
+      .where(eq(db.schema.artifact.projectId, currentValues.projectId))
+      .limit(1);
+    if (artifactRow) {
+      const [existing] = await dbInstance
+        .select({ key: db.schema.toolDefinition.key })
+        .from(db.schema.artifactTool)
+        .innerJoin(
+          db.schema.toolDefinition,
+          eq(
+            db.schema.artifactTool.toolDefinitionId,
+            db.schema.toolDefinition.id
+          )
+        )
+        .where(
+          and(
+            eq(db.schema.artifactTool.id, currentValues.toolId),
+            eq(db.schema.artifactTool.artifactId, artifactRow.id)
+          )
+        )
+        .limit(1);
+      if (existing?.key === utils.constants.TOOL_DEFINITION_KEY_MCP_PROXY) {
+        proxyData = await buildMcpProxyToolData(
+          c,
+          dbInstance,
+          artifactRow.id,
+          currentValues.config,
+          currentValues.metadata || null
+        );
+      }
+    }
+  }
 
   const result = await dbInstance.transaction(async tx => {
     const [project] = await tx
@@ -846,7 +1134,8 @@ const updateTool = async (c: Context<AppEnv>) => {
     }
 
     // Resolve the definition key so http-endpoint configs are re-validated and
-    // normalized server-side (same reasoning as createTool).
+    // normalized server-side (same reasoning as createTool). mcp-proxy was
+    // resolved + re-discovered above.
     const [existing] = await tx
       .select({ key: db.schema.toolDefinition.key })
       .from(db.schema.artifactTool)
@@ -866,8 +1155,9 @@ const updateTool = async (c: Context<AppEnv>) => {
       throw new Error('Tool not found');
     }
 
-    const resolvedConfig =
-      existing.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
+    const resolvedConfig = proxyData
+      ? proxyData.config
+      : existing.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT
         ? validateHttpEndpointConfig(currentValues.config)
         : currentValues.config || null;
 
@@ -875,7 +1165,12 @@ const updateTool = async (c: Context<AppEnv>) => {
       .update(db.schema.artifactTool)
       .set({
         config: resolvedConfig,
-        metadata: currentValues.metadata || null
+        metadata: proxyData
+          ? proxyData.metadata
+          : currentValues.metadata || null,
+        ...(proxyData
+          ? { mcpServerCatalogId: proxyData.mcpServerCatalogId }
+          : {})
       })
       .where(
         and(
@@ -892,7 +1187,257 @@ const updateTool = async (c: Context<AppEnv>) => {
     return artifactTool[0];
   });
 
+  // An mcp-proxy update may change which proxied prompts are enabled; refresh
+  // the Telegram menu so slash-command autocomplete tracks the new set.
+  if (proxyData) {
+    await syncTelegramCommandsForArtifact(c, dbInstance, result.artifactId);
+  }
+
   return c.json(result);
+};
+
+// Build the single auth header to inject on the remote connection from a
+// resolved secret and the server's auth kind.
+const proxyAuthHeader = (
+  authKind: string,
+  secret: string,
+  headerName?: string
+): { name: string; value: string } =>
+  authKind === utils.constants.MCP_PROXY_AUTH_KIND_HEADER
+    ? { name: headerName || 'Authorization', value: secret }
+    : { name: 'Authorization', value: `Bearer ${secret}` };
+
+// Connect to a curated remote MCP server and return everything it exposes,
+// WITHOUT persisting anything. Powers the "enable/disable which tools" picker
+// in the catalog UI AND validates the token before it's stored: the client
+// sends `{ curatedServerId, token }` (an inline token, never written) — if it
+// can list tools the token is good, and only then does the UI persist a
+// credential + create the install. A stored `credentialId` is also accepted
+// (e.g. to re-list an existing connection).
+const previewMcpProxy = async (c: Context<AppEnv>) => {
+  const body = await c.req.json();
+  const currentValues = await utils.Schema.ARTIFACT_GET.parseAsync({
+    projectId: c.req.param('projectId'),
+    userId: c.get('user').id,
+    organizationId: c.req.param('organizationId')
+  });
+
+  const dbInstance = db.create(c);
+
+  const [project] = await dbInstance
+    .select({ id: db.schema.project.id })
+    .from(db.schema.project)
+    .where(
+      and(
+        eq(db.schema.project.id, currentValues.projectId),
+        eq(db.schema.project.organizationId, currentValues.organizationId)
+      )
+    )
+    .limit(1);
+
+  if (!project) {
+    throw new Error('Project not found');
+  }
+
+  const [artifactRow] = await dbInstance
+    .select({ id: db.schema.artifact.id })
+    .from(db.schema.artifact)
+    .where(eq(db.schema.artifact.projectId, currentValues.projectId))
+    .limit(1);
+
+  if (!artifactRow) {
+    throw new Error('Artifact not found for the project');
+  }
+
+  const curatedServerId =
+    typeof body?.curatedServerId === 'string' ? body.curatedServerId : '';
+  if (!curatedServerId) {
+    throw new Error('Select a server to connect.');
+  }
+
+  const [server] = await dbInstance
+    .select()
+    .from(db.schema.mcpServerCatalog)
+    .where(eq(db.schema.mcpServerCatalog.id, curatedServerId))
+    .limit(1);
+
+  if (!server || !server.verified) {
+    throw new Error(
+      'Unknown or unverified MCP server. Pick one from the catalog.'
+    );
+  }
+
+  // Auth resolution by the server's auth kind:
+  //  - oauth: the catalog slug doubles as the OAuth provider key; resolve the
+  //    artifact's existing connection, or tell the UI to run the OAuth flow.
+  //  - otherwise: an inline token (validate-before-store) takes precedence,
+  //    else a stored credentialId; either may be absent for a no-auth server.
+  let authHeader: { name: string; value: string } | null = null;
+  // For oauth, surfaced back to the UI so the save can reference the resolved
+  // credential by id without the client ever seeing it.
+  let resolvedCredentialId: string | undefined;
+  const inlineToken = typeof body?.token === 'string' ? body.token.trim() : '';
+  const headerName =
+    typeof body?.headerName === 'string' ? body.headerName : undefined;
+
+  const oauthNeeded = {
+    needsOauth: true,
+    oauthProvider: server.slug,
+    server: { id: server.id, slug: server.slug, name: server.name }
+  };
+
+  if (server.authKind === utils.constants.MCP_PROXY_AUTH_KIND_OAUTH) {
+    // MCP-OAuth: the token is issued by the MCP server itself (stored on the
+    // credential's metadata.mcpOauth). A row without that, or still pending,
+    // means the user hasn't finished connecting yet.
+    const [credential] = await dbInstance
+      .select()
+      .from(db.schema.artifactCredential)
+      .where(
+        and(
+          eq(db.schema.artifactCredential.provider, server.slug),
+          eq(db.schema.artifactCredential.artifactId, artifactRow.id)
+        )
+      )
+      .limit(1);
+    if (!credential || !readStoredMcpOauth(credential.metadata)) {
+      return c.json(oauthNeeded);
+    }
+    const { secret, needsReauth } = await resolveMcpProxyOauthSecret({
+      c,
+      dbInstance,
+      credential
+    });
+    if (needsReauth || !secret) {
+      return c.json(oauthNeeded);
+    }
+    authHeader = { name: 'Authorization', value: `Bearer ${secret}` };
+    resolvedCredentialId = credential.id;
+  } else if (inlineToken) {
+    authHeader = proxyAuthHeader(server.authKind, inlineToken, headerName);
+  } else if (typeof body?.credentialId === 'string' && body.credentialId) {
+    const [credential] = await dbInstance
+      .select()
+      .from(db.schema.artifactCredential)
+      .where(
+        and(
+          eq(db.schema.artifactCredential.id, body.credentialId),
+          eq(db.schema.artifactCredential.artifactId, artifactRow.id)
+        )
+      )
+      .limit(1);
+    if (!credential) {
+      throw new Error(
+        'The selected credential was not found for this artifact.'
+      );
+    }
+    const { secret, needsReauth } = await refreshArtifactCredential(
+      c,
+      dbInstance,
+      credential
+    );
+    if (needsReauth) {
+      throw new Error(
+        `The credential for "${server.name}" needs to be re-authorized. Reconnect it and try again.`
+      );
+    }
+    authHeader = proxyAuthHeader(server.authKind, secret, headerName);
+    resolvedCredentialId = credential.id;
+  }
+
+  const discovery = await discoverRemoteMcpTools({
+    url: server.url,
+    transport: server.transport,
+    authHeader,
+    timeoutMs: utils.constants.MCP_PROXY_DEFAULT_TIMEOUT_MS,
+    maxItems: utils.constants.MCP_PROXY_MAX_TOOLS
+  });
+
+  // Only surface tools whose name can actually be registered (matches the
+  // boot-time filter), so the UI never offers a tool it can't enable.
+  const safeTools = discovery.tools.filter(
+    t => utils.buildProxyToolName(server.slug, t.name) !== null
+  );
+
+  return c.json({
+    server: { id: server.id, slug: server.slug, name: server.name },
+    serverInfo: discovery.serverInfo,
+    tools: safeTools,
+    resources: discovery.resources,
+    prompts: discovery.prompts,
+    // Present for oauth (and a stored credentialId) so the install can reference
+    // the resolved credential by id; undefined for inline-token discovery.
+    credentialId: resolvedCredentialId
+  });
+};
+
+// Begin the MCP-protocol OAuth flow for an oauth-kind catalog server: discovers
+// the server's auth server, dynamically registers a client, and returns the
+// PKCE authorize URL for the browser to redirect to. The OAuth callback
+// (OAuthController.mcpProxyCallback) finishes the exchange.
+const startMcpProxyOauth = async (c: Context<AppEnv>) => {
+  const body = await c.req.json().catch(() => ({}));
+  const currentValues = await utils.Schema.ARTIFACT_GET.parseAsync({
+    projectId: c.req.param('projectId'),
+    userId: c.get('user').id,
+    organizationId: c.req.param('organizationId')
+  });
+
+  const dbInstance = db.create(c);
+
+  const [project] = await dbInstance
+    .select({ id: db.schema.project.id })
+    .from(db.schema.project)
+    .where(
+      and(
+        eq(db.schema.project.id, currentValues.projectId),
+        eq(db.schema.project.organizationId, currentValues.organizationId)
+      )
+    )
+    .limit(1);
+  if (!project) {
+    throw new Error('Project not found');
+  }
+
+  const [artifactRow] = await dbInstance
+    .select({ id: db.schema.artifact.id })
+    .from(db.schema.artifact)
+    .where(eq(db.schema.artifact.projectId, currentValues.projectId))
+    .limit(1);
+  if (!artifactRow) {
+    throw new Error('Artifact not found for the project');
+  }
+
+  const curatedServerId =
+    typeof body?.curatedServerId === 'string' ? body.curatedServerId : '';
+  if (!curatedServerId) {
+    throw new Error('Select a server to connect.');
+  }
+
+  const [server] = await dbInstance
+    .select()
+    .from(db.schema.mcpServerCatalog)
+    .where(eq(db.schema.mcpServerCatalog.id, curatedServerId))
+    .limit(1);
+  if (!server || !server.verified) {
+    throw new Error(
+      'Unknown or unverified MCP server. Pick one from the catalog.'
+    );
+  }
+  if (server.authKind !== utils.constants.MCP_PROXY_AUTH_KIND_OAUTH) {
+    throw new Error('This server does not use OAuth.');
+  }
+
+  const url = await beginMcpProxyOauth({
+    c,
+    dbInstance,
+    server: { slug: server.slug, url: server.url, name: server.name },
+    artifactId: artifactRow.id,
+    organizationId: currentValues.organizationId,
+    projectId: currentValues.projectId
+  });
+
+  return c.json({ url });
 };
 
 const listTools = async (c: Context<AppEnv>) => {
@@ -936,7 +1481,7 @@ const removeTool = async (c: Context<AppEnv>) => {
 
   const dbInstance = db.create(c);
 
-  await dbInstance.transaction(async tx => {
+  const { artifactId, wasProxy } = await dbInstance.transaction(async tx => {
     const [project] = await tx
       .select()
       .from(db.schema.project)
@@ -983,11 +1528,13 @@ const removeTool = async (c: Context<AppEnv>) => {
       })
       .where(eq(db.schema.artifact.id, currentArtifactByProject.id));
 
-    // http-endpoint tools own a per-endpoint secret (artifact_credential)
-    // referenced by id from their auth config. Removing the tool would orphan
-    // that secret, so delete it too — but only when no other endpoint on the
-    // artifact still references it, and only if it's an http-endpoint secret
-    // (never a shared OAuth/api-key credential bound to a native tool).
+    // http-endpoint and mcp-proxy tools own the credential referenced by id from
+    // their auth config. Removing the tool would orphan it, so delete it too —
+    // but only when no other tool on the artifact still references it, and only
+    // when it's a credential the install actually owns (never a shared native
+    // OAuth/api-key credential). Two owned kinds: a per-tool bearer/header
+    // secret (provider in PER_TOOL_CREDENTIAL_PROVIDERS), and an MCP-OAuth
+    // connection (provider = catalog slug, identified by metadata.mcpOauth).
     const removedConfig = deleteTool[0].config as {
       auth?: { credentialId?: string };
     } | null;
@@ -1007,24 +1554,31 @@ const removeTool = async (c: Context<AppEnv>) => {
       });
 
       if (!stillReferenced) {
-        const deletedCredential = await tx
-          .delete(db.schema.artifactCredential)
+        const [cred] = await tx
+          .select()
+          .from(db.schema.artifactCredential)
           .where(
             and(
               eq(db.schema.artifactCredential.id, credentialId),
               eq(
                 db.schema.artifactCredential.artifactId,
                 currentArtifactByProject.id
-              ),
-              eq(
-                db.schema.artifactCredential.provider,
-                utils.constants.CREDENTIAL_PROVIDER_HTTP_ENDPOINT
               )
             )
           )
-          .returning({ id: db.schema.artifactCredential.id });
+          .limit(1);
 
-        if (deletedCredential.length > 0) {
+        const deletable =
+          !!cred &&
+          ((
+            utils.constants.PER_TOOL_CREDENTIAL_PROVIDERS as readonly string[]
+          ).includes(cred.provider) ||
+            !!readStoredMcpOauth(cred.metadata));
+
+        if (deletable) {
+          await tx
+            .delete(db.schema.artifactCredential)
+            .where(eq(db.schema.artifactCredential.id, cred.id));
           await tx
             .update(db.schema.artifact)
             .set({
@@ -1034,7 +1588,19 @@ const removeTool = async (c: Context<AppEnv>) => {
         }
       }
     }
+
+    // Only mcp-proxy installs set the catalog FK, so it doubles as a cheap "was
+    // this a proxy?" flag — used to decide whether proxied prompts changed.
+    return {
+      artifactId: currentArtifactByProject.id,
+      wasProxy: deleteTool[0].mcpServerCatalogId != null
+    };
   });
+
+  // Removing an mcp-proxy install drops its proxied prompts; refresh the menu.
+  if (wasProxy) {
+    await syncTelegramCommandsForArtifact(c, dbInstance, artifactId);
+  }
 
   return c.json(currentValues);
 };
@@ -1258,12 +1824,14 @@ const createCredential = async (c: Context<AppEnv>) => {
       organizationId: c.req.param('organizationId')
     });
 
-  const isHttpEndpoint =
-    currentValues.provider ===
-    utils.constants.CREDENTIAL_PROVIDER_HTTP_ENDPOINT;
+  // http-endpoint and mcp-proxy secrets are per-tool: many per artifact, each a
+  // fresh labelled row referenced by id (not one-per-provider).
+  const isPerToolSecret = (
+    utils.constants.PER_TOOL_CREDENTIAL_PROVIDERS as readonly string[]
+  ).includes(currentValues.provider);
 
   // Verify the key works before persisting, so we never store a dead key.
-  // http-endpoint secrets have no vendor to validate against, so they skip this.
+  // Per-tool secrets have no vendor to validate against, so they skip this.
   if (currentValues.provider === utils.constants.API_KEY_PROVIDER_CALCOM) {
     const valid = await validateCalcomApiKey(currentValues.apiKey);
     if (!valid) {
@@ -1316,11 +1884,11 @@ const createCredential = async (c: Context<AppEnv>) => {
       throw new Error('Artifact not found for the project');
     }
 
-    // http-endpoint credentials aren't unique per provider — one artifact can
-    // hold many endpoint secrets, each referenced by id from a tool's auth
-    // config and labelled so the user can tell them apart. Always insert a
-    // fresh row instead of overwriting the existing provider credential.
-    if (isHttpEndpoint) {
+    // Per-tool credentials aren't unique per provider — one artifact can hold
+    // many secrets, each referenced by id from a tool's auth config and
+    // labelled so the user can tell them apart. Always insert a fresh row
+    // instead of overwriting the existing provider credential.
+    if (isPerToolSecret) {
       const [inserted] = await tx
         .insert(db.schema.artifactCredential)
         .values({
@@ -1594,6 +2162,8 @@ export const ArtifactController = {
   updateTool,
   removeTool,
   listTools,
+  previewMcpProxy,
+  startMcpProxyOauth,
   removeCredential,
   listCredentials,
   createCredential,

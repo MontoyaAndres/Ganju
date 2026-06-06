@@ -637,6 +637,7 @@ export const channelMessageUsage = pgTable(
       .primaryKey()
       .$defaultFn(() => uuid()),
     kind: text('kind').notNull(),
+    toolName: text('tool_name'),
     input: json('input'),
     output: json('output'),
     latencyMs: integer('latency_ms'),
@@ -713,24 +714,54 @@ export const toolDefinition = pgTable('tool_definition', {
     .$onUpdate(() => new Date())
 });
 
-export const artifactTool = pgTable('artifact_tool', {
+export const mcpServerCatalog = pgTable('mcp_server_catalog', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => uuid()),
-  config: json('config'),
-  metadata: json('metadata'),
-  toolDefinitionId: text('tool_definition_id')
-    .notNull()
-    .references(() => toolDefinition.id, { onDelete: 'cascade' }),
-  artifactId: text('artifact_id')
-    .notNull()
-    .references(() => artifact.id, { onDelete: 'cascade' }),
+  slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  icon: text('icon'),
+  url: text('url').notNull(),
+  transport: text('transport').notNull(),
+  authKind: text('auth_kind').notNull(),
+  defaultScopes: text('default_scopes'),
+  verified: boolean('verified').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'date' })
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date())
 });
+
+export const artifactTool = pgTable(
+  'artifact_tool',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => uuid()),
+    config: json('config'),
+    metadata: json('metadata'),
+    toolDefinitionId: text('tool_definition_id')
+      .notNull()
+      .references(() => toolDefinition.id, { onDelete: 'cascade' }),
+    mcpServerCatalogId: text('mcp_server_catalog_id').references(
+      () => mcpServerCatalog.id,
+      { onDelete: 'set null' }
+    ),
+    artifactId: text('artifact_id')
+      .notNull()
+      .references(() => artifact.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
+  },
+  table => [
+    index('artifact_tool_mcp_server_catalog_idx').on(table.mcpServerCatalogId)
+  ]
+);
 
 export const artifactCredential = pgTable('artifact_credential', {
   id: text('id')
@@ -1054,8 +1085,19 @@ export const artifactToolRelations = relations(artifactTool, ({ one }) => ({
   toolDefinition: one(toolDefinition, {
     fields: [artifactTool.toolDefinitionId],
     references: [toolDefinition.id]
+  }),
+  mcpServerCatalog: one(mcpServerCatalog, {
+    fields: [artifactTool.mcpServerCatalogId],
+    references: [mcpServerCatalog.id]
   })
 }));
+
+export const mcpServerCatalogRelations = relations(
+  mcpServerCatalog,
+  ({ many }) => ({
+    artifactTools: many(artifactTool)
+  })
+);
 
 export const artifactCredentialRelations = relations(
   artifactCredential,

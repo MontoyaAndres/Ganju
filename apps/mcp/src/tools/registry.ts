@@ -68,6 +68,7 @@ import {
 } from './resources';
 import { webSearch, webExtract } from './web';
 import { httpEndpoint } from './httpEndpoint';
+import { mcpProxy } from './mcpProxy';
 
 // types
 import { ToolDefinition } from './types';
@@ -131,5 +132,6 @@ export const toolRegistry = new Map<string, ToolDefinition>([
   ['calcom-cancel-booking', calcomCancelBooking],
   ['web-search', webSearch],
   ['web-extract', webExtract],
-  ['http-endpoint', httpEndpoint]
+  ['http-endpoint', httpEndpoint],
+  ['mcp-proxy', mcpProxy]
 ]);

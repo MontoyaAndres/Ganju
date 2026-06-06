@@ -3,7 +3,12 @@ import { refreshCredentialIfNeeded } from './refreshCredential';
 import { generateEmbedding } from './embedding';
 import { resolveArtifactSlug } from './resolveArtifactSlug';
 import { interpolate, type InterpolationMode } from './interpolate';
-import { allowHttpEndpointCall } from './rateLimit';
+import { allowProxyToolCall } from './rateLimit';
+import {
+  connectRemoteMcpClient,
+  type RemoteMcpAuthHeader,
+  type RemoteMcpHandle
+} from './remoteMcpClient';
 import {
   parseJsonRpcMessages,
   collectBodyOnlyRequests,
@@ -20,7 +25,8 @@ export {
   generateEmbedding,
   resolveArtifactSlug,
   interpolate,
-  allowHttpEndpointCall,
+  allowProxyToolCall,
+  connectRemoteMcpClient,
   parseJsonRpcMessages,
   collectBodyOnlyRequests,
   parseClient,
@@ -29,4 +35,9 @@ export {
   flushRequests
 };
 
-export type { PendingRequest, InterpolationMode };
+export type {
+  PendingRequest,
+  InterpolationMode,
+  RemoteMcpAuthHeader,
+  RemoteMcpHandle
+};

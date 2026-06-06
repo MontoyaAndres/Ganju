@@ -100,6 +100,7 @@ interface UsagePrompt {
 interface MessageUsage {
   id: string;
   kind: 'prompt' | 'tool' | 'resource';
+  toolName: string | null;
   latencyMs: number | null;
   errorMessage: string | null;
   input: Record<string, unknown> | null;
@@ -184,9 +185,17 @@ const usageIcon = (kind: MessageUsage['kind']) => {
 
 const usageLabel = (u: MessageUsage): string => {
   if (u.kind === utils.constants.CHANNEL_USAGE_KIND_TOOL) {
+    const def = u.artifactTool?.toolDefinition;
+    // http-endpoint / mcp-proxy back many tools per row, so their definition
+    // title is just the generic parent — prefer the recorded specific name.
+    const proxied =
+      def?.key === utils.constants.TOOL_DEFINITION_KEY_HTTP_ENDPOINT ||
+      def?.key === utils.constants.TOOL_DEFINITION_KEY_MCP_PROXY;
     return (
-      u.artifactTool?.toolDefinition?.title ||
-      u.artifactTool?.toolDefinition?.key ||
+      (proxied ? u.toolName : def?.title) ||
+      u.toolName ||
+      def?.title ||
+      def?.key ||
       (typeof u.input?.name === 'string' ? (u.input.name as string) : 'Tool')
     );
   }
@@ -195,6 +204,7 @@ const usageLabel = (u: MessageUsage): string => {
       u.artifactResource?.title ||
       u.artifactResource?.uri ||
       u.artifactTool?.toolDefinition?.title ||
+      u.toolName ||
       u.artifactTool?.toolDefinition?.key ||
       (typeof u.input?.uri === 'string'
         ? (u.input.uri as string)
@@ -203,7 +213,8 @@ const usageLabel = (u: MessageUsage): string => {
           : 'Resource')
     );
   }
-  return u.artifactPrompt?.title || 'Prompt';
+  // Proxied prompts have no artifact_prompt row — fall back to the recorded name.
+  return u.artifactPrompt?.title || u.toolName || 'Prompt';
 };
 
 const extractUsageText = (output: unknown): string => {

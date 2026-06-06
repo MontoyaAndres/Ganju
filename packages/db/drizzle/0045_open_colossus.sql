@@ -1,0 +1,3 @@
+ALTER TABLE "artifact_tool" ADD COLUMN "mcp_server_catalog_id" text;--> statement-breakpoint
+ALTER TABLE "artifact_tool" ADD CONSTRAINT "artifact_tool_mcp_server_catalog_id_mcp_server_catalog_id_fk" FOREIGN KEY ("mcp_server_catalog_id") REFERENCES "public"."mcp_server_catalog"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "artifact_tool_mcp_server_catalog_idx" ON "artifact_tool" USING btree ("mcp_server_catalog_id");

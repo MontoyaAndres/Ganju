@@ -3,7 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@anju/db';
 import { utils } from '@anju/utils';
 
-import { oauthState, providers } from '../../utils';
+import { oauthState, providers, completeMcpProxyOauth } from '../../utils';
 
 // types
 import { AppEnv } from '../../types';
@@ -262,7 +262,31 @@ const callback = async (c: Context<AppEnv>) => {
   return c.redirect(redirectUrl);
 };
 
+// Callback for the MCP-protocol OAuth flow (mcp-proxy oauth servers). The
+// authorize step is artifact-scoped (ArtifactController.startMcpProxyOauth);
+// this finishes the code exchange and returns the user to the Tools page.
+const mcpProxyCallback = async (c: Context<AppEnv>) => {
+  const query = c.req.query();
+  const code = query.code;
+  const state = query.state;
+  if (!code || !state) {
+    throw new Error('Missing code or state parameter');
+  }
+
+  const dbInstance = db.create(c);
+  const { slug, organizationId, projectId } = await completeMcpProxyOauth({
+    c,
+    dbInstance,
+    code,
+    state
+  });
+
+  const redirectUrl = `${utils.getEnv(c, 'NEXT_PUBLIC_WEB_URL')}/organization/${organizationId}/project/${projectId}/tools?connected=${slug}`;
+  return c.redirect(redirectUrl);
+};
+
 export const OAuthController = {
   authorize,
-  callback
+  callback,
+  mcpProxyCallback
 };

@@ -11,14 +11,19 @@ import { eq } from 'drizzle-orm';
 import {
   toolRegistry,
   parseHttpEndpointConfig,
-  executeHttpEndpoint
+  executeHttpEndpoint,
+  parseMcpProxyConfig,
+  parseMcpProxyDiscovery,
+  executeMcpProxyCall,
+  executeMcpProxyResourceRead,
+  executeMcpProxyPromptGet
 } from '../../tools';
 import {
   readResourceContent,
   refreshCredentialIfNeeded,
   generateEmbedding,
   resolveArtifactSlug,
-  allowHttpEndpointCall,
+  allowProxyToolCall,
   parseJsonRpcMessages,
   collectBodyOnlyRequests,
   parseClient,
@@ -284,14 +289,359 @@ const business = async (c: Context<AppEnv>) => {
 
   // http-endpoint auth references a credential by id; index the already-
   // refreshed (decrypted) credentials so the dispatcher can resolve its secret.
-  const credentialById = new Map(refreshedCredentials.map(cred => [cred.id, cred]));
+  const credentialById = new Map(
+    refreshedCredentials.map(cred => [cred.id, cred])
+  );
   // Guard against two rows claiming the same MCP tool name (native key or a
   // user-chosen http-endpoint name) — duplicate registration would throw.
   const registeredToolNames = new Set<string>();
+  // Proxied resources/prompts register alongside native ones; track the URIs and
+  // prompt names already claimed (native first, then earlier proxy installs) so a
+  // duplicate is skipped instead of throwing and aborting the whole boot.
+  const registeredResourceUris = new Set(exposedResources.map(r => r.uri));
+  const registeredPromptNames = new Set(
+    artifact.artifactPrompts.map(p => p.id)
+  );
 
   for (const artifactTool of artifact.artifactTools) {
     const toolDef = artifactTool.toolDefinition;
     if (!toolDef) continue;
+
+    // `mcp-proxy` is a proxied definition: each installed row connects a remote
+    // MCP server and registers one named tool per remote tool discovered at
+    // configure-time (stored on metadata.discovery so boot needs no remote
+    // round-trip). Only the actual tools/call below connects to the remote.
+    if (toolDef.key === utils.constants.TOOL_DEFINITION_KEY_MCP_PROXY) {
+      const proxyConfig = parseMcpProxyConfig(artifactTool.config);
+      const discovery = parseMcpProxyDiscovery(artifactTool.metadata);
+      if (!proxyConfig || !discovery) continue;
+
+      const credentialId =
+        proxyConfig.auth.kind !== utils.constants.MCP_PROXY_AUTH_KIND_NONE
+          ? proxyConfig.auth.credentialId
+          : undefined;
+      const resolved = credentialId
+        ? credentialById.get(credentialId)
+        : undefined;
+      const resolvedCredential = resolved
+        ? {
+            secret: resolved.accessToken,
+            needsReauth: resolved.needsReauth === true
+          }
+        : null;
+
+      const prefix = proxyConfig.prefix || 'mcp';
+      // metadata.discovery holds the FULL set the remote exposes; config's
+      // allowedTools is the enabled subset (absent/empty = all enabled).
+      const allowedTools =
+        proxyConfig.allowedTools && proxyConfig.allowedTools.length > 0
+          ? new Set(proxyConfig.allowedTools)
+          : null;
+
+      for (const remoteTool of discovery.tools) {
+        if (allowedTools && !allowedTools.has(remoteTool.name)) continue;
+        // Remote tool names are untrusted; skip-and-log any that can't be safely
+        // composed (bad charset, or the composite exceeds the tool-name limit).
+        const localName = utils.buildProxyToolName(prefix, remoteTool.name);
+        if (!localName) {
+          console.warn(
+            `Skipping proxied tool with unsafe name "${remoteTool.name}" (server ${prefix})`
+          );
+          continue;
+        }
+        if (registeredToolNames.has(localName)) continue;
+
+        // Remote input schemas are untrusted too — a single malformed one must
+        // not abort the whole artifact's MCP boot. Skip-and-log instead.
+        let remoteSchema;
+        try {
+          remoteSchema = utils.jsonSchemaToZodShape(
+            (remoteTool.inputSchema as JsonSchema) ?? {
+              type: 'object',
+              properties: {}
+            }
+          );
+        } catch (error) {
+          console.error(
+            `Skipping proxied tool "${localName}" — invalid input schema`,
+            error
+          );
+          continue;
+        }
+
+        // Remote tool descriptions are untrusted user content (the remote could
+        // attempt prompt injection) — mark them so the model knows it's
+        // third-party.
+        const description = `[via ${prefix}] ${
+          remoteTool.description || remoteTool.title || remoteTool.name
+        }`;
+
+        try {
+          mcpServer.registerTool(
+            localName,
+            {
+              title: remoteTool.title || remoteTool.name,
+              description,
+              inputSchema: remoteSchema
+            },
+            async args => {
+              const startedAt = Date.now();
+              const allowed = await allowProxyToolCall(c.env, artifactTool.id);
+              if (!allowed) {
+                const result = {
+                  content: [
+                    {
+                      type: 'text' as const,
+                      text: `Error: rate limit exceeded for "${localName}". Wait a moment before calling it again.`
+                    }
+                  ]
+                };
+                pendingRequests.push({
+                  method: utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL,
+                  toolName: localName,
+                  artifactToolId: artifactTool.id,
+                  input: args,
+                  output: result,
+                  latencyMs: Date.now() - startedAt,
+                  errorMessage: 'rate limit exceeded'
+                });
+                return result;
+              }
+              try {
+                const result = await executeMcpProxyCall(
+                  proxyConfig,
+                  remoteTool.name,
+                  args,
+                  resolvedCredential
+                );
+                pendingRequests.push({
+                  method: utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL,
+                  toolName: localName,
+                  artifactToolId: artifactTool.id,
+                  input: args,
+                  output: result,
+                  latencyMs: Date.now() - startedAt
+                });
+                return result;
+              } catch (error) {
+                // executeMcpProxyCall returns expected failures as text; this
+                // only fires on an unexpected throw. Surface it as text too
+                // (the tool convention) rather than throwing a protocol error.
+                const message =
+                  error instanceof Error ? error.message : String(error);
+                const result = {
+                  content: [
+                    {
+                      type: 'text' as const,
+                      text: `Error: "${localName}" failed — ${message}`
+                    }
+                  ]
+                };
+                pendingRequests.push({
+                  method: utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL,
+                  toolName: localName,
+                  artifactToolId: artifactTool.id,
+                  input: args,
+                  output: result,
+                  latencyMs: Date.now() - startedAt,
+                  errorMessage: message
+                });
+                return result;
+              }
+            }
+          );
+          registeredToolNames.add(localName);
+        } catch (error) {
+          console.error(
+            `Failed to register proxied tool "${localName}"`,
+            error
+          );
+        }
+      }
+
+      // Remote resources are opt-in: only those whose uri is in allowedResources
+      // register (absent/empty = none, matching the UI's default-off toggles).
+      // Each read forwards to the remote at call time.
+      const allowedResources =
+        proxyConfig.allowedResources && proxyConfig.allowedResources.length > 0
+          ? new Set(proxyConfig.allowedResources)
+          : null;
+      if (allowedResources) {
+        for (const remoteResource of discovery.resources || []) {
+          if (!allowedResources.has(remoteResource.uri)) continue;
+          if (registeredResourceUris.has(remoteResource.uri)) continue;
+          registeredResourceUris.add(remoteResource.uri);
+
+          try {
+            mcpServer.registerResource(
+              `${prefix}: ${
+                remoteResource.name ||
+                remoteResource.title ||
+                remoteResource.uri
+              }`,
+              remoteResource.uri,
+              {
+                title: remoteResource.title || remoteResource.name,
+                description: remoteResource.description
+                  ? `[via ${prefix}] ${remoteResource.description}`
+                  : `[via ${prefix}]`,
+                mimeType: remoteResource.mimeType || undefined
+              },
+              async (uri: URL) => {
+                const startedAt = Date.now();
+                const allowed = await allowProxyToolCall(
+                  c.env,
+                  artifactTool.id
+                );
+                if (!allowed) {
+                  throw new Error(
+                    `rate limit exceeded for "${prefix}". Wait a moment before trying again.`
+                  );
+                }
+                try {
+                  const result = await executeMcpProxyResourceRead(
+                    proxyConfig,
+                    uri.toString(),
+                    resolvedCredential
+                  );
+                  pendingRequests.push({
+                    method: utils.constants.MCP_REQUEST_METHOD_RESOURCES_READ,
+                    resourceUri: uri.toString(),
+                    artifactToolId: artifactTool.id,
+                    input: { uri: uri.toString() },
+                    output: result,
+                    latencyMs: Date.now() - startedAt
+                  });
+                  return result;
+                } catch (error) {
+                  pendingRequests.push({
+                    method: utils.constants.MCP_REQUEST_METHOD_RESOURCES_READ,
+                    resourceUri: uri.toString(),
+                    artifactToolId: artifactTool.id,
+                    input: { uri: uri.toString() },
+                    output: null,
+                    latencyMs: Date.now() - startedAt,
+                    errorMessage:
+                      error instanceof Error ? error.message : String(error)
+                  });
+                  throw error;
+                }
+              }
+            );
+          } catch (error) {
+            console.error(
+              `Failed to register proxied resource "${remoteResource.uri}"`,
+              error
+            );
+          }
+        }
+      }
+
+      // Remote prompts are opt-in the same way. Their argument schema is built
+      // from the discovered `arguments` (MCP prompt args are strings). Names and
+      // schemas are untrusted, so each registration is guarded individually.
+      const allowedPrompts =
+        proxyConfig.allowedPrompts && proxyConfig.allowedPrompts.length > 0
+          ? new Set(proxyConfig.allowedPrompts)
+          : null;
+      if (allowedPrompts) {
+        for (const remotePrompt of discovery.prompts || []) {
+          if (!allowedPrompts.has(remotePrompt.name)) continue;
+          const localName = utils.buildProxyToolName(prefix, remotePrompt.name);
+          if (!localName) {
+            console.warn(
+              `Skipping proxied prompt with unsafe name "${remotePrompt.name}" (server ${prefix})`
+            );
+            continue;
+          }
+          if (registeredPromptNames.has(localName)) continue;
+
+          let argsSchema;
+          try {
+            argsSchema = utils.jsonSchemaToZodShape({
+              type: 'object',
+              properties: Object.fromEntries(
+                (remotePrompt.arguments || []).map(a => [
+                  a.name,
+                  { type: 'string', description: a.description }
+                ])
+              ),
+              required: (remotePrompt.arguments || [])
+                .filter(a => a.required)
+                .map(a => a.name)
+            } as JsonSchema);
+          } catch (error) {
+            console.error(
+              `Skipping proxied prompt "${localName}" — invalid arguments`,
+              error
+            );
+            continue;
+          }
+
+          try {
+            mcpServer.registerPrompt(
+              localName,
+              {
+                title: remotePrompt.title || remotePrompt.name,
+                description: remotePrompt.description
+                  ? `[via ${prefix}] ${remotePrompt.description}`
+                  : `[via ${prefix}]`,
+                argsSchema
+              },
+              async args => {
+                const startedAt = Date.now();
+                const allowed = await allowProxyToolCall(
+                  c.env,
+                  artifactTool.id
+                );
+                if (!allowed) {
+                  throw new Error(
+                    `rate limit exceeded for "${localName}". Wait a moment before trying again.`
+                  );
+                }
+                try {
+                  const result = await executeMcpProxyPromptGet(
+                    proxyConfig,
+                    remotePrompt.name,
+                    args,
+                    resolvedCredential
+                  );
+                  pendingRequests.push({
+                    method: utils.constants.MCP_REQUEST_METHOD_PROMPTS_GET,
+                    promptId: localName,
+                    artifactToolId: artifactTool.id,
+                    input: args,
+                    output: result,
+                    latencyMs: Date.now() - startedAt
+                  });
+                  return result;
+                } catch (error) {
+                  pendingRequests.push({
+                    method: utils.constants.MCP_REQUEST_METHOD_PROMPTS_GET,
+                    promptId: localName,
+                    artifactToolId: artifactTool.id,
+                    input: args,
+                    output: null,
+                    latencyMs: Date.now() - startedAt,
+                    errorMessage:
+                      error instanceof Error ? error.message : String(error)
+                  });
+                  throw error;
+                }
+              }
+            );
+            registeredPromptNames.add(localName);
+          } catch (error) {
+            console.error(
+              `Failed to register proxied prompt "${localName}"`,
+              error
+            );
+          }
+        }
+      }
+
+      continue;
+    }
 
     // `http-endpoint` is a proxied definition: each installed row registers one
     // named tool derived from its config, dispatched against a user HTTP API.
@@ -331,7 +681,7 @@ const business = async (c: Context<AppEnv>) => {
           // Per-tool rate limit: stop the model from hammering one customer
           // backend in a tight loop. Keyed by artifactTool.id so each endpoint
           // has its own budget.
-          const allowed = await allowHttpEndpointCall(c.env, artifactTool.id);
+          const allowed = await allowProxyToolCall(c.env, artifactTool.id);
           if (!allowed) {
             const result = {
               content: [
@@ -368,17 +718,29 @@ const business = async (c: Context<AppEnv>) => {
             });
             return result;
           } catch (error) {
+            // executeHttpEndpoint returns expected failures as text; this only
+            // fires on an unexpected throw. Surface it as text too (the tool
+            // convention) rather than throwing a protocol error.
+            const message =
+              error instanceof Error ? error.message : String(error);
+            const result = {
+              content: [
+                {
+                  type: 'text' as const,
+                  text: `Error: "${endpointConfig.name}" failed — ${message}`
+                }
+              ]
+            };
             pendingRequests.push({
               method: utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL,
               toolName: endpointConfig.name,
               artifactToolId: artifactTool.id,
               input: args,
-              output: null,
+              output: result,
               latencyMs: Date.now() - startedAt,
-              errorMessage:
-                error instanceof Error ? error.message : String(error)
+              errorMessage: message
             });
-            throw error;
+            return result;
           }
         }
       );

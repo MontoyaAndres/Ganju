@@ -1,0 +1,1 @@
+ALTER TABLE "channel_message_usage" ADD COLUMN "tool_name" text;

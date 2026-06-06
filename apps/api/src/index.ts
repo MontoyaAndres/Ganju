@@ -352,6 +352,16 @@ app
     UserMiddleware.verify,
     ArtifactController.createTool
   )
+  .post(
+    '/organization/:organizationId/project/:projectId/artifact/mcp-proxy/discover',
+    UserMiddleware.verify,
+    ArtifactController.previewMcpProxy
+  )
+  .post(
+    '/organization/:organizationId/project/:projectId/artifact/mcp-proxy/oauth/start',
+    UserMiddleware.verify,
+    ArtifactController.startMcpProxyOauth
+  )
   .put(
     '/organization/:organizationId/project/:projectId/artifact/tool/:toolId',
     UserMiddleware.verify,
@@ -382,6 +392,11 @@ app
 
   // Tool catalog controller
   .get('/catalog/tools', UserMiddleware.verify, CatalogController.listGroups)
+  .get(
+    '/catalog/mcp-servers',
+    UserMiddleware.verify,
+    CatalogController.listMcpServers
+  )
 
   // Organization LLM controller
   .get(
@@ -441,6 +456,7 @@ app
   .post('/channel/:channelId/webhook/:platform', ChannelController.webhook)
 
   // OAuth controller
+  .get('/oauth/mcp-proxy/callback', OAuthController.mcpProxyCallback)
   .get(
     '/oauth/:provider/authorize',
     UserMiddleware.verify,
