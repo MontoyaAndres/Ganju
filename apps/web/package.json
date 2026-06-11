@@ -14,17 +14,18 @@
   "dependencies": {
     "@anju/ui": "*",
     "@anju/utils": "*",
-    "next": "^16.1.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "swr": "^2.4.0"
+    "better-auth": "^1.6.16",
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "swr": "^2.4.1"
   },
   "devDependencies": {
     "@anju/tsconfig": "*",
-    "@opennextjs/cloudflare": "^1.19.4",
-    "@types/node": "^25.2.3",
-    "@types/react": "^19.2.14",
+    "@opennextjs/cloudflare": "^1.19.11",
+    "@types/node": "^25.9.3",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }

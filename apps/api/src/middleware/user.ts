@@ -25,13 +25,16 @@ export const verify = async (c: Context<AppEnv>, next: Next) => {
   // authorized by project membership alone (an invitee may belong to a project
   // without belonging to its organization), while an org-scoped route is
   // authorized by organization membership.
-  if (c.req.param('projectId')) {
+  const projectId = c.req.param('projectId');
+  const organizationId = c.req.param('organizationId');
+
+  if (projectId) {
     const [adminOnProject] = await dbInstance
       .select()
       .from(db.schema.projectUser)
       .where(
         and(
-          eq(db.schema.projectUser.projectId, c.req.param('projectId')),
+          eq(db.schema.projectUser.projectId, projectId),
           eq(db.schema.projectUser.userId, session.user.id),
           eq(db.schema.projectUser.role, utils.constants.USER_ROLE_ADMIN)
         )
@@ -41,16 +44,13 @@ export const verify = async (c: Context<AppEnv>, next: Next) => {
     if (!adminOnProject) {
       return c.json({ error: 'Forbidden' }, 403);
     }
-  } else if (c.req.param('organizationId')) {
+  } else if (organizationId) {
     const [adminOnOrganization] = await dbInstance
       .select()
       .from(db.schema.organizationUser)
       .where(
         and(
-          eq(
-            db.schema.organizationUser.organizationId,
-            c.req.param('organizationId')
-          ),
+          eq(db.schema.organizationUser.organizationId, organizationId),
           eq(db.schema.organizationUser.userId, session.user.id),
           eq(db.schema.organizationUser.role, utils.constants.USER_ROLE_ADMIN)
         )

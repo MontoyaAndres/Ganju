@@ -13,18 +13,18 @@
     "@anju/containers": "*",
     "@anju/db": "*",
     "@anju/utils": "*",
-    "@google/genai": "^1.50.1",
-    "@hono/mcp": "^0.2.3",
-    "@modelcontextprotocol/sdk": "^1.26.0",
-    "hono": "^4.11.9",
+    "@google/genai": "^2.8.0",
+    "@hono/mcp": "^0.3.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "hono": "^4.12.25",
     "jose": "^6.2.3"
   },
   "devDependencies": {
     "@anju/tsconfig": "*",
-    "@cloudflare/workers-types": "^4.20260217.0",
-    "@types/node": "^25.2.3",
-    "esbuild": "^0.27.3",
+    "@cloudflare/workers-types": "^4.20260611.1",
+    "@types/node": "^25.9.3",
+    "esbuild": "^0.28.0",
     "fast-glob": "^3.3.3",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }

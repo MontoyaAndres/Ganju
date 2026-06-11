@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
-import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
+import ErrorOutlined from '@mui/icons-material/ErrorOutlined';
 
 export type StatusTone = 'pending' | 'completed' | 'failed';
 
@@ -24,14 +24,14 @@ export const StatusBadgeWrapper = styled.span<{ tone: StatusTone }>`
   `}
 `;
 
-export const FailedIcon = styled(ErrorOutline)`
+export const FailedIcon = styled(ErrorOutlined)`
   ${({ theme }) => css`
     font-size: 14px;
     color: ${theme.colors.red};
   `}
 `;
 
-export const CompletedIcon = styled(CheckCircleOutline)`
+export const CompletedIcon = styled(CheckCircleOutlined)`
   ${({ theme }) => css`
     font-size: 14px;
     color: ${theme.colors.fernGreen};

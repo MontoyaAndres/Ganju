@@ -20,13 +20,13 @@
   },
   "dependencies": {
     "@anju/utils": "*",
-    "drizzle-orm": "^0.45.1",
-    "postgres": "^3.4.8",
-    "uuid": "^13.0.0"
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@anju/tsconfig": "*",
-    "drizzle-kit": "^0.31.9",
-    "typescript": "^5.9.3"
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^6.0.3"
   }
 }

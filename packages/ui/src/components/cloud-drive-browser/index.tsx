@@ -9,9 +9,9 @@ import {
   InsertDriveFileOutlined,
   Search,
   CloudOutlined,
-  StarOutline,
+  StarOutlined,
   ScheduleOutlined,
-  ErrorOutline,
+  ErrorOutlined,
   Close,
   PictureAsPdfOutlined,
   DescriptionOutlined,
@@ -137,7 +137,7 @@ const buildGoogleConfig = (): ProviderConfig => ({
       t.value === utils.constants.GOOGLE_DRIVE_TAB_SHARED_DRIVES ? (
         <CloudOutlined fontSize="small" />
       ) : t.value === utils.constants.GOOGLE_DRIVE_TAB_STARRED ? (
-        <StarOutline fontSize="small" />
+        <StarOutlined fontSize="small" />
       ) : undefined
   })),
   tabRootCrumb: tab => {
@@ -793,7 +793,7 @@ export const CloudDriveBrowser = (props: IProps) => {
 
       {error && (
         <div className="gdrive-error" role="alert">
-          <ErrorOutline fontSize="small" style={{ verticalAlign: 'middle' }} />{' '}
+          <ErrorOutlined fontSize="small" style={{ verticalAlign: 'middle' }} />{' '}
           {error}
         </div>
       )}

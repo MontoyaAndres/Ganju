@@ -4,7 +4,7 @@
   "main": "index.js",
   "repository": "git@github.com:MontoyaAndres/anju.git",
   "author": "MontoyaAndres <andresmontoyafcb@gmail.com>",
-  "packageManager": "npm@11.10.0",
+  "packageManager": "npm@11.17.0",
   "license": "MIT",
   "workspaces": [
     "apps/*",
@@ -22,7 +22,7 @@
     "deploy-prod": "turbo run deploy-prod"
   },
   "dependencies": {
-    "turbo": "^2.8.9"
+    "turbo": "^2.9.18"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",

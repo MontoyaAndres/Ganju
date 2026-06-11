@@ -2,7 +2,7 @@ import { v7 as uuid } from 'uuid';
 import { db } from '@anju/db';
 
 // types
-import type { ZodError } from 'better-auth';
+import type { ZodError } from 'zod';
 import type { Context } from 'hono';
 
 export interface HandleErrorOptions {

@@ -13,6 +13,10 @@ const calendars = async (c: Context<AppEnv>) => {
   const projectId = c.req.param('projectId');
   const organizationId = c.req.param('organizationId');
 
+  if (!projectId || !organizationId) {
+    throw new Error('projectId and organizationId are required');
+  }
+
   const dbInstance = db.create(c);
 
   const [project] = await dbInstance

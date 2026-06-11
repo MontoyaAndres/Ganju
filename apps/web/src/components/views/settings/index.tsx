@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { UI } from '@anju/ui';
 import { utils } from '@anju/utils';
 import IconButton from '@mui/material/IconButton';
-import { Add, DeleteOutline, EditOutlined } from '@mui/icons-material';
+import { Add, DeleteOutlined, EditOutlined } from '@mui/icons-material';
 
 import { Wrapper } from './styles';
 import { MembersManager } from './members-manager';
@@ -787,7 +787,7 @@ export const Settings = (props: SettingsProps) => {
                       onClick={() => setLlmDeleteAlert(llm)}
                       disabled={llmSubmitting}
                     >
-                      <DeleteOutline fontSize="small" />
+                      <DeleteOutlined fontSize="small" />
                     </IconButton>
                   </div>
                 </div>

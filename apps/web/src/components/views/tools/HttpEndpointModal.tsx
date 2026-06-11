@@ -6,7 +6,7 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import {
   Close,
-  DeleteOutline,
+  DeleteOutlined,
   Add,
   ViewList,
   Code,
@@ -583,7 +583,7 @@ export const HttpEndpointModal = ({
                           setHeaders(prev => prev.filter((_, idx) => idx !== i))
                         }
                       >
-                        <DeleteOutline />
+                        <DeleteOutlined />
                       </IconButton>
                     </div>
                   ))}
@@ -627,7 +627,7 @@ export const HttpEndpointModal = ({
                           setQuery(prev => prev.filter((_, idx) => idx !== i))
                         }
                       >
-                        <DeleteOutline />
+                        <DeleteOutlined />
                       </IconButton>
                     </div>
                   ))}
@@ -723,7 +723,7 @@ export const HttpEndpointModal = ({
                             setArgs(prev => prev.filter((_, idx) => idx !== i))
                           }
                         >
-                          <DeleteOutline />
+                          <DeleteOutlined />
                         </IconButton>
                       </div>
                       <div className="http-endpoint-arg-fields">

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { UI } from '@anju/ui';
 import { utils } from '@anju/utils';
-import { CheckCircleOutline } from '@mui/icons-material';
+import { CheckCircleOutlined } from '@mui/icons-material';
 
 import { Wrapper } from './styles';
 
@@ -81,7 +81,7 @@ export const Link = () => {
       {status === 'resolved' && linked ? (
         <div className="link-card">
           <div className="link-success">
-            <CheckCircleOutline className="link-success-icon" />
+            <CheckCircleOutlined className="link-success-icon" />
             <p className="link-success-title">Account linked</p>
             <p className="link-success-text">
               Your {formatProvider(linked.provider)} account

@@ -7,7 +7,7 @@ import Switch from '@mui/material/Switch';
 import {
   Add,
   Close,
-  DeleteOutline,
+  DeleteOutlined,
   EditOutlined,
   ArrowBack,
   OpenInNew,
@@ -15,7 +15,7 @@ import {
   TextFields,
   ExpandMore,
   ExpandLess,
-  RemoveCircleOutline,
+  RemoveCircleOutlined,
   FolderOpenOutlined,
   LanguageOutlined,
   ViewListOutlined,
@@ -1763,7 +1763,7 @@ export const Resources = () => {
             className="resource-item-remove-button"
             onClick={e => handleDeleteRow(e, resource)}
           >
-            <DeleteOutline fontSize="small" />
+            <DeleteOutlined fontSize="small" />
           </IconButton>
         )}
       </div>
@@ -2120,7 +2120,7 @@ export const Resources = () => {
                     <EditOutlined />
                   </IconButton>
                   <IconButton onClick={handleDeleteClick} size="small">
-                    <DeleteOutline />
+                    <DeleteOutlined />
                   </IconButton>
                 </>
               )}
@@ -2571,7 +2571,7 @@ export const Resources = () => {
                                 )
                               }
                             >
-                              <RemoveCircleOutline />
+                              <RemoveCircleOutlined />
                             </IconButton>
                           </div>
                         ))}

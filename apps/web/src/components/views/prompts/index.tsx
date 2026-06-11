@@ -6,10 +6,10 @@ import IconButton from '@mui/material/IconButton';
 import {
   Add,
   Close,
-  DeleteOutline,
+  DeleteOutlined,
   EditOutlined,
   ArrowBack,
-  RemoveCircleOutline,
+  RemoveCircleOutlined,
   Code,
   ViewList,
   ChatBubbleOutlineOutlined
@@ -535,7 +535,7 @@ export const Prompts = () => {
                     <EditOutlined />
                   </IconButton>
                   <IconButton onClick={handleDeleteClick} size="small">
-                    <DeleteOutline />
+                    <DeleteOutlined />
                   </IconButton>
                 </>
               )}
@@ -705,7 +705,7 @@ export const Prompts = () => {
                                   )
                                 }
                               >
-                                <RemoveCircleOutline />
+                                <RemoveCircleOutlined />
                               </IconButton>
                             )}
                           </div>

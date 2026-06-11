@@ -9,7 +9,7 @@ import Switch from '@mui/material/Switch';
 import {
   Close,
   CheckCircle,
-  DeleteOutline,
+  DeleteOutlined,
   EditOutlined,
   LinkOff,
   Link as LinkIcon,
@@ -1296,7 +1296,7 @@ export const Tools = () => {
                                       size="small"
                                       onClick={() => setRemoveAlert(t)}
                                     >
-                                      <DeleteOutline />
+                                      <DeleteOutlined />
                                     </IconButton>
                                   </Tooltip>
                                 </div>
@@ -1736,7 +1736,7 @@ export const Tools = () => {
                                 size="small"
                                 onClick={() => setRemoveAlert(t)}
                               >
-                                <DeleteOutline />
+                                <DeleteOutlined />
                               </IconButton>
                             </Tooltip>
                           </div>

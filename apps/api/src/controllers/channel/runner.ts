@@ -16,7 +16,7 @@ import {
 import type { LlmMessage, LlmToolCall, LlmToolDefinition } from '../../utils';
 import type { AppEnv } from '../../types';
 import type { ChannelNotifier, Source, SourceButton } from '@anju/utils';
-import { Client } from '@modelcontextprotocol/sdk/client';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 type ArtifactResourceRow = InferSelectModel<typeof db.schema.artifactResource>;
 

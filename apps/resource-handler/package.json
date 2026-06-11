@@ -11,18 +11,18 @@
   "dependencies": {
     "@anju/db": "*",
     "@anju/utils": "*",
-    "@modelcontextprotocol/sdk": "^1.26.0",
-    "cheerio": "^1.0.0",
-    "fflate": "^0.8.2",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "cheerio": "^1.2.0",
+    "fflate": "^0.8.3",
     "mammoth": "^1.12.0",
-    "playwright": "^1.49.0",
-    "unpdf": "^1.6.0",
+    "playwright": "^1.60.0",
+    "unpdf": "^1.6.2",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@anju/tsconfig": "*",
-    "@types/node": "^25.2.3",
-    "esbuild": "^0.27.3",
-    "typescript": "^5.9.3"
+    "@types/node": "^25.9.3",
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.3"
   }
 }

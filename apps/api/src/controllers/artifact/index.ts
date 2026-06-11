@@ -448,6 +448,11 @@ const createResource = async (c: Context<AppEnv>) => {
   const projectId = c.req.param('projectId');
   const organizationId = c.req.param('organizationId');
   const userId = c.get('user').id;
+
+  if (!projectId || !organizationId) {
+    throw new Error('projectId and organizationId are required');
+  }
+
   const isWebsite =
     body?.sourceType === utils.constants.RESOURCE_SOURCE_TYPE_WEBSITE;
 
@@ -604,6 +609,10 @@ const updateResource = async (c: Context<AppEnv>) => {
   const organizationId = c.req.param('organizationId');
   const resourceId = c.req.param('resourceId');
   const userId = c.get('user').id;
+
+  if (!projectId || !organizationId || !resourceId) {
+    throw new Error('projectId, organizationId and resourceId are required');
+  }
 
   const dbInstance = db.create(c);
 

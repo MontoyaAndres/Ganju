@@ -11,6 +11,11 @@ import { AppEnv } from '../../types';
 const authorize = async (c: Context<AppEnv>) => {
   const provider = c.req.param('provider');
   const query = c.req.query();
+
+  if (!provider) {
+    throw new Error('provider is required');
+  }
+
   const organizationId = query.organizationId;
   const projectId = query.projectId;
   const scopes = query.scopes;
@@ -65,6 +70,11 @@ const authorize = async (c: Context<AppEnv>) => {
 const callback = async (c: Context<AppEnv>) => {
   const provider = c.req.param('provider');
   const query = c.req.query();
+
+  if (!provider) {
+    throw new Error('provider is required');
+  }
+
   const code = query.code;
   const stateParam = query.state;
 

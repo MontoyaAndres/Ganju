@@ -16,11 +16,11 @@
   },
   "dependencies": {
     "@noble/ciphers": "^2.2.0",
-    "dayjs": "^1.11.20",
-    "zod": "^4.3.6"
+    "dayjs": "^1.11.21",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@anju/tsconfig": "*",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }

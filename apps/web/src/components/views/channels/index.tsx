@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip';
 import {
   Add,
   Close,
-  DeleteOutline,
+  DeleteOutlined,
   ArrowBack,
   ForumOutlined,
   Telegram,
@@ -1572,7 +1572,7 @@ export const Channels = () => {
                     variant="outlined"
                     onClick={() => setDeleteAlert(true)}
                   >
-                    <DeleteOutline />
+                    <DeleteOutlined />
                     <span className="button-text">Remove channel</span>
                   </UI.Button>
                 </div>
