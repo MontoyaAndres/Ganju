@@ -67,6 +67,7 @@ import {
   searchResources
 } from './resources';
 import { webSearch, webExtract } from './web';
+import { listPrompts } from './prompts';
 import { httpEndpoint } from './httpEndpoint';
 import { mcpProxy } from './mcpProxy';
 
@@ -79,6 +80,7 @@ export const toolRegistry = new Map<string, ToolDefinition>([
   ['read-resource', readResource],
   ['send-resource', sendResource],
   ['search-resources', searchResources],
+  ['list-prompts', listPrompts],
   ['gmail-send-email', gmailSendEmail],
   ['gmail-reply-email', gmailReplyEmail],
   ['gmail-forward-email', gmailForwardEmail],

@@ -16,7 +16,8 @@ import {
   parseMcpProxyDiscovery,
   executeMcpProxyCall,
   executeMcpProxyResourceRead,
-  executeMcpProxyPromptGet
+  executeMcpProxyPromptGet,
+  type PromptInventoryItem
 } from '../../tools';
 import {
   readResourceContent,
@@ -120,6 +121,22 @@ const business = async (c: Context<AppEnv>) => {
     artifact.artifactCredentials.map(cred => refreshCredentialIfNeeded(c, cred))
   );
 
+  // Channel-relayed self-fetches from the API worker tag themselves so we can
+  // distinguish them from direct MCP clients (Claude Desktop, mcp-inspector).
+  // Only honor these on trusted auth paths — internal-secret (the API holds it)
+  // or bot-on-behalf-of JWTs (minted in-process by the API, never issued to
+  // external OAuth clients). Otherwise a Claude Desktop user could spoof them and
+  // pollute the session metadata (and the list-prompts guidance). Read once here;
+  // reused for the session metadata below.
+  const channelTrust =
+    authContext?.kind === 'internal' || authContext?.isBotToken === true;
+  const channelIdHeader = channelTrust
+    ? (c.req.header(utils.constants.MCP_CHANNEL_ID_HEADER) ?? null)
+    : null;
+  const channelPlatform = channelTrust
+    ? (c.req.header(utils.constants.MCP_CHANNEL_PLATFORM_HEADER) ?? null)
+    : null;
+
   const mcpServer = new McpServer({
     name: artifact.project.name || 'MCP Server',
     description: artifact.project.description || 'MCP Server Description',
@@ -130,9 +147,33 @@ const business = async (c: Context<AppEnv>) => {
   });
   const bucket = c.env.STORAGE_BUCKET;
   const pendingRequests: PendingRequest[] = [];
+  // The prompts/commands this server exposes (artifact + proxied), accumulated as
+  // each prompt is registered below so the list-prompts tool mirrors exactly what
+  // is registered. Read at tool-call time, after this boot loop has fully run.
+  const promptInventory: PromptInventoryItem[] = [];
 
   for (const prompt of artifact.artifactPrompts) {
-    const schema = utils.jsonSchemaToZodShape(prompt.schema as JsonSchema);
+    const promptSchema = (prompt.schema as JsonSchema) || {
+      type: 'object',
+      properties: {}
+    };
+    const schema = utils.jsonSchemaToZodShape(promptSchema);
+    const requiredArgs = new Set(promptSchema.required || []);
+    const promptSlug = utils.slugifyPromptTitle(prompt.title);
+    promptInventory.push({
+      name: prompt.id,
+      title: prompt.title,
+      description: prompt.description || undefined,
+      source: 'artifact',
+      command: promptSlug ? `/${promptSlug}` : null,
+      arguments: Object.entries(promptSchema.properties || {}).map(
+        ([name, prop]) => ({
+          name,
+          description: (prop as { description?: string }).description,
+          required: requiredArgs.has(name)
+        })
+      )
+    });
 
     mcpServer.registerPrompt(
       prompt.id,
@@ -631,6 +672,20 @@ const business = async (c: Context<AppEnv>) => {
               }
             );
             registeredPromptNames.add(localName);
+            const proxyTitle = remotePrompt.title || remotePrompt.name;
+            const proxySlug = utils.slugifyPromptTitle(proxyTitle);
+            promptInventory.push({
+              name: localName,
+              title: proxyTitle,
+              description: remotePrompt.description || undefined,
+              source: 'mcp-proxy',
+              command: proxySlug ? `/${proxySlug}` : null,
+              arguments: (remotePrompt.arguments || []).map(a => ({
+                name: a.name,
+                description: a.description,
+                required: a.required === true
+              }))
+            });
           } catch (error) {
             console.error(
               `Failed to register proxied prompt "${localName}"`,
@@ -807,6 +862,8 @@ const business = async (c: Context<AppEnv>) => {
             config: toolConfig,
             credentials: toolCredentials,
             resources: exposedResources,
+            prompts: promptInventory,
+            channelPlatform,
             bucket,
             env: c.env,
             db: dbInstance,
@@ -866,25 +923,14 @@ const business = async (c: Context<AppEnv>) => {
     c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? null;
   const client = parseClient(userAgent);
 
-  // Channel-relayed self-fetches from the API worker tag themselves so we can
-  // distinguish them from direct MCP clients (Claude Desktop, mcp-inspector).
-  // Only honor these on trusted auth paths — internal-secret (the API holds
-  // it) or bot-on-behalf-of JWTs (minted in-process by the API, never issued
-  // to external OAuth clients). Otherwise a Claude Desktop user could spoof
-  // them and pollute the session metadata.
-  const channelTrust =
-    authContext?.kind === 'internal' || authContext?.isBotToken === true;
-  const channelIdHeader = channelTrust
-    ? (c.req.header(utils.constants.MCP_CHANNEL_ID_HEADER) ?? null)
-    : null;
-  const channelPlatformHeader = channelTrust
-    ? (c.req.header(utils.constants.MCP_CHANNEL_PLATFORM_HEADER) ?? null)
-    : null;
+  // channelTrust / channelIdHeader / channelPlatform are resolved once at boot
+  // (see above) so the same trusted-header read drives both the list-prompts
+  // guidance and this session metadata.
   const sessionMetadata: Record<string, unknown> | null = channelIdHeader
     ? {
         via: 'channel',
         channelId: channelIdHeader,
-        platform: channelPlatformHeader
+        platform: channelPlatform
       }
     : null;
 

@@ -8,4 +8,8 @@ export {
   executeMcpProxyPromptGet,
   type ResolvedProxyCredential
 } from './mcpProxy';
-export type { ToolDefinition } from './types';
+export type {
+  ToolDefinition,
+  PromptInventoryItem,
+  PromptInventoryArgument
+} from './types';
