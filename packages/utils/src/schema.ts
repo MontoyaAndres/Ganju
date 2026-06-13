@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { constants } from './constants';
 import { isReservedSlug, isValidSlugFormat } from './slug';
-import { slugifyPromptTitle } from './slugifyPromptTitle';
+import { slugifyTitle } from './slugifyTitle';
 
 // A prompt title becomes a slash command; it must not collide with a command
 // the channel runner handles itself (e.g. `/link`).
@@ -12,7 +12,7 @@ const PROMPT_TITLE = z
   .max(200)
   .refine(
     title =>
-      !constants.RESERVED_BOT_COMMANDS.includes(slugifyPromptTitle(title)),
+      !constants.RESERVED_BOT_COMMANDS.includes(slugifyTitle(title)),
     { message: 'This title is reserved as a bot command' }
   );
 

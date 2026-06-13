@@ -3,10 +3,10 @@ import styled from '@emotion/styled';
 
 export const Wrapper = styled.div`
   ${({ theme }) => css`
-    min-height: calc(100vh - 60px);
+    height: calc(100vh - 60px);
 
     @media (min-width: ${theme.screens.xl}) {
-      min-height: 100vh;
+      height: 100vh;
     }
 
     .tools-container {
@@ -14,8 +14,8 @@ export const Wrapper = styled.div`
       max-width: 1100px;
       margin: 0 auto;
 
-      @media (min-width: ${theme.screens.md}) {
-        padding: 24px 32px;
+      @media (min-width: ${theme.screens.xl}) {
+        padding: 28px 32px;
       }
     }
 

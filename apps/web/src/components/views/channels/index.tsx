@@ -214,15 +214,15 @@ const channelLabel = (channel: Channel): string => {
 };
 
 const usageIcon = (kind: MessageUsage['kind']) => {
-  if (kind === utils.constants.CHANNEL_USAGE_KIND_TOOL)
+  if (kind === utils.constants.USAGE_KIND_TOOL)
     return <BuildOutlined />;
-  if (kind === utils.constants.CHANNEL_USAGE_KIND_RESOURCE)
+  if (kind === utils.constants.USAGE_KIND_RESOURCE)
     return <AttachFileOutlined />;
   return <AutoAwesomeOutlined />;
 };
 
 const usageLabel = (u: MessageUsage): string => {
-  if (u.kind === utils.constants.CHANNEL_USAGE_KIND_TOOL) {
+  if (u.kind === utils.constants.USAGE_KIND_TOOL) {
     const def = u.artifactTool?.toolDefinition;
     // http-endpoint / mcp-proxy back many tools per row, so their definition
     // title is just the generic parent — prefer the recorded specific name.
@@ -237,7 +237,7 @@ const usageLabel = (u: MessageUsage): string => {
       (typeof u.input?.name === 'string' ? (u.input.name as string) : 'Tool')
     );
   }
-  if (u.kind === utils.constants.CHANNEL_USAGE_KIND_RESOURCE) {
+  if (u.kind === utils.constants.USAGE_KIND_RESOURCE) {
     return (
       u.artifactResource?.title ||
       u.artifactResource?.uri ||
@@ -307,7 +307,7 @@ const collectResourceAttachments = (
   const out: UsageResource[] = [];
   for (const u of usages) {
     if (
-      u.kind === utils.constants.CHANNEL_USAGE_KIND_RESOURCE &&
+      u.kind === utils.constants.USAGE_KIND_RESOURCE &&
       u.artifactResource &&
       !seen.has(u.artifactResource.id)
     ) {

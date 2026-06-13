@@ -255,6 +255,19 @@ const createPrompt = async (c: Context<AppEnv>) => {
       throw new Error('Artifact not found for the project');
     }
 
+    const newSlug = utils.slugifyTitle(currentValues.title);
+    if (newSlug) {
+      const siblings = await tx
+        .select({ title: db.schema.artifactPrompt.title })
+        .from(db.schema.artifactPrompt)
+        .where(
+          eq(db.schema.artifactPrompt.artifactId, currentArtifactByProject.id)
+        );
+      if (siblings.some(p => utils.slugifyTitle(p.title) === newSlug)) {
+        throw new Error('A prompt with this command name already exists');
+      }
+    }
+
     const artifactPrompt = await tx
       .insert(db.schema.artifactPrompt)
       .values({
@@ -321,6 +334,28 @@ const updatePrompt = async (c: Context<AppEnv>) => {
 
     if (!currentArtifactByProject) {
       throw new Error('Artifact not found for the project');
+    }
+
+    const newSlug = utils.slugifyTitle(currentValues.title);
+    if (newSlug) {
+      const siblings = await tx
+        .select({
+          id: db.schema.artifactPrompt.id,
+          title: db.schema.artifactPrompt.title
+        })
+        .from(db.schema.artifactPrompt)
+        .where(
+          eq(db.schema.artifactPrompt.artifactId, currentArtifactByProject.id)
+        );
+      if (
+        siblings.some(
+          p =>
+            p.id !== currentValues.promptId &&
+            utils.slugifyTitle(p.title) === newSlug
+        )
+      ) {
+        throw new Error('A prompt with this command name already exists');
+      }
     }
 
     const artifactPrompt = await tx

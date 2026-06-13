@@ -145,6 +145,12 @@ const HomeLayout = ({ page }: { page: HomePage }) => {
     router.push(`${projectBase}/${section}`);
   };
 
+  const goToProjectHome = () => {
+    if (!projectBase) return;
+    setMobileMenuClicked(false);
+    router.push(projectBase);
+  };
+
   useEffect(() => {
     if (currentOrgId && !currentProjectId && organizations === null) {
       loadOrganizations();
@@ -554,7 +560,7 @@ const HomeLayout = ({ page }: { page: HomePage }) => {
                       ? 'active'
                       : ''
                   }
-                  onClick={() => {}}
+                  onClick={goToProjectHome}
                 >
                   {pathname === '/organization/[id]/project/[projectId]' ? (
                     <HomeFilled />
@@ -685,7 +691,7 @@ const HomeLayout = ({ page }: { page: HomePage }) => {
                   ? 'active'
                   : ''
               }
-              onClick={() => {}}
+              onClick={goToProjectHome}
             >
               {pathname === '/organization/[id]/project/[projectId]' ? (
                 <HomeFilled />

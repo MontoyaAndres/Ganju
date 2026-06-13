@@ -14,7 +14,7 @@ export const Wrapper = styled.div<IProps>`
     margin: 0 auto;
 
     @media (min-width: ${theme.screens.xl}) {
-      height: calc(100vh - 0px);
+      height: 100vh;
     }
 
     .prompts-list {
@@ -22,8 +22,8 @@ export const Wrapper = styled.div<IProps>`
       overflow-y: auto;
       padding: 20px;
 
-      @media (min-width: ${theme.screens.md}) {
-        padding: 24px 32px;
+      @media (min-width: ${theme.screens.xl}) {
+        padding: 28px 32px;
       }
 
       &.has-selection {
@@ -194,8 +194,8 @@ export const Wrapper = styled.div<IProps>`
             display: inline-block;
             margin-top: 6px;
             padding: 2px 8px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-              monospace;
+            font-family:
+              ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: ${theme.fonts.xs};
             color: ${theme.colors.bastille}CC;
             background-color: ${theme.colors.bastille}0D;
@@ -324,8 +324,8 @@ export const Wrapper = styled.div<IProps>`
             color: ${theme.colors.bastille}99;
 
             code {
-              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
-                Consolas, monospace;
+              font-family:
+                ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
               font-size: ${theme.fonts.xs};
               padding: 2px 6px;
               color: ${theme.colors.bastille};

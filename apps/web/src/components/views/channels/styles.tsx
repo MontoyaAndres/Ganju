@@ -23,7 +23,7 @@ export const Wrapper = styled.div<IProps>`
       padding: 20px;
 
       @media (min-width: ${theme.screens.md}) {
-        padding: 24px 32px;
+        padding: 24px 0;
       }
 
       &.has-selection {

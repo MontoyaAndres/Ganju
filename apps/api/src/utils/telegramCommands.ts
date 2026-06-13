@@ -17,7 +17,7 @@ export const registerTelegramBotCommands = async (
 ) => {
   const commands = prompts
     .map(p => ({
-      command: utils.slugifyPromptTitle(p.title).slice(0, 32),
+      command: utils.slugifyTitle(p.title).slice(0, 32),
       description: (p.description || p.title).slice(0, 256)
     }))
     .filter(

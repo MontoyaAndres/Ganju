@@ -31,7 +31,7 @@ const buildCommands = (
 ): DiscordApplicationCommand[] => {
   const promptCommands = prompts
     .map(p => ({
-      name: utils.slugifyPromptTitle(p.title).slice(0, 32),
+      name: utils.slugifyTitle(p.title).slice(0, 32),
       description: (p.description || p.title || 'Run this prompt').slice(0, 100)
     }))
     .filter(

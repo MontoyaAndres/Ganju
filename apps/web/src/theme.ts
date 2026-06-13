@@ -20,6 +20,24 @@ const basicConfig = {
     fairPink: '#FFEBEE',
     salem: '#1F7A3A'
   },
+  chart: {
+    telegram: '#7FC8EC',
+    whatsapp: '#86D9A4',
+    slack: '#C9A0DC',
+    discord: '#9AA6F2',
+    fallback: '#9AA0A6',
+    mcp: '#1C1825',
+    mcpPalette: [
+      '#5B8DEF',
+      '#E0894F',
+      '#3FB6A8',
+      '#B06FD8',
+      '#D9657F',
+      '#E0B341',
+      '#6C7BE0',
+      '#7BB35F'
+    ]
+  },
   fonts: {
     xs: '12px',
     sm: '14px',

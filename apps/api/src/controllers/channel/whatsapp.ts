@@ -289,6 +289,7 @@ const processWhatsappMessage = async (
       userText: cleanText,
       promptId: promptMatch?.promptId || null,
       promptArtifactId: promptMatch?.artifactPromptId ?? null,
+      promptTitle: promptMatch?.promptTitle ?? null,
       promptArgs: promptMatch?.args || undefined,
       notifier: createWhatsappNotifier(credentials, message.from)
     });

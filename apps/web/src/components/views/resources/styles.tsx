@@ -14,7 +14,7 @@ export const Wrapper = styled.div<IProps>`
     margin: 0 auto;
 
     @media (min-width: ${theme.screens.xl}) {
-      height: calc(100vh - 0px);
+      height: 100vh;
     }
 
     .resources-list {
@@ -22,8 +22,8 @@ export const Wrapper = styled.div<IProps>`
       overflow-y: auto;
       padding: 20px;
 
-      @media (min-width: ${theme.screens.md}) {
-        padding: 24px 32px;
+      @media (min-width: ${theme.screens.xl}) {
+        padding: 28px 32px;
       }
 
       &.has-selection {

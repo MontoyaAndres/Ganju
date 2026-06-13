@@ -1,0 +1,1 @@
+ALTER TABLE "artifact" ADD COLUMN "artifact_resource_usage_count" integer DEFAULT 0 NOT NULL;

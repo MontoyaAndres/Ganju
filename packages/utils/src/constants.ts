@@ -483,14 +483,12 @@ const CHANNEL_CONVERSATION_SCOPES = [
   CHANNEL_CONVERSATION_SCOPE_CHANNEL
 ];
 
-const CHANNEL_USAGE_KIND_PROMPT = 'prompt' as 'prompt';
-const CHANNEL_USAGE_KIND_RESOURCE = 'resource' as 'resource';
-const CHANNEL_USAGE_KIND_TOOL = 'tool' as 'tool';
-const CHANNEL_USAGE_KINDS = [
-  CHANNEL_USAGE_KIND_PROMPT,
-  CHANNEL_USAGE_KIND_RESOURCE,
-  CHANNEL_USAGE_KIND_TOOL
-];
+// Kinds of artifact usage — what was exercised on a request. Shared by channel
+// message usage and the artifact_execution audit trail (who ran what, when).
+const USAGE_KIND_PROMPT = 'prompt' as 'prompt';
+const USAGE_KIND_RESOURCE = 'resource' as 'resource';
+const USAGE_KIND_TOOL = 'tool' as 'tool';
+const USAGE_KINDS = [USAGE_KIND_PROMPT, USAGE_KIND_RESOURCE, USAGE_KIND_TOOL];
 
 const LLM_PROVIDER_ANTHROPIC = 'anthropic' as 'anthropic';
 const LLM_PROVIDER_OPENAI = 'openai' as 'openai';
@@ -1295,10 +1293,10 @@ export const constants = {
   CHANNEL_CONVERSATION_SCOPE_GROUP,
   CHANNEL_CONVERSATION_SCOPE_CHANNEL,
   CHANNEL_CONVERSATION_SCOPES,
-  CHANNEL_USAGE_KIND_PROMPT,
-  CHANNEL_USAGE_KIND_RESOURCE,
-  CHANNEL_USAGE_KIND_TOOL,
-  CHANNEL_USAGE_KINDS,
+  USAGE_KIND_PROMPT,
+  USAGE_KIND_RESOURCE,
+  USAGE_KIND_TOOL,
+  USAGE_KINDS,
   LLM_PROVIDER_ANTHROPIC,
   LLM_PROVIDER_OPENAI,
   LLM_PROVIDER_OPENAI_COMPATIBLE,

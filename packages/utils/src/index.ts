@@ -88,7 +88,9 @@ import { JsonSchema, jsonSchemaToZodShape } from './jsonSchemaToZodShape';
 import { buildProxyToolName } from './mcpProxy';
 import { ipv4InPrivateRange, isBlockedHost } from './ssrf';
 import { formatRelative } from './formatRelative';
-import { slugifyPromptTitle } from './slugifyPromptTitle';
+import { formatRelativeTime } from './formatRelativeTime';
+import { slugifyTitle } from './slugifyTitle';
+import { tallyUsageKinds } from './tallyUsageKinds';
 import { formatFilename } from './formatFilename';
 import {
   decodeEntities,
@@ -179,7 +181,9 @@ export const utils = {
   isBlockedHost,
   validateMessageVariables,
   formatRelative,
-  slugifyPromptTitle,
+  formatRelativeTime,
+  slugifyTitle,
+  tallyUsageKinds,
   formatFilename,
   decodeEntities,
   escapeHtml,

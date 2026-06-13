@@ -367,6 +367,15 @@ export const artifact = pgTable('artifact', {
     .notNull()
     .default(0),
   channelCount: integer('channel_count').notNull().default(0),
+  artifactToolUsageCount: integer('artifact_tool_usage_count')
+    .notNull()
+    .default(0),
+  artifactPromptUsageCount: integer('artifact_prompt_usage_count')
+    .notNull()
+    .default(0),
+  artifactResourceUsageCount: integer('artifact_resource_usage_count')
+    .notNull()
+    .default(0),
   metadata: json('metadata'),
   projectId: text('project_id')
     .notNull()
@@ -858,6 +867,49 @@ export const artifactResourceChunk = pgTable(
   ]
 );
 
+export const artifactExecution = pgTable(
+  'artifact_execution',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => uuid()),
+    artifactId: text('artifact_id')
+      .notNull()
+      .references(() => artifact.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(), // 'tool' | 'prompt' | 'resource'
+    name: text('name'),
+    source: text('source').notNull(),
+    channelId: text('channel_id').references(() => channel.id, {
+      onDelete: 'set null'
+    }),
+    userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    externalActorId: text('external_actor_id'),
+    externalActorName: text('external_actor_name'),
+    artifactToolId: text('artifact_tool_id').references(() => artifactTool.id, {
+      onDelete: 'set null'
+    }),
+    artifactPromptId: text('artifact_prompt_id').references(
+      () => artifactPrompt.id,
+      { onDelete: 'set null' }
+    ),
+    artifactResourceId: text('artifact_resource_id').references(
+      () => artifactResource.id,
+      { onDelete: 'set null' }
+    ),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => [
+    index('artifact_execution_artifact_idx').on(table.artifactId),
+    index('artifact_execution_artifact_createdAt_idx').on(
+      table.artifactId,
+      table.createdAt
+    ),
+    index('artifact_execution_userId_idx').on(table.userId),
+    index('artifact_execution_kind_idx').on(table.kind)
+  ]
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -965,8 +1017,39 @@ export const artifactRelations = relations(artifact, ({ one, many }) => ({
   artifactTools: many(artifactTool),
   artifactCredentials: many(artifactCredential),
   channels: many(channel),
-  mcpSessions: many(mcpSession)
+  mcpSessions: many(mcpSession),
+  executions: many(artifactExecution)
 }));
+
+export const artifactExecutionRelations = relations(
+  artifactExecution,
+  ({ one }) => ({
+    artifact: one(artifact, {
+      fields: [artifactExecution.artifactId],
+      references: [artifact.id]
+    }),
+    channel: one(channel, {
+      fields: [artifactExecution.channelId],
+      references: [channel.id]
+    }),
+    user: one(user, {
+      fields: [artifactExecution.userId],
+      references: [user.id]
+    }),
+    artifactTool: one(artifactTool, {
+      fields: [artifactExecution.artifactToolId],
+      references: [artifactTool.id]
+    }),
+    artifactPrompt: one(artifactPrompt, {
+      fields: [artifactExecution.artifactPromptId],
+      references: [artifactPrompt.id]
+    }),
+    artifactResource: one(artifactResource, {
+      fields: [artifactExecution.artifactResourceId],
+      references: [artifactResource.id]
+    })
+  })
+);
 
 export const organizationLlmRelations = relations(
   organizationLlm,

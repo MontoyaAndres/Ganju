@@ -117,6 +117,7 @@ interface RunOptions {
   // The artifact_prompt FK to record on usage. Null for proxied prompts, whose
   // promptId is an MCP name (`<prefix>__<remote>`), not an artifact_prompt id.
   promptArtifactId?: string | null;
+  promptTitle?: string | null;
   promptArgs?: Record<string, string>;
   notifier?: ChannelNotifier;
 }
@@ -420,6 +421,7 @@ export const runChannelTurn = async (
   const usageEvents: Array<{
     kind: string;
     toolName: string;
+    resourceUri?: string | null;
     artifactToolId: string | null;
     artifactResourceId?: string | null;
     artifactPromptId?: string | null;
@@ -484,8 +486,8 @@ export const runChannelTurn = async (
           ];
         }
         usageEvents.push({
-          kind: utils.constants.CHANNEL_USAGE_KIND_PROMPT,
-          toolName: options.promptId,
+          kind: utils.constants.USAGE_KIND_PROMPT,
+          toolName: options.promptTitle || options.promptId,
           artifactToolId: null,
           artifactPromptId: options.promptArtifactId ?? null,
           input: options.promptArgs || {},
@@ -494,8 +496,8 @@ export const runChannelTurn = async (
         });
       } catch (error: any) {
         usageEvents.push({
-          kind: utils.constants.CHANNEL_USAGE_KIND_PROMPT,
-          toolName: options.promptId,
+          kind: utils.constants.USAGE_KIND_PROMPT,
+          toolName: options.promptTitle || options.promptId,
           artifactToolId: null,
           artifactPromptId: options.promptArtifactId ?? null,
           input: options.promptArgs || {},
@@ -654,20 +656,57 @@ export const runChannelTurn = async (
   assistantMessageId = assistantMessage.id;
 
   if (usageEvents.length > 0) {
-    await dbInstance.insert(db.schema.channelMessageUsage).values(
-      usageEvents.map(event => ({
-        kind: event.kind,
-        toolName: event.toolName,
-        artifactToolId: event.artifactToolId,
-        artifactResourceId: event.artifactResourceId || null,
-        artifactPromptId: event.artifactPromptId || null,
-        input: event.input,
-        output: event.output,
-        latencyMs: event.latencyMs,
-        errorMessage: event.errorMessage || null,
-        messageId: assistantMessage.id
-      }))
-    );
+    // The message-usage rows, the execution-audit rows, and the denormalized
+    // counter bump are one logical accounting record for this turn — write them
+    // in a transaction so a mid-sequence failure can't leave them disagreeing.
+    await dbInstance.transaction(async tx => {
+      await tx.insert(db.schema.channelMessageUsage).values(
+        usageEvents.map(event => ({
+          kind: event.kind,
+          toolName: event.toolName,
+          artifactToolId: event.artifactToolId,
+          artifactResourceId: event.artifactResourceId || null,
+          artifactPromptId: event.artifactPromptId || null,
+          input: event.input,
+          output: event.output,
+          latencyMs: event.latencyMs,
+          errorMessage: event.errorMessage || null,
+          messageId: assistantMessage.id
+        }))
+      );
+
+      // Record the execution-audit rows for this channel turn: who (the linked
+      // user when known, plus the external participant) ran which tool/prompt or
+      // read which resource, and when. Source is the channel platform. Resource
+      // rows are named by their URI (matching the MCP path), not the generic
+      // read/send tool key.
+      await tx.insert(db.schema.artifactExecution).values(
+        usageEvents.map(event => ({
+          artifactId: artifactRow.id,
+          kind: event.kind,
+          name:
+            event.kind === utils.constants.USAGE_KIND_RESOURCE
+              ? event.resourceUri || event.toolName || null
+              : event.toolName || null,
+          source: channelRow.platform,
+          channelId: channelRow.id,
+          userId: linkedUserId,
+          externalActorId: participant.externalUserId,
+          externalActorName: participant.displayName,
+          artifactToolId: event.artifactToolId || null,
+          artifactPromptId: event.artifactPromptId || null,
+          artifactResourceId: event.artifactResourceId || null
+        }))
+      );
+
+      // Mirror invocations into the artifact's denormalized usage totals so the
+      // home view reads usage without aggregating usage rows.
+      await db.incrementArtifactUsage(
+        tx,
+        artifactRow.id,
+        utils.tallyUsageKinds(usageEvents)
+      );
+    });
   }
 
   await dbInstance
@@ -886,6 +925,7 @@ const executeToolCall = async (
   usageEvents: Array<{
     kind: string;
     toolName: string;
+    resourceUri?: string | null;
     artifactToolId: string | null;
     artifactResourceId?: string | null;
     artifactPromptId?: string | null;
@@ -903,8 +943,8 @@ const executeToolCall = async (
   const artifactToolId = artifactToolIdByCallName.get(call.name) || null;
   const isResourceTool = RESOURCE_TOOL_KEYS.has(call.name);
   const kind = isResourceTool
-    ? utils.constants.CHANNEL_USAGE_KIND_RESOURCE
-    : utils.constants.CHANNEL_USAGE_KIND_TOOL;
+    ? utils.constants.USAGE_KIND_RESOURCE
+    : utils.constants.USAGE_KIND_TOOL;
   const uri =
     URI_BEARING_RESOURCE_TOOL_KEYS.has(call.name) &&
     typeof call.arguments?.uri === 'string'
@@ -1015,6 +1055,7 @@ const executeToolCall = async (
     usageEvents.push({
       kind,
       toolName: call.name,
+      resourceUri: uri,
       artifactToolId,
       artifactResourceId,
       input: call.arguments,
@@ -1027,6 +1068,7 @@ const executeToolCall = async (
     usageEvents.push({
       kind,
       toolName: call.name,
+      resourceUri: uri,
       artifactToolId,
       artifactResourceId,
       input: call.arguments,

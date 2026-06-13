@@ -60,6 +60,15 @@ declare module '@emotion/react' {
       fairPink: string;
       salem: string;
     };
+    chart: {
+      telegram: string;
+      whatsapp: string;
+      slack: string;
+      discord: string;
+      fallback: string;
+      mcp: string;
+      mcpPalette: string[];
+    };
     fonts: {
       xs: string;
       sm: string;

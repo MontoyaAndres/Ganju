@@ -151,6 +151,11 @@ const business = async (c: Context<AppEnv>) => {
   // each prompt is registered below so the list-prompts tool mirrors exactly what
   // is registered. Read at tool-call time, after this boot loop has fully run.
   const promptInventory: PromptInventoryItem[] = [];
+  // MCP prompt names exposed to clients (native first, then proxied below).
+  // Native prompts use their slugified title — unique per artifact by creation —
+  // so clients show a readable name; the set also guards proxied prompts from
+  // colliding with them.
+  const registeredPromptNames = new Set<string>();
 
   for (const prompt of artifact.artifactPrompts) {
     const promptSchema = (prompt.schema as JsonSchema) || {
@@ -159,9 +164,14 @@ const business = async (c: Context<AppEnv>) => {
     };
     const schema = utils.jsonSchemaToZodShape(promptSchema);
     const requiredArgs = new Set(promptSchema.required || []);
-    const promptSlug = utils.slugifyPromptTitle(prompt.title);
+    // The command name is unique per artifact, so the slugified title is a
+    // stable, readable MCP name — show it instead of the opaque id. (A title
+    // that slugifies to empty can't form a command; fall back to the id.)
+    const promptSlug = utils.slugifyTitle(prompt.title);
+    const promptName = promptSlug || prompt.id;
+    registeredPromptNames.add(promptName);
     promptInventory.push({
-      name: prompt.id,
+      name: promptName,
       title: prompt.title,
       description: prompt.description || undefined,
       source: 'artifact',
@@ -176,7 +186,7 @@ const business = async (c: Context<AppEnv>) => {
     });
 
     mcpServer.registerPrompt(
-      prompt.id,
+      promptName,
       {
         title: prompt.title,
         description: prompt.description || undefined,
@@ -208,6 +218,7 @@ const business = async (c: Context<AppEnv>) => {
 
         pendingRequests.push({
           method: utils.constants.MCP_REQUEST_METHOD_PROMPTS_GET,
+          toolName: prompt.title,
           promptId: prompt.id,
           artifactPromptId: prompt.id,
           input: args,
@@ -220,7 +231,19 @@ const business = async (c: Context<AppEnv>) => {
     );
   }
 
+  // MCP resource names shown to clients — the slugified title rather than the
+  // opaque id. Resource titles aren't unique, so fall back to the id when a slug
+  // repeats (templates are keyed by name and would otherwise clash on boot).
+  const registeredResourceNames = new Set<string>();
+
   for (const resource of exposedResources) {
+    const resourceSlug = utils.slugifyTitle(resource.title);
+    const resourceName =
+      resourceSlug && !registeredResourceNames.has(resourceSlug)
+        ? resourceSlug
+        : resource.id;
+    registeredResourceNames.add(resourceName);
+
     const resourceMetadata = {
       title: resource.title,
       description: resource.description || undefined,
@@ -243,7 +266,7 @@ const business = async (c: Context<AppEnv>) => {
       });
 
       mcpServer.registerResource(
-        resource.id,
+        resourceName,
         template,
         resourceMetadata,
         async (uri: URL, variables) => {
@@ -296,7 +319,7 @@ const business = async (c: Context<AppEnv>) => {
     }
 
     mcpServer.registerResource(
-      resource.id,
+      resourceName,
       resource.uri,
       resourceMetadata,
       async (uri: URL) => {
@@ -340,9 +363,6 @@ const business = async (c: Context<AppEnv>) => {
   // prompt names already claimed (native first, then earlier proxy installs) so a
   // duplicate is skipped instead of throwing and aborting the whole boot.
   const registeredResourceUris = new Set(exposedResources.map(r => r.uri));
-  const registeredPromptNames = new Set(
-    artifact.artifactPrompts.map(p => p.id)
-  );
 
   for (const artifactTool of artifact.artifactTools) {
     const toolDef = artifactTool.toolDefinition;
@@ -673,7 +693,7 @@ const business = async (c: Context<AppEnv>) => {
             );
             registeredPromptNames.add(localName);
             const proxyTitle = remotePrompt.title || remotePrompt.name;
-            const proxySlug = utils.slugifyPromptTitle(proxyTitle);
+            const proxySlug = utils.slugifyTitle(proxyTitle);
             promptInventory.push({
               name: localName,
               title: proxyTitle,
@@ -955,7 +975,11 @@ const business = async (c: Context<AppEnv>) => {
           clientVersion: client.version,
           metadata: sessionMetadata
         });
-        await flushRequests(dbInstance, session.id, allRequests);
+        await flushRequests(dbInstance, session.id, artifact.id, allRequests, {
+          userId: jwtUserId ?? null,
+          clientName: client.name,
+          viaChannel: channelIdHeader != null
+        });
       } catch (error) {
         console.error('Failed to record MCP usage', error);
       }

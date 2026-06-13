@@ -1,0 +1,2 @@
+ALTER TABLE "artifact" ADD COLUMN "artifact_tool_usage_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "artifact" ADD COLUMN "artifact_prompt_usage_count" integer DEFAULT 0 NOT NULL;

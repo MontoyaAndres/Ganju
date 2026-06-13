@@ -18,8 +18,8 @@ export interface IProps {
   };
 }
 
-const ProjectPage = (props: IProps) => {
-  return <h1>Project Page {props.auth.name}</h1>;
+const ProjectPage = (_props: IProps) => {
+  return <Components.Views.Overview />;
 };
 
 ProjectPage.getLayout = Components.Layouts.Home;

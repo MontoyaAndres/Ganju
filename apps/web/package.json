@@ -15,8 +15,10 @@
     "@anju/ui": "*",
     "@anju/utils": "*",
     "better-auth": "^1.6.16",
+    "chart.js": "^4.5.1",
     "next": "^16.2.9",
     "react": "^19.2.7",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.7",
     "swr": "^2.4.1"
   },

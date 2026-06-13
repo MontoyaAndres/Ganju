@@ -491,12 +491,12 @@ export const Prompts = () => {
               }}
             >
               <p className="prompt-item-title">{prompt.title}</p>
-              {utils.slugifyPromptTitle(prompt.title) && (
+              {utils.slugifyTitle(prompt.title) && (
                 <code
                   className="prompt-item-command"
                   title="Slash command in linked chat channels"
                 >
-                  /{utils.slugifyPromptTitle(prompt.title)}
+                  /{utils.slugifyTitle(prompt.title)}
                 </code>
               )}
               {prompt.description && (
@@ -567,10 +567,10 @@ export const Prompts = () => {
                       });
                   }}
                 />
-                {utils.slugifyPromptTitle(editValues.title) && (
+                {utils.slugifyTitle(editValues.title) && (
                   <p className="panel-command-hint">
                     Slash command:{' '}
-                    <code>/{utils.slugifyPromptTitle(editValues.title)}</code>
+                    <code>/{utils.slugifyTitle(editValues.title)}</code>
                   </p>
                 )}
                 <UI.Input

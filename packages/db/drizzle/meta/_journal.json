@@ -330,6 +330,41 @@
       "when": 1780761396205,
       "tag": "0046_rare_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1781284944720,
+      "tag": "0047_purple_lady_mastermind",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1781289310232,
+      "tag": "0048_secret_talkback",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1781290387163,
+      "tag": "0049_funny_xorn",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1781290500000,
+      "tag": "0050_backfill_usage_counts",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1781300543524,
+      "tag": "0051_slippery_microbe",
+      "breakpoints": true
     }
   ]
 }

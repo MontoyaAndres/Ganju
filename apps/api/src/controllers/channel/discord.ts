@@ -282,6 +282,7 @@ interface DiscordRunOptions {
   userText: string;
   promptId?: string | null;
   promptArtifactId?: string | null;
+  promptTitle?: string | null;
   promptArgs?: Record<string, string>;
 }
 
@@ -431,6 +432,7 @@ export const handleDiscordIngest = async (c: Context<AppEnv>) => {
     userText: cleanText,
     promptId: promptMatch?.promptId || null,
     promptArtifactId: promptMatch?.artifactPromptId ?? null,
+    promptTitle: promptMatch?.promptTitle ?? null,
     promptArgs: promptMatch?.args || undefined
   });
 
@@ -667,6 +669,7 @@ export const handleDiscordInteraction = async (c: Context<AppEnv>) => {
         userText: trailingText || `/${name}`,
         promptId: promptMatch?.promptId || null,
         promptArtifactId: promptMatch?.artifactPromptId ?? null,
+        promptTitle: promptMatch?.promptTitle ?? null,
         promptArgs: promptMatch?.args || undefined
       });
       await editInteractionOriginal(

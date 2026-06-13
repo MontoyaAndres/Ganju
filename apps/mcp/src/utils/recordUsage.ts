@@ -161,10 +161,24 @@ export const upsertSession = async (
   return refetched;
 };
 
+export interface RequestActor {
+  // The authenticated user behind this MCP session, when there is one.
+  userId: string | null;
+  // The MCP client name (e.g. "Claude Desktop") — used as the actor label when
+  // the session has no registered user (machine / api-token access).
+  clientName: string | null;
+  // True when these requests were proxied in by a channel bot. The channel
+  // runner owns usage/execution accounting for those, so we skip it here to
+  // avoid double counting the same logical call.
+  viaChannel: boolean;
+}
+
 export const flushRequests = async (
   dbInstance: ReturnType<typeof db.create>,
   sessionId: string,
-  requests: PendingRequest[]
+  artifactId: string,
+  requests: PendingRequest[],
+  actor: RequestActor
 ): Promise<void> => {
   if (requests.length === 0) return;
 
@@ -192,4 +206,52 @@ export const flushRequests = async (
       lastRequestAt: new Date()
     })
     .where(eq(db.schema.mcpSession.id, sessionId));
+
+  // Channel-proxied calls are accounted for by the channel runner (which knows
+  // the external actor) — recording them here as well would double count.
+  if (actor.viaChannel) return;
+
+  // Map each meaningful call to an execution-audit row: who ran which
+  // tool/prompt or read which resource, and when. Protocol noise
+  // (initialize/ping/list) carries no kind and is skipped.
+  const kindFor = (method: string): string | null => {
+    if (method === utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL) {
+      return utils.constants.USAGE_KIND_TOOL;
+    }
+    if (method === utils.constants.MCP_REQUEST_METHOD_PROMPTS_GET) {
+      return utils.constants.USAGE_KIND_PROMPT;
+    }
+    if (method === utils.constants.MCP_REQUEST_METHOD_RESOURCES_READ) {
+      return utils.constants.USAGE_KIND_RESOURCE;
+    }
+    return null;
+  };
+
+  const executions = requests
+    .map(r => ({ r, kind: kindFor(r.method) }))
+    .filter((e): e is { r: PendingRequest; kind: string } => e.kind !== null)
+    .map(({ r, kind }) => ({
+      artifactId,
+      kind,
+      name:
+        kind === utils.constants.USAGE_KIND_RESOURCE
+          ? (r.resourceUri ?? null)
+          : (r.toolName ?? r.promptId ?? null),
+      source: utils.constants.SERVICE_NAME_MCP,
+      userId: actor.userId,
+      externalActorId: null,
+      externalActorName: actor.userId ? null : actor.clientName,
+      artifactToolId: r.artifactToolId ?? null,
+      artifactPromptId: r.artifactPromptId ?? null,
+      artifactResourceId: r.artifactResourceId ?? null
+    }));
+
+  if (executions.length === 0) return;
+
+  await dbInstance.insert(db.schema.artifactExecution).values(executions);
+  await db.incrementArtifactUsage(
+    dbInstance,
+    artifactId,
+    utils.tallyUsageKinds(executions)
+  );
 };

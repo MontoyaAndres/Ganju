@@ -182,6 +182,11 @@ app
     UserMiddleware.verify,
     ProjectController.get
   )
+  .get(
+    '/organization/:organizationId/project/:projectId/overview',
+    UserMiddleware.verify,
+    ProjectController.getOverview
+  )
   .delete(
     '/organization/:organizationId/project/:projectId',
     UserMiddleware.verify,

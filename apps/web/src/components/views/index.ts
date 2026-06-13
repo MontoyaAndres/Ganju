@@ -1,4 +1,5 @@
 import { Auth } from './auth';
+import { Overview } from './overview';
 import { Tools } from './tools';
 import { Prompts } from './prompts';
 import { Resources } from './resources';
@@ -10,6 +11,7 @@ import { Invitation } from './invitation';
 
 export const Views = {
   Auth,
+  Overview,
   Tools,
   Prompts,
   Resources,

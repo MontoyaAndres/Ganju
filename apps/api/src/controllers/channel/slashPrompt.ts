@@ -31,6 +31,9 @@ export const resolveSlashPrompt = async (
   promptId: string;
   // The artifact_prompt FK to record on usage — null for proxied prompts.
   artifactPromptId: string | null;
+  // Human-readable prompt title, recorded as the usage/execution name (promptId
+  // is an opaque id for native prompts, so it can't double as the label).
+  promptTitle: string;
   args: Record<string, string>;
 } | null> => {
   const dbInstance = db.create(c);
@@ -40,7 +43,7 @@ export const resolveSlashPrompt = async (
     .where(eq(db.schema.artifactPrompt.artifactId, artifactId));
 
   const match = prompts.find(
-    p => utils.slugifyPromptTitle(p.title) === command.name
+    p => utils.slugifyTitle(p.title) === command.name
   );
   if (match) {
     const schema = match.schema as {
@@ -53,13 +56,20 @@ export const resolveSlashPrompt = async (
     if (firstProp && command.trailingText) {
       args[firstProp] = command.trailingText;
     }
-    return { promptId: match.id, artifactPromptId: match.id, args };
+    return {
+      // The MCP server registers native prompts under their slugified title, so
+      // invoke getPrompt by that name (matches command.name), not the id.
+      promptId: utils.slugifyTitle(match.title),
+      artifactPromptId: match.id,
+      promptTitle: match.title,
+      args
+    };
   }
 
   // Fall back to proxied (mcp-proxy) prompts, invoked by their MCP name.
   const proxied = await loadProxiedPrompts(dbInstance, artifactId);
   const proxiedMatch = proxied.find(
-    p => utils.slugifyPromptTitle(p.title) === command.name
+    p => utils.slugifyTitle(p.title) === command.name
   );
   if (proxiedMatch) {
     const args: Record<string, string> = {};
@@ -70,6 +80,7 @@ export const resolveSlashPrompt = async (
     return {
       promptId: proxiedMatch.mcpName,
       artifactPromptId: null,
+      promptTitle: proxiedMatch.title,
       args
     };
   }

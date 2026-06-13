@@ -1,0 +1,2 @@
+ALTER TABLE "artifact_execution" ADD COLUMN "channel_id" text;--> statement-breakpoint
+ALTER TABLE "artifact_execution" ADD CONSTRAINT "artifact_execution_channel_id_channel_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."channel"("id") ON DELETE set null ON UPDATE no action;
