@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 import type { AppEnv } from '../types';
 
@@ -42,7 +42,10 @@ export const createMcpClient = async (
       // binding call has no UA and the row looks like an anonymous machine
       // request.
       if (channelContext) {
-        headers.set('user-agent', utils.constants.MCP_CHANNEL_CLIENT_USER_AGENT);
+        headers.set(
+          'user-agent',
+          utils.constants.MCP_CHANNEL_CLIENT_USER_AGENT
+        );
         headers.set(
           utils.constants.MCP_CHANNEL_ID_HEADER,
           channelContext.channelId
@@ -59,7 +62,7 @@ export const createMcpClient = async (
       ) as unknown as Promise<Response>;
     }
   });
-  const client = new Client({ name: 'anju-channel', version: '0.0.1' });
+  const client = new Client({ name: 'ganju-channel', version: '0.0.1' });
   await client.connect(transport);
 
   return {

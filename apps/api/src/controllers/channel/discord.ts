@@ -1,14 +1,14 @@
 import { Context } from 'hono';
 import { eq } from 'drizzle-orm';
-import { db, utils as dbUtils } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db, utils as dbUtils } from '@ganju/db';
+import { utils } from '@ganju/utils';
 import type {
   ChannelNotifier,
   SourceButton,
   DiscordSendRequest,
   DiscordSendRemoteResourceRequest
-} from '@anju/utils';
-import { getResourceHandler } from '@anju/containers';
+} from '@ganju/utils';
+import { getResourceHandler } from '@ganju/containers';
 
 import { runChannelTurn } from './runner';
 import { resolveSlashPrompt } from './slashPrompt';

@@ -31,9 +31,9 @@ COPY packages/db packages/db
 COPY packages/utils packages/utils
 COPY apps/resource-handler apps/resource-handler
 
-RUN npm --workspace @anju/utils run build
-RUN npm --workspace @anju/db run build
-RUN npm --workspace @anju/resource-handler run build
+RUN npm --workspace @ganju/utils run build
+RUN npm --workspace @ganju/db run build
+RUN npm --workspace @ganju/resource-handler run build
 
 WORKDIR /repo/apps/resource-handler
 ENV NODE_ENV=production

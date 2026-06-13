@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 import { CheckCircleOutlined } from '@mui/icons-material';
 
 import { Wrapper } from './styles';
@@ -20,7 +20,7 @@ const ERROR_MESSAGES: Record<string, string> = {
     'That code is invalid or has expired. Ask your bot for a new one.',
   expired_code: 'That code has expired. Ask your bot for a new one.',
   already_linked_to_other_user:
-    'This account is already linked to a different Anju user.'
+    'This account is already linked to a different Ganju user.'
 };
 
 const formatProvider = (provider: string) =>
@@ -86,7 +86,7 @@ export const Link = () => {
             <p className="link-success-text">
               Your {formatProvider(linked.provider)} account
               {linked.displayName ? ` (${linked.displayName})` : ''} is now
-              connected to Anju. You can head back to your bot.
+              connected to Ganju. You can head back to your bot.
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export const Link = () => {
           <div className="link-header">
             <h1 className="link-title">Link your account</h1>
             <p className="link-subtitle">
-              Enter the code your bot gave you to connect it to your Anju
+              Enter the code your bot gave you to connect it to your Ganju
               account.
             </p>
           </div>

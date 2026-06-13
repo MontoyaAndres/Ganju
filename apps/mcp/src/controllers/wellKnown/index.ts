@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 import type { AppEnv } from '../../types';
 

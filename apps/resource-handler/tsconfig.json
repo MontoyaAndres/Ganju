@@ -1,5 +1,5 @@
 {
-  "extends": "@anju/tsconfig/base.json",
+  "extends": "@ganju/tsconfig/base.json",
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],

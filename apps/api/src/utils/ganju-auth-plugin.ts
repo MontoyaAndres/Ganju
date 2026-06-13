@@ -5,7 +5,7 @@ import {
   APIError
 } from 'better-auth/api';
 import { signJWT } from 'better-auth/plugins/jwt';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 import type { BetterAuthPlugin } from 'better-auth';
 
 const generateLinkCode = (): string => {
@@ -115,10 +115,10 @@ const authenticateBotClient = async (
   return row;
 };
 
-export const anjuAuthPlugin = (
+export const ganjuAuthPlugin = (
   trustedBotClientId?: string
 ): BetterAuthPlugin => ({
-  id: 'anju-auth',
+  id: 'ganju-auth',
   endpoints: {
     startExternalLink: createAuthEndpoint(
       '/external/start',

@@ -1,13 +1,13 @@
 import { Context } from 'hono';
 import { and, eq } from 'drizzle-orm';
-import { db, utils as dbUtils } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db, utils as dbUtils } from '@ganju/db';
+import { utils } from '@ganju/utils';
 import type {
   ChannelNotifier,
   WhatsappSendRequest,
   WhatsappSendRemoteResourceRequest
-} from '@anju/utils';
-import { getResourceHandler } from '@anju/containers';
+} from '@ganju/utils';
+import { getResourceHandler } from '@ganju/containers';
 
 import { runChannelTurn } from './runner';
 import { resolveSlashPrompt } from './slashPrompt';
@@ -435,9 +435,7 @@ const sendWhatsappAttachment = async (
     phoneNumberId: credentials.phoneNumberId,
     to,
     replyToMessageId: replyToMessageId || undefined,
-    caption: caption
-      ? markdownToWhatsapp(caption).slice(0, 1024)
-      : undefined
+    caption: caption ? markdownToWhatsapp(caption).slice(0, 1024) : undefined
   };
 
   const handler = getResourceHandler(env);
@@ -478,7 +476,9 @@ const sendWhatsappAttachment = async (
   if (resource.fileKey) {
     const object = await env.STORAGE_BUCKET.get(resource.fileKey);
     if (!object) {
-      throw new Error(`Resource file not found in storage: ${resource.fileKey}`);
+      throw new Error(
+        `Resource file not found in storage: ${resource.fileKey}`
+      );
     }
     arrayBuffer = await object.arrayBuffer();
     filename = resource.fileName || resource.title || 'file';
@@ -549,7 +549,10 @@ const parseSlashCommandText = (text: string): ParsedSlashCommand | null => {
   if (!trimmed.startsWith('/')) return null;
   const match = trimmed.match(/^\/([a-zA-Z0-9_-]+)(?:\s+([\s\S]*))?$/);
   if (!match) return null;
-  return { name: match[1].toLowerCase(), trailingText: (match[2] || '').trim() };
+  return {
+    name: match[1].toLowerCase(),
+    trailingText: (match[2] || '').trim()
+  };
 };
 
 const chunkMessage = (text: string): string[] => {
@@ -576,7 +579,10 @@ const verifyWhatsappSignature = async (
   signature: string | undefined,
   rawBody: string
 ): Promise<boolean> => {
-  if (!signature || !signature.startsWith(utils.constants.WHATSAPP_SIGNATURE_PREFIX)) {
+  if (
+    !signature ||
+    !signature.startsWith(utils.constants.WHATSAPP_SIGNATURE_PREFIX)
+  ) {
     return false;
   }
   const expected = `${utils.constants.WHATSAPP_SIGNATURE_PREFIX}${await utils.hmacSha256Hex(

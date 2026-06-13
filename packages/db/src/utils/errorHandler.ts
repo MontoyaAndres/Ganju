@@ -1,5 +1,5 @@
 import { v7 as uuid } from 'uuid';
-import { db } from '@anju/db';
+import { db } from '@ganju/db';
 
 // types
 import type { ZodError } from 'zod';

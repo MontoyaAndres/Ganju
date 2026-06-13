@@ -1,4 +1,4 @@
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 // Cheap liveness/auth check used before persisting a user-supplied key. Tavily
 // has no free introspection endpoint, so we run the smallest possible search

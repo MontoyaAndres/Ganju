@@ -1,6 +1,6 @@
 import { Context } from 'hono';
-import { utils as dbUtils } from '@anju/db';
-import { utils } from '@anju/utils';
+import { utils as dbUtils } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 import { createAuth } from '../../utils';
 
@@ -24,7 +24,7 @@ interface ExternalLinkApi {
 const providerLabel = (provider: string): string =>
   provider.charAt(0).toUpperCase() + provider.slice(1);
 
-// `/link` connects a messaging-platform user to an Anju account for THIS
+// `/link` connects a messaging-platform user to an Ganju account for THIS
 // channel, returning a code to redeem on the web. Shared by every platform —
 // they differ only in the provider, so the controllers just pass the external
 // user id they parsed from their own webhook payload.
@@ -59,7 +59,7 @@ export const startChannelLink = async (
     });
 
     return [
-      `Link this ${providerLabel(args.provider)} account to your Anju account.`,
+      `Link this ${providerLabel(args.provider)} account to your Ganju account.`,
       '',
       `Open ${webUrl}/link?code=${result.code}`,
       `(or go to ${webUrl}/link and enter the code ${result.code})`,

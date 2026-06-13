@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Tooltip, { TooltipProps } from '@mui/material/Tooltip';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 export interface IProps {
   text: string;

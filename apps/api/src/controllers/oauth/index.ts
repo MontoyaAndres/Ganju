@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, eq, sql } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 import { oauthState, providers, completeMcpProxyOauth } from '../../utils';
 

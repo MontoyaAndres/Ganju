@@ -1,9 +1,6 @@
 import http from 'node:http';
-import { utils } from '@anju/utils';
-import type {
-  OutlookSendRequest,
-  OutlookSendResponse
-} from '@anju/utils';
+import { utils } from '@ganju/utils';
+import type { OutlookSendRequest, OutlookSendResponse } from '@ganju/utils';
 
 import { utils as serverUtils } from './utils/index.js';
 
@@ -42,16 +39,16 @@ const buildMessageBody = (req: OutlookSendRequest) => {
   };
   const message: Record<string, unknown> = {
     body: {
-      contentType: (req.contentType ?? 'html').toUpperCase() === 'TEXT'
-        ? 'Text'
-        : 'HTML',
+      contentType:
+        (req.contentType ?? 'html').toUpperCase() === 'TEXT' ? 'Text' : 'HTML',
       content: req.body
     }
   };
   if (req.subject !== undefined) message.subject = req.subject;
   if (recipients.toRecipients) message.toRecipients = recipients.toRecipients;
   if (recipients.ccRecipients) message.ccRecipients = recipients.ccRecipients;
-  if (recipients.bccRecipients) message.bccRecipients = recipients.bccRecipients;
+  if (recipients.bccRecipients)
+    message.bccRecipients = recipients.bccRecipients;
   return message;
 };
 
@@ -220,7 +217,10 @@ const sendDraft = async (
 const handleSendEmail = async (
   req: OutlookSendRequest,
   attachments: ParsedAttachment[]
-): Promise<{ status: number; body: OutlookSendResponse | { error: string } }> => {
+): Promise<{
+  status: number;
+  body: OutlookSendResponse | { error: string };
+}> => {
   const anyLarge = attachments.some(a => a.bytes.byteLength > INLINE_THRESHOLD);
 
   if (!anyLarge) {
@@ -234,7 +234,10 @@ const handleSendEmail = async (
       body: { message, saveToSentItems: true }
     });
     if (res.status >= 300) {
-      return { status: res.status, body: { error: graphError(res.status, res.body) } };
+      return {
+        status: res.status,
+        body: { error: graphError(res.status, res.body) }
+      };
     }
     // sendMail returns 202 with no body — no message id available.
     return { status: 200, body: { id: '' } };
@@ -271,7 +274,10 @@ const handleSendEmail = async (
 const handleReplyOrForward = async (
   req: OutlookSendRequest,
   attachments: ParsedAttachment[]
-): Promise<{ status: number; body: OutlookSendResponse | { error: string } }> => {
+): Promise<{
+  status: number;
+  body: OutlookSendResponse | { error: string };
+}> => {
   if (!req.messageId) {
     return { status: 400, body: { error: 'messageId is required' } };
   }
@@ -298,9 +304,8 @@ const handleReplyOrForward = async (
   // also needs recipients (createForward doesn't accept them up front).
   const patchBody: Record<string, unknown> = {
     body: {
-      contentType: (req.contentType ?? 'html').toUpperCase() === 'TEXT'
-        ? 'Text'
-        : 'HTML',
+      contentType:
+        (req.contentType ?? 'html').toUpperCase() === 'TEXT' ? 'Text' : 'HTML',
       content: req.body
     }
   };
@@ -345,7 +350,10 @@ const handleReplyOrForward = async (
 const handleCreateDraft = async (
   req: OutlookSendRequest,
   attachments: ParsedAttachment[]
-): Promise<{ status: number; body: OutlookSendResponse | { error: string } }> => {
+): Promise<{
+  status: number;
+  body: OutlookSendResponse | { error: string };
+}> => {
   const draftRes = await graphFetch(req.accessToken, '/me/messages', {
     method: 'POST',
     body: buildMessageBody(req)
@@ -378,7 +386,10 @@ const handleCreateDraft = async (
 const handleUpdateDraft = async (
   req: OutlookSendRequest,
   attachments: ParsedAttachment[]
-): Promise<{ status: number; body: OutlookSendResponse | { error: string } }> => {
+): Promise<{
+  status: number;
+  body: OutlookSendResponse | { error: string };
+}> => {
   if (!req.draftId) {
     return { status: 400, body: { error: 'draftId is required' } };
   }
@@ -459,7 +470,9 @@ export const handleOutlookSend = async (
   }
 
   if (!metadata.accessToken) {
-    serverUtils.sendJson(res, 401, { error: 'missing accessToken in metadata' });
+    serverUtils.sendJson(res, 401, {
+      error: 'missing accessToken in metadata'
+    });
     return;
   }
   if (!metadata.body && metadata.operation !== 'update-draft') {

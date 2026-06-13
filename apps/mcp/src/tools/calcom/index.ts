@@ -1,4 +1,4 @@
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 import { ToolContext, ToolDefinition } from '../types';
 
@@ -96,7 +96,7 @@ const callCalcom = async (
 export const listEventTypes: ToolDefinition = {
   title: 'Cal.com: List Event Types',
   description:
-    "List the event types on the connected Cal.com account (the bookable meeting templates, e.g. \"30 Min Meeting\"). Returns each event type's ID, title, duration, and slug. Call this to discover the eventTypeId the artifact owner should lock as the default, or to find a specific event type's ID before passing it as the eventTypeId override to the other Cal.com tools.",
+    'List the event types on the connected Cal.com account (the bookable meeting templates, e.g. "30 Min Meeting"). Returns each event type\'s ID, title, duration, and slug. Call this to discover the eventTypeId the artifact owner should lock as the default, or to find a specific event type\'s ID before passing it as the eventTypeId override to the other Cal.com tools.',
   schema: { type: 'object', properties: {} },
   handler: async (_args, context) => {
     const auth = getApiKey(context);
@@ -125,16 +125,14 @@ export const listEventTypes: ToolDefinition = {
       const duration = minutes ? `${minutes} min` : 'unknown duration';
       return `- ${et.title || '(untitled)'} (${duration}) | slug: ${et.slug || '?'} | ID: ${et.id}`;
     });
-    return text(
-      `Found ${items.length} event type(s):\n\n${lines.join('\n')}`
-    );
+    return text(`Found ${items.length} event type(s):\n\n${lines.join('\n')}`);
   }
 };
 
 export const listAvailableSlots: ToolDefinition = {
   title: 'Cal.com: List Available Slots',
   description:
-    'Find open booking slots for a Cal.com event type between start and end (both required ISO 8601, UTC). The event type is the artifact\'s default unless you pass eventTypeId. Pass timeZone (IANA) to return slots in that zone — otherwise the configured default zone is used. Use this to confirm availability before calcom-create-booking; the typical flow is list-available-slots → create-booking. Returns the open start times.',
+    "Find open booking slots for a Cal.com event type between start and end (both required ISO 8601, UTC). The event type is the artifact's default unless you pass eventTypeId. Pass timeZone (IANA) to return slots in that zone — otherwise the configured default zone is used. Use this to confirm availability before calcom-create-booking; the typical flow is list-available-slots → create-booking. Returns the open start times.",
   schema: {
     type: 'object',
     properties: {
@@ -290,9 +288,7 @@ export const createBooking: ToolDefinition = {
       end?: string;
     };
     const when =
-      booking.start && booking.end
-        ? ` ${booking.start} → ${booking.end}`
-        : '';
+      booking.start && booking.end ? ` ${booking.start} → ${booking.end}` : '';
     return text(
       `Booking created. UID: ${booking.uid || 'unknown'} | status: ${booking.status || 'unknown'}${when}`
     );
@@ -302,13 +298,14 @@ export const createBooking: ToolDefinition = {
 export const cancelBooking: ToolDefinition = {
   title: 'Cal.com: Cancel Booking',
   description:
-    "Cancel a Cal.com booking by its UID (returned when the booking was created, or surfaced elsewhere). Only call this when the user has clearly decided to cancel — the attendee is notified. Optionally pass a reason. Returns confirmation.",
+    'Cancel a Cal.com booking by its UID (returned when the booking was created, or surfaced elsewhere). Only call this when the user has clearly decided to cancel — the attendee is notified. Optionally pass a reason. Returns confirmation.',
   schema: {
     type: 'object',
     properties: {
       bookingUid: {
         type: 'string',
-        description: 'UID of the booking to cancel (from calcom-create-booking).'
+        description:
+          'UID of the booking to cancel (from calcom-create-booking).'
       },
       reason: {
         type: 'string',

@@ -4,8 +4,8 @@ import {
   ResourceTemplate
 } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPTransport } from '@hono/mcp';
-import { JsonSchema, utils } from '@anju/utils';
-import { db } from '@anju/db';
+import { JsonSchema, utils } from '@ganju/utils';
+import { db } from '@ganju/db';
 import { eq } from 'drizzle-orm';
 
 import {

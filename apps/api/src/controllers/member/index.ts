@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, asc, count, eq, sql } from 'drizzle-orm';
-import { utils } from '@anju/utils';
-import { db } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { db } from '@ganju/db';
 
 // types
 import { AppEnv } from '../../types';

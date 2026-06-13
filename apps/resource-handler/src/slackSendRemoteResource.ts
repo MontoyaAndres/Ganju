@@ -1,6 +1,9 @@
 import http from 'node:http';
-import { utils } from '@anju/utils';
-import type { SlackSendRemoteResourceRequest, SlackSendRequest } from '@anju/utils';
+import { utils } from '@ganju/utils';
+import type {
+  SlackSendRemoteResourceRequest,
+  SlackSendRequest
+} from '@ganju/utils';
 
 import { utils as serverUtils } from './utils/index.js';
 import { connectRemoteMcpClient } from './remoteMcpClient.js';
@@ -17,8 +20,7 @@ export const handleSlackSendRemoteResource = async (
 ): Promise<void> => {
   let body: SlackSendRemoteResourceRequest;
   try {
-    body =
-      await serverUtils.parseJsonBody<SlackSendRemoteResourceRequest>(req);
+    body = await serverUtils.parseJsonBody<SlackSendRemoteResourceRequest>(req);
   } catch (err) {
     serverUtils.sendJson(res, 400, {
       error: `invalid JSON body: ${(err as Error).message}`

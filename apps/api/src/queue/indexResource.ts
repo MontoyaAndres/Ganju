@@ -1,8 +1,8 @@
 import type { ExecutionContext, MessageBatch } from '@cloudflare/workers-types';
-import { db } from '@anju/db';
-import { ExtractedDocument, utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { ExtractedDocument, utils } from '@ganju/utils';
 import { eq } from 'drizzle-orm';
-import { getResourceHandler } from '@anju/containers';
+import { getResourceHandler } from '@ganju/containers';
 
 import { reindexResourceChunks } from '../utils';
 import { markResourceFailed, reportQueueError } from './shared';
@@ -57,10 +57,15 @@ const indexOne = async (env: Bindings, resourceId: string): Promise<void> => {
 
     if (!response.ok) {
       const detail = await response.text().catch(() => '');
-      await reportQueueError(env, '/indexResource', new Error(detail || `status ${response.status}`), {
-        resourceId,
-        status: response.status
-      });
+      await reportQueueError(
+        env,
+        '/indexResource',
+        new Error(detail || `status ${response.status}`),
+        {
+          resourceId,
+          status: response.status
+        }
+      );
       throw new Error(
         `resource-handler /extract failed (${response.status}) for ${resourceId}`
       );

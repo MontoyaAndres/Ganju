@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { GoogleGenAI } from '@google/genai';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 export type EmbeddingTaskType =
   | 'RETRIEVAL_DOCUMENT'

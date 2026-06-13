@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 
 import { Wrapper } from './styles';
 
@@ -99,7 +99,7 @@ export const Invitation = (props: IProps) => {
         </p>
         <div className="invitation-actions">
           <UI.Button size="small" onClick={() => router.push('/')}>
-            Go to Anju
+            Go to Ganju
           </UI.Button>
         </div>
       </>
@@ -112,12 +112,12 @@ export const Invitation = (props: IProps) => {
         <p className="invitation-eyebrow">Invitation</p>
         <h1 className="invitation-title">Invitation not found</h1>
         <p className="invitation-text">
-          This invitation link is invalid. Ask whoever invited you to send a
-          new one.
+          This invitation link is invalid. Ask whoever invited you to send a new
+          one.
         </p>
         <div className="invitation-actions">
           <UI.Button size="small" onClick={() => router.push('/')}>
-            Go to Anju
+            Go to Ganju
           </UI.Button>
         </div>
       </>
@@ -137,12 +137,11 @@ export const Invitation = (props: IProps) => {
         <p className="invitation-eyebrow">Invitation</p>
         <h1 className="invitation-title">Invitation unavailable</h1>
         <p className="invitation-text">
-          This invitation to {targetName} has already been used or was
-          revoked.
+          This invitation to {targetName} has already been used or was revoked.
         </p>
         <div className="invitation-actions">
           <UI.Button size="small" onClick={() => router.push('/')}>
-            Go to Anju
+            Go to Ganju
           </UI.Button>
         </div>
       </>
@@ -160,7 +159,7 @@ export const Invitation = (props: IProps) => {
         </p>
         <div className="invitation-actions">
           <UI.Button size="small" onClick={() => router.push('/')}>
-            Go to Anju
+            Go to Ganju
           </UI.Button>
         </div>
       </>
@@ -176,7 +175,7 @@ export const Invitation = (props: IProps) => {
       <h1 className="invitation-title">You&apos;ve been invited</h1>
       <p className="invitation-text">
         {invitation.inviterName || 'A teammate'} invited you to join{' '}
-        <span className="invitation-target">{targetName}</span> on Anju.
+        <span className="invitation-target">{targetName}</span> on Ganju.
       </p>
       <span className="invitation-scope">{scopeLabel}</span>
 
@@ -206,9 +205,9 @@ export const Invitation = (props: IProps) => {
       ) : auth ? (
         <>
           <p className="invitation-text">
-            This invitation was sent to <strong>{invitation.email}</strong>,
-            but you are signed in as <strong>{auth.email}</strong>. Sign in
-            with the invited address to accept it.
+            This invitation was sent to <strong>{invitation.email}</strong>, but
+            you are signed in as <strong>{auth.email}</strong>. Sign in with the
+            invited address to accept it.
           </p>
           <div className="invitation-actions">
             <UI.Button

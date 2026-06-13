@@ -1,5 +1,5 @@
 {
-  "name": "@anju/resource-handler",
+  "name": "@ganju/resource-handler",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,8 +9,8 @@
     "clean": "rm -rf dist && rm -rf node_modules"
   },
   "dependencies": {
-    "@anju/db": "*",
-    "@anju/utils": "*",
+    "@ganju/db": "*",
+    "@ganju/utils": "*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "cheerio": "^1.2.0",
     "fflate": "^0.8.3",
@@ -20,7 +20,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
-    "@anju/tsconfig": "*",
+    "@ganju/tsconfig": "*",
     "@types/node": "^25.9.3",
     "esbuild": "^0.28.0",
     "typescript": "^6.0.3"

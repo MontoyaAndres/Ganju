@@ -14,10 +14,10 @@ Tools exposed to MCP clients (Claude Desktop, ChatGPT, Cursor, Notion Custom Age
 
 Two flavors of tool in this codebase:
 
-- **Native tools** — TypeScript handlers in this folder. One `tool_definition` row = one MCP tool. Use when the vendor has no MCP server, when the tool is Anju domain logic, or when channel runtime needs end-to-end control.
+- **Native tools** — TypeScript handlers in this folder. One `tool_definition` row = one MCP tool. Use when the vendor has no MCP server, when the tool is Ganju domain logic, or when channel runtime needs end-to-end control.
 - **Proxied tools** — `mcp-proxy` and `http-endpoint` definitions where one `tool_definition` row produces _many_ MCP tools at server boot, derived from the `artifact_tool.config` of each instance. Use when the vendor already ships an MCP server (Notion, GitHub, Linear, Stripe, Atlassian, Sentry, Cloudflare), or when the user wants to expose their own backend without a TypeScript handler.
 
-The default position: **proxy first, build only when there's no good MCP server or it's Anju-specific**. Hand-rolling a Notion tool when Notion ships and maintains its own is wasted effort.
+The default position: **proxy first, build only when there's no good MCP server or it's Ganju-specific**. Hand-rolling a Notion tool when Notion ships and maintains its own is wasted effort.
 
 ## Provider auth
 

@@ -1,8 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
 import { Context } from 'hono';
 import { eq } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 import type { Bindings } from '../types';
 
@@ -255,7 +255,7 @@ export class DiscordGatewayDO extends DurableObject<Bindings> {
       d: {
         token,
         intents: utils.constants.DISCORD_INTENTS,
-        properties: { os: 'linux', browser: 'anju', device: 'anju' }
+        properties: { os: 'linux', browser: 'ganju', device: 'ganju' }
       }
     });
   }
@@ -329,7 +329,7 @@ export class DiscordGatewayDO extends DurableObject<Bindings> {
 
     try {
       await this.env.API.fetch(
-        `https://anju-discord-gateway/channel/${channelId}/ingest/discord`,
+        `https://ganju-discord-gateway/channel/${channelId}/ingest/discord`,
         {
           method: 'POST',
           headers: {

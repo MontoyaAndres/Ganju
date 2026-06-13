@@ -1,13 +1,11 @@
 import { and, eq, type SQL } from 'drizzle-orm';
-import { db } from '@anju/db';
-import type { Database } from '@anju/db';
+import { db } from '@ganju/db';
+import type { Database } from '@ganju/db';
 
 // The transaction handle drizzle passes to `db.create(c).transaction(tx => …)`.
 // Derived from the Database type so the conflict check can run inside the same
 // transaction as the channel insert.
-type ChannelTransaction = Parameters<
-  Parameters<Database['transaction']>[0]
->[0];
+type ChannelTransaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 interface ChannelConflictOptions {
   // The platform of the channel being created (CHANNEL_PLATFORM_*).

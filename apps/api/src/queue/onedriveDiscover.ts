@@ -1,6 +1,6 @@
 import type { ExecutionContext, MessageBatch } from '@cloudflare/workers-types';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 import { and, eq, sql } from 'drizzle-orm';
 
 import {
@@ -149,7 +149,9 @@ const insertChildResource = async (
           ? utils.constants.RESOURCE_SOURCE_TYPE_ONE_DRIVE_FOLDER
           : utils.constants.RESOURCE_SOURCE_TYPE_FILE,
         status: utils.constants.STATUS_PENDING,
-        mimeType: folder ? utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM : mimeType,
+        mimeType: folder
+          ? utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM
+          : mimeType,
         fileName: child.name,
         artifactId: parent.artifactId,
         parentResourceId: parent.id,

@@ -11,7 +11,7 @@ Free:
 
 - User can upload only 24mb resource
 - User can't create a new org/project, can only have 1 - so she can't invite no one
-- User uses mcp as https://mcp.anju.ai/<slug>
+- User uses mcp as https://mcp.ganju.ai/<slug>
 - Limit tools, prompts and resources user can active/upload (5 tools, 5 prompts, (don't know how many resources can upload (limit size?)))
 - Some tools are premium (don't know which ones)
 - Community support
@@ -21,7 +21,7 @@ Paid:
 - User can upload only 500mb resource
 - No limits on orgs/projects amount
 - No limits on invitations for orgs/projects
-- User can add custom slug https://<mycompany>.mcp.anju.ai/ (We need to pay Cloudflare ACM (10USD/Month))
+- User can add custom slug https://<mycompany>.mcp.ganju.ai/ (We need to pay Cloudflare ACM (10USD/Month))
 - User no limits on tools, prompts, resources.
 - User can create custom tool (programming, don't know how yet)
 - Support 24/7
@@ -31,7 +31,7 @@ Enterprise:
 - No limit upload size
 - No limits on orgs/projects amount
 - No limits on invitations for orgs/projects
-- User can add custom slug https://<mycompany>.mcp.anju.ai/
+- User can add custom slug https://<mycompany>.mcp.ganju.ai/
 - User no limits on tools, prompts, resources.
 - User can create custom tool (programming, don't know how yet)
 - Better support (My Developers working for them?)

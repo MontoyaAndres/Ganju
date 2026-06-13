@@ -1,7 +1,7 @@
 import { and, inArray, InferSelectModel } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
-import type { ExtractedDocumentMetadata, Source } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
+import type { ExtractedDocumentMetadata, Source } from '@ganju/utils';
 
 import { extractToolText } from './toolText';
 
@@ -49,9 +49,7 @@ export const collectSources = async (
   const seenRead = new Set<string>();
 
   for (const event of usageEvents) {
-    if (
-      event.toolName === utils.constants.RESOURCE_TOOL_KEY_SEARCH_RESOURCES
-    ) {
+    if (event.toolName === utils.constants.RESOURCE_TOOL_KEY_SEARCH_RESOURCES) {
       for (const hit of parseSearchHits(event.output)) {
         const resource = artifactResourceByUri.get(hit.uri);
         if (!resource) continue;
@@ -86,9 +84,7 @@ export const collectSources = async (
 
   const pageByKey = new Map<string, number>();
   if (fileLookups.length > 0) {
-    const resourceIds = Array.from(
-      new Set(fileLookups.map(l => l.resourceId))
-    );
+    const resourceIds = Array.from(new Set(fileLookups.map(l => l.resourceId)));
     const indexes = Array.from(new Set(fileLookups.map(l => l.chunkIndex)));
     const rows = await dbInstance
       .select({

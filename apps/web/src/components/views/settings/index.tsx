@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 import IconButton from '@mui/material/IconButton';
 import { Add, DeleteOutlined, EditOutlined } from '@mui/icons-material';
 
@@ -189,9 +189,9 @@ export const Settings = (props: SettingsProps) => {
       });
       if (signal?.aborted) return;
       const found = Array.isArray(list)
-        ? (list.find(
-            (item: Organization) => item.id === organizationId
-          ) as Organization | undefined)
+        ? (list.find((item: Organization) => item.id === organizationId) as
+            | Organization
+            | undefined)
         : undefined;
       if (found) {
         setOrganization(found);
@@ -609,7 +609,6 @@ export const Settings = (props: SettingsProps) => {
           </>
         )}
       </section>
-
     </section>
   );
 

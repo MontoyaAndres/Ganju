@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from '@emotion/react';
 import type { Theme } from '@emotion/react';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import {
@@ -532,7 +532,7 @@ export const Overview = () => {
   // Live preview of the MCP connection as the user edits the slug — the
   // resulting URL plus how it drops into an MCP client's config.
   const previewUrl = `${mcpRoot}/${previewSlug || data?.artifact.slug || ''}`;
-  const configName = previewSlug || data?.artifact.slug || 'anju';
+  const configName = previewSlug || data?.artifact.slug || 'ganju';
   const configSnippet = JSON.stringify(
     { mcpServers: { [configName]: { url: previewUrl } } },
     null,

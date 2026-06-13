@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 import type {
   LlmAdapter,
   LlmAdapterInput,

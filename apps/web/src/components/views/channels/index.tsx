@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 import IconButton from '@mui/material/IconButton';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
@@ -25,7 +25,7 @@ import {
 
 import { Wrapper, UsageModalOverlay } from './styles';
 
-import type { Source } from '@anju/utils';
+import type { Source } from '@ganju/utils';
 
 interface BotInfo {
   id: number;
@@ -214,8 +214,7 @@ const channelLabel = (channel: Channel): string => {
 };
 
 const usageIcon = (kind: MessageUsage['kind']) => {
-  if (kind === utils.constants.USAGE_KIND_TOOL)
-    return <BuildOutlined />;
+  if (kind === utils.constants.USAGE_KIND_TOOL) return <BuildOutlined />;
   if (kind === utils.constants.USAGE_KIND_RESOURCE)
     return <AttachFileOutlined />;
   return <AutoAwesomeOutlined />;
@@ -1478,8 +1477,8 @@ export const Channels = () => {
                     />
                     <p className="panel-toggle-hint">
                       Paste this into the Meta app dashboard → WhatsApp →
-                      Configuration → Callback URL, with the Verify token you set
-                      when connecting, then subscribe to the messages field.
+                      Configuration → Callback URL, with the Verify token you
+                      set when connecting, then subscribe to the messages field.
                     </p>
                     <WhatsappRequirements />
                   </div>

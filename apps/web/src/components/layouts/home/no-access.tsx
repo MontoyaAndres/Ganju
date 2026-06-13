@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { UI } from '@anju/ui';
+import { UI } from '@ganju/ui';
 import { LockOutlined } from '@mui/icons-material';
 
 import { NoAccessWrapper } from './styles';

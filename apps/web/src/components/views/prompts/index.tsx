@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 import IconButton from '@mui/material/IconButton';
 import {
   Add,

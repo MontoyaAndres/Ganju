@@ -9,7 +9,7 @@ export const Auth = (
     <Wrapper>
       <div className="logo">
         <div className="logo-image" />
-        <div className="logo-text">Anju.ai</div>
+        <div className="logo-text">Ganju.ai</div>
       </div>
       {page}
     </Wrapper>

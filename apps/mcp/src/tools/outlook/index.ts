@@ -1,6 +1,6 @@
-import { utils } from '@anju/utils';
-import type { OutlookSendRequest, OutlookSendResponse } from '@anju/utils';
-import { getResourceHandler } from '@anju/containers';
+import { utils } from '@ganju/utils';
+import type { OutlookSendRequest, OutlookSendResponse } from '@ganju/utils';
+import { getResourceHandler } from '@ganju/containers';
 
 import { ToolContext, ToolDefinition } from '../types';
 
@@ -274,7 +274,7 @@ export const sendEmail: ToolDefinition = {
 export const replyEmail: ToolDefinition = {
   title: 'Outlook: Reply',
   description:
-    'Reply to an existing Outlook message, preserving its conversation via Graph\'s createReply / createReplyAll flow. Set replyAll=true to include all original recipients. Pass attachmentUris (from list-resources or search-resources) to attach files. Use this — not outlook-send-email — whenever continuing an existing conversation, so the reply lands in the same thread on the recipient side. Returns the new message ID and conversation ID.',
+    "Reply to an existing Outlook message, preserving its conversation via Graph's createReply / createReplyAll flow. Set replyAll=true to include all original recipients. Pass attachmentUris (from list-resources or search-resources) to attach files. Use this — not outlook-send-email — whenever continuing an existing conversation, so the reply lands in the same thread on the recipient side. Returns the new message ID and conversation ID.",
   schema: {
     type: 'object',
     properties: {
@@ -437,9 +437,7 @@ export const listEmails: ToolDefinition = {
       auth.token,
       `/me/mailFolders/${encodeURIComponent(folder)}/messages?${params.toString()}`,
       // Graph requires the eventual consistency hint when $search is used.
-      args.query
-        ? { headers: { ConsistencyLevel: 'eventual' } }
-        : undefined
+      args.query ? { headers: { ConsistencyLevel: 'eventual' } } : undefined
     );
     if (!response.ok)
       return text(
@@ -672,7 +670,10 @@ export const listThreads: ToolDefinition = {
   schema: {
     type: 'object',
     properties: {
-      query: { type: 'string', description: 'Optional full-text search query.' },
+      query: {
+        type: 'string',
+        description: 'Optional full-text search query.'
+      },
       maxResults: {
         type: 'number',
         minimum: 1,
@@ -730,9 +731,7 @@ export const listThreads: ToolDefinition = {
       m =>
         `- Thread ${m.conversationId} :: ${m.subject || '(no subject)'} — last from ${formatRecipient(m.from)} at ${m.receivedDateTime || 'unknown'} :: ${m.bodyPreview?.slice(0, 120) || ''}`
     );
-    return text(
-      `Found ${seen.size} thread(s):\n\n${lines.join('\n')}`
-    );
+    return text(`Found ${seen.size} thread(s):\n\n${lines.join('\n')}`);
   }
 };
 

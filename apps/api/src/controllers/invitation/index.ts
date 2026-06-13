@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
-import { utils } from '@anju/utils';
-import { db } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { db } from '@ganju/db';
 
 import { sendInvitationEmail } from '../../utils';
 

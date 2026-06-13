@@ -1,5 +1,5 @@
-import { JsonSchema } from '@anju/utils';
-import { db, Database } from '@anju/db';
+import { JsonSchema } from '@ganju/utils';
+import { db, Database } from '@ganju/db';
 import { InferSelectModel } from 'drizzle-orm';
 import { R2Bucket } from '@cloudflare/workers-types';
 

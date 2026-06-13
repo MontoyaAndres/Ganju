@@ -1,14 +1,14 @@
 import { Context } from 'hono';
 import { eq } from 'drizzle-orm';
-import { db, utils as dbUtils } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db, utils as dbUtils } from '@ganju/db';
+import { utils } from '@ganju/utils';
 import type {
   ChannelNotifier,
   SourceButton,
   TelegramSendRequest,
   TelegramSendRemoteResourceRequest
-} from '@anju/utils';
-import { getResourceHandler } from '@anju/containers';
+} from '@ganju/utils';
+import { getResourceHandler } from '@ganju/containers';
 
 import { runChannelTurn } from './runner';
 import { resolveSlashPrompt } from './slashPrompt';
@@ -448,7 +448,6 @@ const parseSlashCommand = (
   const trailingText = text.slice(cmdEntity.offset + cmdEntity.length).trim();
   return { name: name.toLowerCase(), trailingText };
 };
-
 
 const messageAddressesBot = (
   message: TelegramIncomingMessage,

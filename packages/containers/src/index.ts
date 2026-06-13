@@ -1,5 +1,5 @@
 import { Container, getContainer } from '@cloudflare/containers';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 export interface ResourceHandlerCallerEnv {
   RESOURCE_HANDLER: DurableObjectNamespace<ResourceHandler>;

@@ -1,6 +1,6 @@
 import http from 'node:http';
-import { utils } from '@anju/utils';
-import { utils as dbUtils } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { utils as dbUtils } from '@ganju/db';
 
 import { extractDocuments } from './extract.js';
 import { handleGmailSend } from './gmailSend.js';

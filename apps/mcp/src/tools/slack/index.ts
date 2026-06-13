@@ -1,8 +1,8 @@
-import { utils } from '@anju/utils';
-import { getResourceHandler } from '@anju/containers';
+import { utils } from '@ganju/utils';
+import { getResourceHandler } from '@ganju/containers';
 
 // types
-import type { SlackSendRequest, SlackSendResponse } from '@anju/utils';
+import type { SlackSendRequest, SlackSendResponse } from '@ganju/utils';
 import { ToolContext, ToolDefinition } from '../types';
 
 const SLACK_BASE = utils.constants.SLACK_API_BASE;
@@ -471,7 +471,7 @@ export const getUser: ToolDefinition = {
 export const uploadFile: ToolDefinition = {
   title: 'Slack: Upload File',
   description:
-    "Upload a file from an Anju resource to Slack and share it in the given channel via Slack's external-upload flow (files.getUploadURLExternal + completeUploadExternal). Pass `resourceUri` (from list-resources / search-resources), the destination `channel`, and optionally an `initialComment` (message body posted alongside the file) and `threadTs` to drop the file inside an existing thread. Per-file cap is 100MB. Returns the new file ID and a permalink. Use this — not slack-send-message — when the user wants to share a document/image, not just text.",
+    "Upload a file from an Ganju resource to Slack and share it in the given channel via Slack's external-upload flow (files.getUploadURLExternal + completeUploadExternal). Pass `resourceUri` (from list-resources / search-resources), the destination `channel`, and optionally an `initialComment` (message body posted alongside the file) and `threadTs` to drop the file inside an existing thread. Per-file cap is 100MB. Returns the new file ID and a permalink. Use this — not slack-send-message — when the user wants to share a document/image, not just text.",
   schema: {
     type: 'object',
     properties: {
@@ -482,7 +482,7 @@ export const uploadFile: ToolDefinition = {
       resourceUri: {
         type: 'string',
         description:
-          'Anju resource URI (from list-resources or search-resources) to upload.'
+          'Ganju resource URI (from list-resources or search-resources) to upload.'
       },
       title: {
         type: 'string',

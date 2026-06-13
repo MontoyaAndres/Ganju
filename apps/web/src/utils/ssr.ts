@@ -1,5 +1,5 @@
 import { GetServerSideProps, GetServerSidePropsContext } from 'next';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 const getMe = async (context: GetServerSidePropsContext) => {
   const { req } = context;

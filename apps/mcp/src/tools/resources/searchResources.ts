@@ -1,4 +1,4 @@
-import { db } from '@anju/db';
+import { db } from '@ganju/db';
 import { eq, sql } from 'drizzle-orm';
 
 import { ToolDefinition } from '../types';

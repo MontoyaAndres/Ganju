@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 
 import { Wrapper } from './styles';
 import { authClient } from '../../../utils';
@@ -47,7 +47,7 @@ export const Auth = () => {
       <p className="terms">
         By signing in, you agree to our{' '}
         <a
-          href="https://anju.ai/terms"
+          href="https://ganju.ai/terms"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -55,7 +55,7 @@ export const Auth = () => {
         </a>{' '}
         and{' '}
         <a
-          href="https://anju.ai/privacy"
+          href="https://ganju.ai/privacy"
           target="_blank"
           rel="noopener noreferrer"
         >

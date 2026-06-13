@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, eq } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 import { loadProxiedPrompts } from '../controllers/channel/proxiedPrompts';
 
@@ -55,7 +55,7 @@ const buildCommands = (
 
   const linkCommand: DiscordApplicationCommand = {
     name: utils.constants.BOT_COMMAND_LINK,
-    description: 'Link this Discord account to your Anju account',
+    description: 'Link this Discord account to your Ganju account',
     type: 1
   };
 
@@ -101,7 +101,10 @@ export const syncDiscordCommandsForArtifact = async (
     .where(
       and(
         eq(db.schema.channel.artifactId, artifactId),
-        eq(db.schema.channel.platform, utils.constants.CHANNEL_PLATFORM_DISCORD),
+        eq(
+          db.schema.channel.platform,
+          utils.constants.CHANNEL_PLATFORM_DISCORD
+        ),
         eq(db.schema.channel.status, utils.constants.STATUS_ACTIVE)
       )
     );

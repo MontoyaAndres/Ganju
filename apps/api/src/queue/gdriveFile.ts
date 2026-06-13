@@ -1,9 +1,6 @@
-import type {
-  ExecutionContext,
-  MessageBatch
-} from '@cloudflare/workers-types';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import type { ExecutionContext, MessageBatch } from '@cloudflare/workers-types';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 import { eq, sql } from 'drizzle-orm';
 
 import {

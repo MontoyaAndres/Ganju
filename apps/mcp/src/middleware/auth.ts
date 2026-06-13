@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from 'jose';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 import { resolveArtifactSlug } from '../utils';
 
@@ -71,8 +71,7 @@ const verifyJwt = async (
         : [];
     return {
       userId: typeof payload.sub === 'string' ? payload.sub : undefined,
-      scopes:
-        typeof payload.scope === 'string' ? payload.scope.split(' ') : [],
+      scopes: typeof payload.scope === 'string' ? payload.scope.split(' ') : [],
       aud,
       isBotToken: typeof payload.external_provider === 'string'
     };
@@ -93,14 +92,12 @@ const introspectToken = async (
     console.warn('MCP introspection: NEXT_PUBLIC_API_URL is not set');
     return null;
   }
-  const res = await c.env.API
-    .fetch(`${apiUrl}/auth/oauth2/userinfo`, {
-      headers: { authorization: `Bearer ${token}` }
-    })
-    .catch((error: unknown) => {
-      console.warn(`MCP introspection: userinfo fetch failed — ${error}`);
-      return null;
-    });
+  const res = await c.env.API.fetch(`${apiUrl}/auth/oauth2/userinfo`, {
+    headers: { authorization: `Bearer ${token}` }
+  }).catch((error: unknown) => {
+    console.warn(`MCP introspection: userinfo fetch failed — ${error}`);
+    return null;
+  });
   if (!res) return null;
   if (!res.ok) {
     const detail = await res.text().catch(() => '');

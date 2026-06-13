@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { eq } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 import { loadProxiedPrompts } from './proxiedPrompts';
 
@@ -42,9 +42,7 @@ export const resolveSlashPrompt = async (
     .from(db.schema.artifactPrompt)
     .where(eq(db.schema.artifactPrompt.artifactId, artifactId));
 
-  const match = prompts.find(
-    p => utils.slugifyTitle(p.title) === command.name
-  );
+  const match = prompts.find(p => utils.slugifyTitle(p.title) === command.name);
   if (match) {
     const schema = match.schema as {
       properties?: Record<string, { type: string }>;

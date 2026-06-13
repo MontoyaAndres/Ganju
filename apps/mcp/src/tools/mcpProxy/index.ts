@@ -1,4 +1,4 @@
-import { McpProxyToolConfig, McpProxyDiscovery, utils } from '@anju/utils';
+import { McpProxyToolConfig, McpProxyDiscovery, utils } from '@ganju/utils';
 
 import {
   connectRemoteMcpClient,

@@ -1,4 +1,4 @@
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 import { ToolContext, ToolDefinition } from '../types';
 
@@ -107,7 +107,9 @@ const resolveTopic = (
     cfgString(args.topic) ||
     cfgString(context.config?.defaultTopic) ||
     utils.constants.TAVILY_TOPIC_GENERAL;
-  return (utils.constants.TAVILY_TOPICS as readonly string[]).includes(requested)
+  return (utils.constants.TAVILY_TOPICS as readonly string[]).includes(
+    requested
+  )
     ? requested
     : utils.constants.TAVILY_TOPIC_GENERAL;
 };
@@ -247,7 +249,9 @@ export const webExtract: ToolDefinition = {
     const auth = getApiKey(context);
     if (!auth.ok) return auth.response;
 
-    const urls = cfgStringArray(args.urls) ?? (cfgString(args.urls) ? [String(args.urls)] : undefined);
+    const urls =
+      cfgStringArray(args.urls) ??
+      (cfgString(args.urls) ? [String(args.urls)] : undefined);
     if (!urls) return text('Error: at least one url is required.');
 
     const requestedDepth = cfgString(args.extractDepth);

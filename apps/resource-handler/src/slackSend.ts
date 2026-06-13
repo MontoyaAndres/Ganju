@@ -1,10 +1,10 @@
 import http from 'node:http';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 import { utils as serverUtils } from './utils/index.js';
 
 // types
-import type { SlackSendRequest, SlackSendResponse } from '@anju/utils';
+import type { SlackSendRequest, SlackSendResponse } from '@ganju/utils';
 
 interface SlackEnvelope {
   ok: boolean;

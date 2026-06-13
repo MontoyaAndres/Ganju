@@ -1,8 +1,8 @@
 {
-  "name": "anju",
+  "name": "ganju",
   "version": "0.0.0",
   "main": "index.js",
-  "repository": "git@github.com:MontoyaAndres/anju.git",
+  "repository": "git@github.com:MontoyaAndres/ganju.git",
   "author": "MontoyaAndres <andresmontoyafcb@gmail.com>",
   "packageManager": "npm@11.17.0",
   "license": "MIT",

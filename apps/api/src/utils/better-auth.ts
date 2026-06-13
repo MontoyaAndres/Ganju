@@ -4,10 +4,10 @@ import { betterAuth } from 'better-auth';
 import { jwt } from 'better-auth/plugins/jwt';
 import { oidcProvider } from 'better-auth/plugins/oidc-provider';
 import { v7 as uuid } from 'uuid';
-import { utils } from '@anju/utils';
-import { db } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { db } from '@ganju/db';
 
-import { anjuAuthPlugin } from './anju-auth-plugin';
+import { ganjuAuthPlugin } from './ganju-auth-plugin';
 import { oauthConsentHTML } from './oauth-consent-page';
 
 export const createAuth = (c: Context) => {
@@ -18,7 +18,7 @@ export const createAuth = (c: Context) => {
   const webUrl = utils.getEnv(c, 'NEXT_PUBLIC_WEB_URL')!;
 
   return betterAuth({
-    appName: 'anju',
+    appName: 'ganju',
     database: drizzleAdapter(dbInstance, {
       provider: 'pg',
       schema: db.schema
@@ -65,7 +65,7 @@ export const createAuth = (c: Context) => {
         accessTokenExpiresIn: 3600,
         refreshTokenExpiresIn: 60 * 60 * 24 * 30
       }),
-      anjuAuthPlugin(utils.getEnv(c, 'BOT_OAUTH_CLIENT_ID'))
+      ganjuAuthPlugin(utils.getEnv(c, 'BOT_OAUTH_CLIENT_ID'))
     ]
   });
 };

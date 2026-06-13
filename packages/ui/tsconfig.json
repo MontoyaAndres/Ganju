@@ -1,5 +1,5 @@
 {
-  "extends": "@anju/tsconfig/react.json",
+  "extends": "@ganju/tsconfig/react.json",
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"]
 }

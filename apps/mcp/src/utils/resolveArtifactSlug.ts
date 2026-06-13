@@ -1,8 +1,8 @@
 // Extracts the artifact slug from the request host. The MCP worker is mounted
-// on a wildcard route such as `*.mcp.anju.ai`; the leftmost label identifies
-// the artifact (e.g. `7f3a8b2c...mcp.anju.ai` → `7f3a8b2c...`).
+// on a wildcard route such as `*.mcp.ganju.ai`; the leftmost label identifies
+// the artifact (e.g. `7f3a8b2c...mcp.ganju.ai` → `7f3a8b2c...`).
 //
-// Returns null when the request hits the apex (`mcp.anju.ai`) or when the host
+// Returns null when the request hits the apex (`mcp.ganju.ai`) or when the host
 // header is malformed — callers should reject the request in that case.
 export const resolveArtifactSlug = (req: Request): string | null => {
   const host = req.headers.get('host');

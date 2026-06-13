@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, desc, eq } from 'drizzle-orm';
-import { utils } from '@anju/utils';
-import { db } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { db } from '@ganju/db';
 
 import { AppEnv } from '../../types';
 

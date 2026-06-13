@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { utils } from '@anju/utils';
-import { utils as dbUtils } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { utils as dbUtils } from '@ganju/db';
 
 import {
   UserController,
@@ -474,7 +474,7 @@ app
   )
   .get('/oauth/:provider/callback', OAuthController.callback);
 
-export { ResourceHandler } from '@anju/containers';
+export { ResourceHandler } from '@ganju/containers';
 export { DiscordGatewayDO } from './durable-objects/discordGateway';
 
 export default {
@@ -492,38 +492,38 @@ export default {
     env: Bindings,
     ctx: ExecutionContext
   ) => {
-    if (batch.queue.startsWith('anju-crawl-discover')) {
+    if (batch.queue.startsWith('ganju-crawl-discover')) {
       return handleCrawlDiscoverBatch(
         batch as MessageBatch<CrawlDiscoverJob>,
         env,
         ctx
       );
     }
-    if (batch.queue.startsWith('anju-crawl-page')) {
+    if (batch.queue.startsWith('ganju-crawl-page')) {
       return handleCrawlPageBatch(batch as MessageBatch<PageJob>, env, ctx);
     }
-    if (batch.queue.startsWith('anju-gdrive-discover')) {
+    if (batch.queue.startsWith('ganju-gdrive-discover')) {
       return handleGdriveDiscoverBatch(
         batch as MessageBatch<GdriveDiscoverJob>,
         env,
         ctx
       );
     }
-    if (batch.queue.startsWith('anju-gdrive-file')) {
+    if (batch.queue.startsWith('ganju-gdrive-file')) {
       return handleGdriveFileBatch(
         batch as MessageBatch<GdriveFileJob>,
         env,
         ctx
       );
     }
-    if (batch.queue.startsWith('anju-onedrive-discover')) {
+    if (batch.queue.startsWith('ganju-onedrive-discover')) {
       return handleOnedriveDiscoverBatch(
         batch as MessageBatch<OnedriveDiscoverJob>,
         env,
         ctx
       );
     }
-    if (batch.queue.startsWith('anju-onedrive-file')) {
+    if (batch.queue.startsWith('ganju-onedrive-file')) {
       return handleOnedriveFileBatch(
         batch as MessageBatch<OnedriveFileJob>,
         env,

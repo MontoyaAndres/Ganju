@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
-import type { EnvSource } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
+import type { EnvSource } from '@ganju/utils';
 
 import type { Bindings } from '../types';
 

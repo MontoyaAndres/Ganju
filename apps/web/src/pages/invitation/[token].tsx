@@ -1,5 +1,5 @@
 import { GetServerSideProps } from 'next';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 import { Components } from '../../components';
 

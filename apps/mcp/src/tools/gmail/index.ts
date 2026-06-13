@@ -1,6 +1,6 @@
-import { utils } from '@anju/utils';
-import type { GmailSendRequest, GmailSendResponse } from '@anju/utils';
-import { getResourceHandler } from '@anju/containers';
+import { utils } from '@ganju/utils';
+import type { GmailSendRequest, GmailSendResponse } from '@ganju/utils';
+import { getResourceHandler } from '@ganju/containers';
 
 import { ToolContext, ToolDefinition } from '../types';
 

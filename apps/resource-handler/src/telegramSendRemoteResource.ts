@@ -1,6 +1,6 @@
 import http from 'node:http';
-import { utils } from '@anju/utils';
-import type { TelegramSendRemoteResourceRequest } from '@anju/utils';
+import { utils } from '@ganju/utils';
+import type { TelegramSendRemoteResourceRequest } from '@ganju/utils';
 
 import { utils as serverUtils } from './utils/index.js';
 import { connectRemoteMcpClient } from './remoteMcpClient.js';

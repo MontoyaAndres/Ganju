@@ -1,9 +1,6 @@
-import type {
-  ExecutionContext,
-  MessageBatch
-} from '@cloudflare/workers-types';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import type { ExecutionContext, MessageBatch } from '@cloudflare/workers-types';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 import { eq, sql } from 'drizzle-orm';
 
 import {
@@ -117,10 +114,7 @@ const syncOne = async (env: Bindings, resourceId: string): Promise<void> => {
     typeof file.size === 'number' && Number.isFinite(file.size)
       ? file.size
       : null;
-  if (
-    declaredSize !== null &&
-    declaredSize > utils.constants.MAX_FILE_SIZE
-  ) {
+  if (declaredSize !== null && declaredSize > utils.constants.MAX_FILE_SIZE) {
     throw new Error(
       `OneDrive file ${file.id} exceeds the ${utils.constants.MAX_FILE_SIZE / (1024 * 1024)}MB limit (size: ${declaredSize} bytes)`
     );

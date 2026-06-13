@@ -1,4 +1,4 @@
-import { HttpEndpointToolConfig, utils } from '@anju/utils';
+import { HttpEndpointToolConfig, utils } from '@ganju/utils';
 
 import { interpolate } from '../../utils/interpolate';
 import { ToolDefinition } from '../types';

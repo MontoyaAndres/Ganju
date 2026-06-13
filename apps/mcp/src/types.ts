@@ -4,7 +4,7 @@ import type {
   KVNamespace,
   R2Bucket
 } from '@cloudflare/workers-types';
-import type { ResourceHandler } from '@anju/containers';
+import type { ResourceHandler } from '@ganju/containers';
 
 export type Variables = {
   authContext: {

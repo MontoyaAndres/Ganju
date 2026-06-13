@@ -1,4 +1,4 @@
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 // Name a forwarded (remote MCP) resource file: prefer the uri's last path
 // segment, then give it an extension from its mime type so the chat shows a

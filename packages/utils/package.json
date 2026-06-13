@@ -1,5 +1,5 @@
 {
-  "name": "@anju/utils",
+  "name": "@ganju/utils",
   "version": "0.0.1",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -20,7 +20,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@anju/tsconfig": "*",
+    "@ganju/tsconfig": "*",
     "typescript": "^6.0.3"
   }
 }

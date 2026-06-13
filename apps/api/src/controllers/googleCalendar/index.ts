@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, eq } from 'drizzle-orm';
-import { utils } from '@anju/utils';
-import { db } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { db } from '@ganju/db';
 
 import { getCalendarAccessToken, listCalendars } from '../../utils';
 
@@ -63,7 +63,9 @@ const calendars = async (c: Context<AppEnv>) => {
   }
 
   if (utils.isCredentialNeedingReauth(credential.metadata)) {
-    throw new Error('Google Calendar credential needs reauth for this project.');
+    throw new Error(
+      'Google Calendar credential needs reauth for this project.'
+    );
   }
 
   const accessToken = await getCalendarAccessToken(c, artifactRow.id);

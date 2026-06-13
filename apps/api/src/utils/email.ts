@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 // types
 import type { AppEnv } from '../types';
@@ -34,7 +34,7 @@ export const sendInvitationEmail = async (
   const subject = `${input.inviterName} invited you to the ${input.targetName} ${scopeLabel}`;
 
   const text = [
-    `${input.inviterName} has invited you to join the ${scopeLabel} "${input.targetName}" on Anju.`,
+    `${input.inviterName} has invited you to join the ${scopeLabel} "${input.targetName}" on Ganju.`,
     '',
     'Sign in to accept or decline this invitation:',
     acceptUrl,
@@ -56,7 +56,7 @@ export const sendInvitationEmail = async (
                 <h1 style="margin:0 0 16px;font-size:20px;">You've been invited</h1>
                 <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">
                   <strong>${inviter}</strong> has invited you to join the
-                  ${scopeLabel} <strong>${target}</strong> on Anju.
+                  ${scopeLabel} <strong>${target}</strong> on Ganju.
                 </p>
                 <p style="margin:0 0 24px;font-size:14px;line-height:1.5;">
                   Sign in with this email address to accept or decline the
@@ -80,7 +80,7 @@ export const sendInvitationEmail = async (
 
   try {
     await sendEmail.send({
-      from: `Anju <noreply@${domain}>`,
+      from: `Ganju <noreply@${domain}>`,
       to: input.to,
       subject,
       text,

@@ -1,5 +1,5 @@
 {
-  "name": "@anju/db",
+  "name": "@ganju/db",
   "version": "0.0.1",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -19,13 +19,13 @@
     "migrate-prod": "dotenv -e ../../.env.prod drizzle-kit migrate"
   },
   "dependencies": {
-    "@anju/utils": "*",
+    "@ganju/utils": "*",
     "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.9",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "@anju/tsconfig": "*",
+    "@ganju/tsconfig": "*",
     "drizzle-kit": "^0.31.10",
     "typescript": "^6.0.3"
   }

@@ -1,6 +1,6 @@
 import http from 'node:http';
-import { utils } from '@anju/utils';
-import type { DiscordSendRequest } from '@anju/utils';
+import { utils } from '@ganju/utils';
+import type { DiscordSendRequest } from '@ganju/utils';
 
 import { utils as serverUtils } from './utils/index.js';
 

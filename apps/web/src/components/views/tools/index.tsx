@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
-import type { CalendarConfigField } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
+import type { CalendarConfigField } from '@ganju/utils';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Switch from '@mui/material/Switch';
@@ -81,7 +81,7 @@ interface ArtifactCredential {
   metadata?: { needsReauth?: boolean; reauthReason?: string } | null;
 }
 
-const EXPANDED_GROUP_KEY = 'anju:expandedToolGroupId';
+const EXPANDED_GROUP_KEY = 'ganju:expandedToolGroupId';
 
 const SEND_UPDATES_OPTIONS = [
   {

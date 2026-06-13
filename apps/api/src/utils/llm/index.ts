@@ -1,4 +1,4 @@
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 import { openAiAdapter } from './openai';
 import { anthropicAdapter } from './anthropic';

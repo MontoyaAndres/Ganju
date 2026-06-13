@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { eq, sql, and, InferSelectModel } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 import { collectSources } from './sources';
 import { extractToolText } from './toolText';
@@ -15,7 +15,7 @@ import {
 
 import type { LlmMessage, LlmToolCall, LlmToolDefinition } from '../../utils';
 import type { AppEnv } from '../../types';
-import type { ChannelNotifier, Source, SourceButton } from '@anju/utils';
+import type { ChannelNotifier, Source, SourceButton } from '@ganju/utils';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 type ArtifactResourceRow = InferSelectModel<typeof db.schema.artifactResource>;
@@ -381,7 +381,7 @@ export const runChannelTurn = async (
   }
 
   // Call MCP on behalf of the participant only when they have linked their
-  // Anju account AND are a member of this project — projects are isolated, so
+  // Ganju account AND are a member of this project — projects are isolated, so
   // org membership alone doesn't grant access. Otherwise fall back to the
   // channel's internal-secret access, so linking never downgrades a user.
   let mcpAuthToken: string | undefined;

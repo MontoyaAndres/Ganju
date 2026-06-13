@@ -3,7 +3,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 import {
   FolderOutlined,
   InsertDriveFileOutlined,
@@ -227,7 +227,10 @@ const buildGoogleConfig = (): ProviderConfig => ({
     }
 
     params.set('q', clauses.join(' and '));
-    return { url: `${GDRIVE_API_BASE}/files?${params.toString()}`, kind: 'files' };
+    return {
+      url: `${GDRIVE_API_BASE}/files?${params.toString()}`,
+      kind: 'files'
+    };
   },
   parseFiles: payload => {
     const data = payload as GDriveListResponse;
@@ -526,9 +529,7 @@ export const CloudDriveBrowser = (props: IProps) => {
         if (response.status === 401) {
           if (!cancelled) {
             onTokenExpiredRef.current?.();
-            setError(
-              'Session expired. Please reconnect and try again.'
-            );
+            setError('Session expired. Please reconnect and try again.');
             setItems([]);
           }
           return;
@@ -574,7 +575,7 @@ export const CloudDriveBrowser = (props: IProps) => {
       tab === utils.constants.GOOGLE_DRIVE_TAB_SHARED_DRIVES &&
       path.length === 1
         ? item.id
-        : item.driveId ?? currentDriveId;
+        : (item.driveId ?? currentDriveId);
     setPath(prev => [
       ...prev,
       { id: item.id, name: item.name, driveId: nextDriveId }

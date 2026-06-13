@@ -1,8 +1,8 @@
 import { Context } from 'hono';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { v7 as uuid } from 'uuid';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 import {
   handleTelegramWebhook,

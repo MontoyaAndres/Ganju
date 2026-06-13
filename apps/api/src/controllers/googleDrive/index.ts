@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, eq, sql } from 'drizzle-orm';
-import { utils } from '@anju/utils';
-import { db } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { db } from '@ganju/db';
 
 import {
   driveUri,
@@ -20,9 +20,9 @@ const isFolder = (mimeType: string, isFolderFlag: boolean): boolean =>
 
 const ensureSupportedMime = (mimeType: string, folder: boolean): void => {
   if (folder) return;
-  const supported = (
-    utils.constants.MIMETYPES as readonly string[]
-  ).includes(mimeType);
+  const supported = (utils.constants.MIMETYPES as readonly string[]).includes(
+    mimeType
+  );
   if (!supported) {
     throw new Error(`Unsupported Google Drive mime type: ${mimeType}`);
   }

@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { eq } from 'drizzle-orm';
-import { db } from '@anju/db';
+import { db } from '@ganju/db';
 
 // types
 import { AppEnv } from '../../types';

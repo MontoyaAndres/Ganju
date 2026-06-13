@@ -1,11 +1,7 @@
 import CircularProgress from '@mui/material/CircularProgress';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
-import {
-  StatusBadgeWrapper,
-  FailedIcon,
-  CompletedIcon
-} from './styles';
+import { StatusBadgeWrapper, FailedIcon, CompletedIcon } from './styles';
 
 export interface IProps {
   status: string;

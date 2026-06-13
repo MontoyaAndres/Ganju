@@ -1,12 +1,12 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 import type {
   McpProxyDiscoveredTool,
   McpProxyDiscoveredResource,
   McpProxyDiscoveredPrompt
-} from '@anju/utils';
+} from '@ganju/utils';
 
 export interface DiscoverRemoteMcpInput {
   url: string;
@@ -71,7 +71,7 @@ export const discoverRemoteMcpTools = async (
       : new StreamableHTTPClientTransport(parsed, { fetch: fetchWithAuth });
 
   const client = new Client({
-    name: 'anju-mcp-proxy-discovery',
+    name: 'ganju-mcp-proxy-discovery',
     version: '0.0.1'
   });
 

@@ -14,7 +14,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { v7 as uuid } from 'uuid';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 export const user = pgTable(
   'user',

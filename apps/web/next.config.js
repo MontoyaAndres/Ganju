@@ -1,9 +1,9 @@
 const path = require('path');
-const { utils } = require('@anju/utils');
+const { utils } = require('@ganju/utils');
 
 module.exports = {
   reactStrictMode: true,
-  transpilePackages: ['@anju/ui', '@anju/utils'],
+  transpilePackages: ['@ganju/ui', '@ganju/utils'],
   outputFileTracingRoot: path.join(__dirname, '../../'),
   outputFileTracingIncludes: {
     '*': ['../../node_modules/@emotion/**']

@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
-import type { EnvSource } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
+import type { EnvSource } from '@ganju/utils';
 
 import { providers } from './providers';
 
@@ -20,7 +20,10 @@ export interface OneDriveFile {
   lastModifiedDateTime?: string;
   eTag?: string;
   cTag?: string;
-  file?: { mimeType?: string; hashes?: { quickXorHash?: string; sha1Hash?: string; sha256Hash?: string } };
+  file?: {
+    mimeType?: string;
+    hashes?: { quickXorHash?: string; sha1Hash?: string; sha256Hash?: string };
+  };
   folder?: { childCount?: number };
   parentReference?: { driveId?: string; id?: string; path?: string };
   deleted?: { state?: string };
@@ -290,12 +293,10 @@ export const parseOneDriveUri = (
   return { driveId: tail.slice(0, slash), itemId: tail.slice(slash + 1) };
 };
 
-export const isOneDriveFolder = (file: OneDriveFile): boolean =>
-  !!file.folder;
+export const isOneDriveFolder = (file: OneDriveFile): boolean => !!file.folder;
 
 export const oneDriveFileMimeType = (file: OneDriveFile): string =>
-  file.file?.mimeType ||
-  utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM;
+  file.file?.mimeType || utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM;
 
 export const buildOneDriveResourceMetadata = (
   file: OneDriveFile,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 import IconButton from '@mui/material/IconButton';
 import Switch from '@mui/material/Switch';
 import { Close, ExpandMore, ExpandLess, LinkOff } from '@mui/icons-material';

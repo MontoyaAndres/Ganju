@@ -12,7 +12,7 @@ const howToInvoke = (channelPlatform: string | null): string =>
 export const listPrompts: ToolDefinition = {
   title: 'List Prompts',
   description:
-    'List every prompt/command this MCP server exposes — the ones created in Anju (source "artifact") and the ones from connected mcp-proxy servers (source "mcp-proxy") — together with how to run them on the current surface. Returns JSON: {surface, howToInvoke, prompts:[{name, title, description, source, command, arguments}]}. `command` is the chat slash command (e.g. `/summarize`, null if not chat-invocable); `arguments` is [{name, description, required}], and text after the command fills the first one. Use this to tell the user which commands exist and exactly how to trigger them.',
+    'List every prompt/command this MCP server exposes — the ones created in Ganju (source "artifact") and the ones from connected mcp-proxy servers (source "mcp-proxy") — together with how to run them on the current surface. Returns JSON: {surface, howToInvoke, prompts:[{name, title, description, source, command, arguments}]}. `command` is the chat slash command (e.g. `/summarize`, null if not chat-invocable); `arguments` is [{name, description, required}], and text after the command fills the first one. Use this to tell the user which commands exist and exactly how to trigger them.',
   schema: {
     type: 'object',
     properties: {}

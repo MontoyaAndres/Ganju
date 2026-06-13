@@ -15,16 +15,16 @@ declare namespace Cloudflare {
 	interface ProductionEnv {
 		ASSETS: Fetcher;
 		NODE_ENV: "production";
-		NEXT_PUBLIC_API_URL: "https://api.anju.ai";
-		NEXT_PUBLIC_MCP_URL: "https://mcp.anju.ai";
-		NEXT_PUBLIC_WEB_URL: "https://app.anju.ai";
+		NEXT_PUBLIC_API_URL: "https://api.ganju.ai";
+		NEXT_PUBLIC_MCP_URL: "https://mcp.ganju.ai";
+		NEXT_PUBLIC_WEB_URL: "https://app.ganju.ai";
 	}
 	interface Env {
 		ASSETS: Fetcher;
 		NODE_ENV?: "production";
-		NEXT_PUBLIC_API_URL?: "https://development-api.vocesqueabrazan.com" | "https://api.anju.ai";
-		NEXT_PUBLIC_MCP_URL?: "https://development-mcp.vocesqueabrazan.com" | "https://mcp.anju.ai";
-		NEXT_PUBLIC_WEB_URL?: "https://development-app.vocesqueabrazan.com" | "https://app.anju.ai";
+		NEXT_PUBLIC_API_URL?: "https://development-api.vocesqueabrazan.com" | "https://api.ganju.ai";
+		NEXT_PUBLIC_MCP_URL?: "https://development-mcp.vocesqueabrazan.com" | "https://mcp.ganju.ai";
+		NEXT_PUBLIC_WEB_URL?: "https://development-app.vocesqueabrazan.com" | "https://app.ganju.ai";
 	}
 }
 interface CloudflareEnv extends Cloudflare.Env {}

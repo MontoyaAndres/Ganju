@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 export interface ProxiedPrompt {
   // The MCP prompt name registered on the server (`<prefix>__<remoteName>`) —

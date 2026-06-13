@@ -1,8 +1,8 @@
 import type { ExecutionContext, MessageBatch } from '@cloudflare/workers-types';
-import { db } from '@anju/db';
-import { utils, ExtractedDocument } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils, ExtractedDocument } from '@ganju/utils';
 import { eq, and, ne } from 'drizzle-orm';
-import { getResourceHandler } from '@anju/containers';
+import { getResourceHandler } from '@ganju/containers';
 
 import { reindexResourceChunks } from '../utils';
 import { markResourceFailed, reportQueueError } from './shared';

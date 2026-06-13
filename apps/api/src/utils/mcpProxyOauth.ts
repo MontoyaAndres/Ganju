@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, eq, sql } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 import {
   discoverOAuthProtectedResourceMetadata,
   discoverAuthorizationServerMetadata,
@@ -113,7 +113,7 @@ export const beginMcpProxyOauth = async (input: {
   const client = await registerClient(authServerUrl, {
     metadata,
     clientMetadata: {
-      client_name: 'Anju',
+      client_name: 'Ganju',
       redirect_uris: [redirect],
       grant_types: ['authorization_code', 'refresh_token'],
       response_types: ['code'],

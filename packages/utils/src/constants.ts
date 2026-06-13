@@ -241,7 +241,7 @@ const CRAWL_DEFAULT_MAX_DEPTH = 3;
 const CRAWL_MAX_DEPTH_LIMIT = 10;
 const CRAWL_PAGE_FETCH_TIMEOUT_MS = 30000;
 const CRAWL_USER_AGENT =
-  'Mozilla/5.0 (compatible; AnjuCrawler/1.0; +https://anju.ai)';
+  'Mozilla/5.0 (compatible; GanjuCrawler/1.0; +https://ganju.ai)';
 
 const RESOURCE_ICON_THEME_DARK = 'dark';
 const RESOURCE_ICON_THEME_LIGHT = 'light';
@@ -574,7 +574,7 @@ const SLACK_SIGNATURE_MAX_SKEW_SECONDS = 300;
 const SLACK_MESSAGE_LIMIT = 2900;
 const SLACK_MAX_SOURCE_BUTTONS = 10;
 
-// The Slack app configuration Anju needs, surfaced in the UI when connecting a
+// The Slack app configuration Ganju needs, surfaced in the UI when connecting a
 // Slack channel. Required scopes back the runner's calls (mentions, DMs,
 // posting, file upload); recommended scopes only enrich names/titles and
 // degrade gracefully; bot events are what the webhook subscribes to.
@@ -667,7 +667,7 @@ const EMBED_BATCH_SIZE = 96;
 
 const RESOURCE_HANDLER_SLEEP_AFTER = '10m';
 
-const DOCS_URL = 'https://docs.anju.ai';
+const DOCS_URL = 'https://docs.ganju.ai';
 
 const BASE64_DATA_URI_RE =
   /data:image\/[a-zA-Z0-9+\-.]+;base64,[A-Za-z0-9+/=\s]+/g;
@@ -1031,10 +1031,10 @@ const MCP_AUTH_KINDS = [MCP_AUTH_KIND_JWT, MCP_AUTH_KIND_INTERNAL];
 
 const MCP_SESSION_HEADER = 'mcp-session-id';
 
-const MCP_INTERNAL_HEADER = 'x-anju-internal-secret';
-const MCP_CHANNEL_ID_HEADER = 'x-anju-channel-id';
-const MCP_CHANNEL_PLATFORM_HEADER = 'x-anju-channel-platform';
-const MCP_CHANNEL_CLIENT_USER_AGENT = 'anju-channel/0.0.1';
+const MCP_INTERNAL_HEADER = 'x-ganju-internal-secret';
+const MCP_CHANNEL_ID_HEADER = 'x-ganju-channel-id';
+const MCP_CHANNEL_PLATFORM_HEADER = 'x-ganju-channel-platform';
+const MCP_CHANNEL_CLIENT_USER_AGENT = 'ganju-channel/0.0.1';
 const JWKS_KV_KEY = 'jwks:v1';
 const JWKS_TTL_SECONDS = 600;
 
@@ -1043,7 +1043,7 @@ const JWKS_TTL_SECONDS = 600;
 // authorization-server metadata and RFC 9728 protected-resource metadata).
 const OAUTH_SCOPES_SUPPORTED = ['openid', 'profile', 'email', 'offline_access'];
 
-// Anju-specific OAuth scopes for MCP access. `mcp:read` is the default scope
+// Ganju-specific OAuth scopes for MCP access. `mcp:read` is the default scope
 // minted by the bot-on-behalf-of grant (a custom grant that bypasses the OIDC
 // authorize endpoint). `artifact:<slug>` — built from this prefix — gates a
 // subjectless machine token to a single MCP server in the MCP auth middleware.
@@ -1054,7 +1054,7 @@ const OAUTH_SCOPES_SUPPORTED = ['openid', 'profile', 'email', 'offline_access'];
 const MCP_SCOPE_READ = 'mcp:read';
 const ARTIFACT_SCOPE_PREFIX = 'artifact:';
 
-const BOT_GRANT_TYPE = 'urn:anju:bot-on-behalf-of';
+const BOT_GRANT_TYPE = 'urn:ganju:bot-on-behalf-of';
 const EXTERNAL_LINK_VERIFICATION_PREFIX = 'external_link:';
 const EXTERNAL_LINK_TTL_SECONDS = 600;
 const BOT_ACCESS_TOKEN_TTL_SECONDS = 3600;

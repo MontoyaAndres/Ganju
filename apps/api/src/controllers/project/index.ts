@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
-import { utils } from '@anju/utils';
-import { db } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { db } from '@ganju/db';
 import { v7 as uuid } from 'uuid';
 
 // types
@@ -198,86 +198,86 @@ const getOverview = async (c: Context<AppEnv>) => {
         .from(db.schema.channel)
         .where(eq(db.schema.channel.artifactId, base.artifactId)),
 
-    // One line per channel platform: count the messages exchanged per day —
-    // both the user's turns and the assistant's replies (tool/system rows are
-    // internal plumbing and excluded).
-    dbInstance
-      .select({
-        platform: db.schema.channel.platform,
-        date: channelDay,
-        total: sql<number>`count(*)::int`
-      })
-      .from(db.schema.channelMessage)
-      .innerJoin(
-        db.schema.channelConversation,
-        eq(
-          db.schema.channelConversation.id,
-          db.schema.channelMessage.conversationId
+      // One line per channel platform: count the messages exchanged per day —
+      // both the user's turns and the assistant's replies (tool/system rows are
+      // internal plumbing and excluded).
+      dbInstance
+        .select({
+          platform: db.schema.channel.platform,
+          date: channelDay,
+          total: sql<number>`count(*)::int`
+        })
+        .from(db.schema.channelMessage)
+        .innerJoin(
+          db.schema.channelConversation,
+          eq(
+            db.schema.channelConversation.id,
+            db.schema.channelMessage.conversationId
+          )
         )
-      )
-      .innerJoin(
-        db.schema.channel,
-        eq(db.schema.channel.id, db.schema.channelConversation.channelId)
-      )
-      .where(
-        and(
-          eq(db.schema.channel.artifactId, base.artifactId),
-          inArray(db.schema.channelMessage.role, [
-            utils.constants.ROLE_MESSAGE_USER,
-            utils.constants.ROLE_MESSAGE_ASSISTANT
-          ]),
-          gte(db.schema.channelMessage.createdAt, since)
+        .innerJoin(
+          db.schema.channel,
+          eq(db.schema.channel.id, db.schema.channelConversation.channelId)
         )
-      )
-      .groupBy(db.schema.channel.platform, channelDay),
+        .where(
+          and(
+            eq(db.schema.channel.artifactId, base.artifactId),
+            inArray(db.schema.channelMessage.role, [
+              utils.constants.ROLE_MESSAGE_USER,
+              utils.constants.ROLE_MESSAGE_ASSISTANT
+            ]),
+            gte(db.schema.channelMessage.createdAt, since)
+          )
+        )
+        .groupBy(db.schema.channel.platform, channelDay),
 
-    // One line per MCP client: count the meaningful calls (tool/prompt/resource)
-    // per client per day, ignoring protocol noise like initialize/ping/list.
-    dbInstance
-      .select({
-        client: db.schema.mcpSession.clientName,
-        date: mcpDay,
-        total: sql<number>`count(*)::int`
-      })
-      .from(db.schema.mcpRequest)
-      .innerJoin(
-        db.schema.mcpSession,
-        eq(db.schema.mcpSession.id, db.schema.mcpRequest.sessionId)
-      )
-      .where(
-        and(
-          eq(db.schema.mcpSession.artifactId, base.artifactId),
-          gte(db.schema.mcpRequest.createdAt, since),
-          inArray(db.schema.mcpRequest.method, [
-            utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL,
-            utils.constants.MCP_REQUEST_METHOD_PROMPTS_GET,
-            utils.constants.MCP_REQUEST_METHOD_RESOURCES_READ
-          ])
+      // One line per MCP client: count the meaningful calls (tool/prompt/resource)
+      // per client per day, ignoring protocol noise like initialize/ping/list.
+      dbInstance
+        .select({
+          client: db.schema.mcpSession.clientName,
+          date: mcpDay,
+          total: sql<number>`count(*)::int`
+        })
+        .from(db.schema.mcpRequest)
+        .innerJoin(
+          db.schema.mcpSession,
+          eq(db.schema.mcpSession.id, db.schema.mcpRequest.sessionId)
         )
-      )
-      .groupBy(db.schema.mcpSession.clientName, mcpDay),
+        .where(
+          and(
+            eq(db.schema.mcpSession.artifactId, base.artifactId),
+            gte(db.schema.mcpRequest.createdAt, since),
+            inArray(db.schema.mcpRequest.method, [
+              utils.constants.MCP_REQUEST_METHOD_TOOLS_CALL,
+              utils.constants.MCP_REQUEST_METHOD_PROMPTS_GET,
+              utils.constants.MCP_REQUEST_METHOD_RESOURCES_READ
+            ])
+          )
+        )
+        .groupBy(db.schema.mcpSession.clientName, mcpDay),
 
-    // The "who ran what, when" feed — the most recent executions across MCP
-    // clients and channel bots, with the registered user's name when known.
-    dbInstance
-      .select({
-        id: db.schema.artifactExecution.id,
-        kind: db.schema.artifactExecution.kind,
-        name: db.schema.artifactExecution.name,
-        source: db.schema.artifactExecution.source,
-        userName: db.schema.user.name,
-        externalActorName: db.schema.artifactExecution.externalActorName,
-        createdAt: db.schema.artifactExecution.createdAt
-      })
-      .from(db.schema.artifactExecution)
-      .leftJoin(
-        db.schema.user,
-        eq(db.schema.user.id, db.schema.artifactExecution.userId)
-      )
-      .where(eq(db.schema.artifactExecution.artifactId, base.artifactId))
-      .orderBy(desc(db.schema.artifactExecution.createdAt))
-      .limit(8)
-  ]);
+      // The "who ran what, when" feed — the most recent executions across MCP
+      // clients and channel bots, with the registered user's name when known.
+      dbInstance
+        .select({
+          id: db.schema.artifactExecution.id,
+          kind: db.schema.artifactExecution.kind,
+          name: db.schema.artifactExecution.name,
+          source: db.schema.artifactExecution.source,
+          userName: db.schema.user.name,
+          externalActorName: db.schema.artifactExecution.externalActorName,
+          createdAt: db.schema.artifactExecution.createdAt
+        })
+        .from(db.schema.artifactExecution)
+        .leftJoin(
+          db.schema.user,
+          eq(db.schema.user.id, db.schema.artifactExecution.userId)
+        )
+        .where(eq(db.schema.artifactExecution.artifactId, base.artifactId))
+        .orderBy(desc(db.schema.artifactExecution.createdAt))
+        .limit(8)
+    ]);
 
   return c.json({
     project: {

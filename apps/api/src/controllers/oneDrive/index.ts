@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { and, eq, sql } from 'drizzle-orm';
-import { utils } from '@anju/utils';
-import { db } from '@anju/db';
+import { utils } from '@ganju/utils';
+import { db } from '@ganju/db';
 
 import {
   oneDriveUri,
@@ -20,9 +20,9 @@ const ensureSupportedMime = (
   folder: boolean
 ): void => {
   if (folder) return;
-  const supported = (
-    utils.constants.MIMETYPES as readonly string[]
-  ).includes(mimeType || '');
+  const supported = (utils.constants.MIMETYPES as readonly string[]).includes(
+    mimeType || ''
+  );
   if (!supported) {
     throw new Error(`Unsupported OneDrive mime type: ${mimeType ?? 'unknown'}`);
   }
@@ -30,13 +30,14 @@ const ensureSupportedMime = (
 
 const create = async (c: Context<AppEnv>) => {
   const body = await c.req.json();
-  const currentValues =
-    await utils.Schema.ARTIFACT_CREATE_ONE_DRIVE.parseAsync({
+  const currentValues = await utils.Schema.ARTIFACT_CREATE_ONE_DRIVE.parseAsync(
+    {
       ...body,
       projectId: c.req.param('projectId'),
       userId: c.get('user').id,
       organizationId: c.req.param('organizationId')
-    });
+    }
+  );
 
   const dbInstance = db.create(c);
 
@@ -132,11 +133,10 @@ const create = async (c: Context<AppEnv>) => {
               ? utils.constants.RESOURCE_SOURCE_TYPE_ONE_DRIVE_FOLDER
               : utils.constants.RESOURCE_SOURCE_TYPE_FILE,
             status: utils.constants.STATUS_PENDING,
-            mimeType:
-              folder
-                ? utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM
-                : item.mimeType ||
-                  utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM,
+            mimeType: folder
+              ? utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM
+              : item.mimeType ||
+                utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM,
             fileName: folder ? null : item.name,
             artifactId: currentArtifactByProject.id,
             metadata

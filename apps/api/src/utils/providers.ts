@@ -1,4 +1,4 @@
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 export interface OAuthProviderConfig {
   authUrl: string;

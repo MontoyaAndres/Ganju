@@ -3,8 +3,8 @@ import type {
   R2Object,
   ReadableStream as WorkersReadableStream
 } from '@cloudflare/workers-types';
-import { db, utils as dbUtils } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db, utils as dbUtils } from '@ganju/db';
+import { utils } from '@ganju/utils';
 import { eq } from 'drizzle-orm';
 
 import type { Bindings } from '../types';

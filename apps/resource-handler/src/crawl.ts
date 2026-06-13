@@ -1,5 +1,5 @@
-import { utils } from '@anju/utils';
-import type { ExtractedDocument } from '@anju/utils';
+import { utils } from '@ganju/utils';
+import type { ExtractedDocument } from '@ganju/utils';
 
 export interface DiscoveredPage {
   url: string;
@@ -149,11 +149,17 @@ const extractFullText = ($: any): string => {
       ? $('article').first()
       : $('body');
   stripBoilerplate($, root);
-  const text = root.text().replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const text = root
+    .text()
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   return text;
 };
 
-const collectMetaTags = ($: any): {
+const collectMetaTags = (
+  $: any
+): {
   openGraph: Record<string, string>;
   twitter: Record<string, string>;
   generic: Record<string, string>;
@@ -398,12 +404,7 @@ export const crawlDiscover = async (
     }
 
     if (depth === 0 && !seed) {
-      seed = buildSeo(
-        $,
-        fetched.finalUrl,
-        fetched.status,
-        fetched.contentType
-      );
+      seed = buildSeo($, fetched.finalUrl, fetched.status, fetched.contentType);
     }
 
     const titleAttr =
@@ -469,7 +470,12 @@ export const crawlPage = async (
   const text = extractFullText($);
   if (!text) return null;
 
-  const seo = buildSeo($, fetched.finalUrl, fetched.status, fetched.contentType);
+  const seo = buildSeo(
+    $,
+    fetched.finalUrl,
+    fetched.status,
+    fetched.contentType
+  );
   const encoding = detectEncoding($, fetched.contentType);
   const size = Buffer.byteLength(text, 'utf8');
 

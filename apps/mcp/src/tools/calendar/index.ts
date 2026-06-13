@@ -1,4 +1,4 @@
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 import { ToolContext, ToolDefinition } from '../types';
 
@@ -441,7 +441,10 @@ export const createEvent: ToolDefinition = {
     if (location) body.location = location;
 
     const visibility = cfgString(config.defaultVisibility);
-    if (visibility && visibility !== utils.constants.CALENDAR_VISIBILITY_DEFAULT) {
+    if (
+      visibility &&
+      visibility !== utils.constants.CALENDAR_VISIBILITY_DEFAULT
+    ) {
       body.visibility = visibility;
     }
 

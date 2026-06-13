@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { eq } from 'drizzle-orm';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 import { providers } from './providers';
 

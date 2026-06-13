@@ -10,9 +10,9 @@
     "deploy-prod": "wrangler deploy --env production"
   },
   "dependencies": {
-    "@anju/containers": "*",
-    "@anju/db": "*",
-    "@anju/utils": "*",
+    "@ganju/containers": "*",
+    "@ganju/db": "*",
+    "@ganju/utils": "*",
     "@google/genai": "^2.8.0",
     "@hono/mcp": "^0.3.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -20,7 +20,7 @@
     "jose": "^6.2.3"
   },
   "devDependencies": {
-    "@anju/tsconfig": "*",
+    "@ganju/tsconfig": "*",
     "@cloudflare/workers-types": "^4.20260611.1",
     "@types/node": "^25.9.3",
     "esbuild": "^0.28.0",

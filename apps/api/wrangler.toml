@@ -1,4 +1,4 @@
-name = "anju-api"
+name = "ganju-api"
 main = "dist/index.js"
 compatibility_date = "2025-11-17"
 
@@ -11,7 +11,7 @@ cpu_ms = 30000
 command = "npm run build"
 
 [env.development]
-name = "anju-api-development"
+name = "ganju-api-development"
 routes = [
   { pattern = "development-api.vocesqueabrazan.com", custom_domain = true }
 ]
@@ -31,88 +31,88 @@ NEXT_PUBLIC_WEB_URL = "https://development-app.vocesqueabrazan.com"
 NEXT_PUBLIC_DOMAIN = "vocesqueabrazan.com"
 [[env.development.services]]
 binding = "MCP"
-service = "anju-mcp-development"
+service = "ganju-mcp-development"
 [[env.development.services]]
 binding = "API"
-service = "anju-api-development"
+service = "ganju-api-development"
 [[env.development.hyperdrive]]
 binding = "HYPERDRIVE"
 id = "20b38b96e12a4f45ac111fb7d8161edf"
 [[env.development.r2_buckets]]
 binding = "STORAGE_BUCKET"
-bucket_name = "anju-storage-development"
+bucket_name = "ganju-storage-development"
 [[env.development.send_email]]
 name = "SEND_EMAIL"
 [[env.development.queues.producers]]
 binding = "INDEX_QUEUE"
-queue = "anju-index-development"
+queue = "ganju-index-development"
 [[env.development.queues.producers]]
 binding = "CRAWL_DISCOVER_QUEUE"
-queue = "anju-crawl-discover-development"
+queue = "ganju-crawl-discover-development"
 [[env.development.queues.producers]]
 binding = "CRAWL_PAGE_QUEUE"
-queue = "anju-crawl-page-development"
+queue = "ganju-crawl-page-development"
 [[env.development.queues.producers]]
 binding = "GDRIVE_DISCOVER_QUEUE"
-queue = "anju-gdrive-discover-development"
+queue = "ganju-gdrive-discover-development"
 [[env.development.queues.producers]]
 binding = "GDRIVE_FILE_QUEUE"
-queue = "anju-gdrive-file-development"
+queue = "ganju-gdrive-file-development"
 [[env.development.queues.producers]]
 binding = "ONEDRIVE_DISCOVER_QUEUE"
-queue = "anju-onedrive-discover-development"
+queue = "ganju-onedrive-discover-development"
 [[env.development.queues.producers]]
 binding = "ONEDRIVE_FILE_QUEUE"
-queue = "anju-onedrive-file-development"
+queue = "ganju-onedrive-file-development"
 [[env.development.queues.consumers]]
-queue = "anju-index-development"
+queue = "ganju-index-development"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 5
 max_retries = 3
-dead_letter_queue = "anju-index-dlq-development"
+dead_letter_queue = "ganju-index-dlq-development"
 [[env.development.queues.consumers]]
-queue = "anju-crawl-discover-development"
+queue = "ganju-crawl-discover-development"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 2
 max_retries = 3
-dead_letter_queue = "anju-crawl-discover-dlq-development"
+dead_letter_queue = "ganju-crawl-discover-dlq-development"
 [[env.development.queues.consumers]]
-queue = "anju-crawl-page-development"
+queue = "ganju-crawl-page-development"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 5
 max_retries = 3
-dead_letter_queue = "anju-crawl-page-dlq-development"
+dead_letter_queue = "ganju-crawl-page-dlq-development"
 [[env.development.queues.consumers]]
-queue = "anju-gdrive-discover-development"
+queue = "ganju-gdrive-discover-development"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 2
 max_retries = 3
-dead_letter_queue = "anju-gdrive-discover-dlq-development"
+dead_letter_queue = "ganju-gdrive-discover-dlq-development"
 [[env.development.queues.consumers]]
-queue = "anju-gdrive-file-development"
+queue = "ganju-gdrive-file-development"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 5
 max_retries = 3
-dead_letter_queue = "anju-gdrive-file-dlq-development"
+dead_letter_queue = "ganju-gdrive-file-dlq-development"
 [[env.development.queues.consumers]]
-queue = "anju-onedrive-discover-development"
+queue = "ganju-onedrive-discover-development"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 2
 max_retries = 3
-dead_letter_queue = "anju-onedrive-discover-dlq-development"
+dead_letter_queue = "ganju-onedrive-discover-dlq-development"
 [[env.development.queues.consumers]]
-queue = "anju-onedrive-file-development"
+queue = "ganju-onedrive-file-development"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 5
 max_retries = 3
-dead_letter_queue = "anju-onedrive-file-dlq-development"
+dead_letter_queue = "ganju-onedrive-file-dlq-development"
 [[env.development.containers]]
 class_name = "ResourceHandler"
 image = "../resource-handler/Dockerfile"
@@ -133,7 +133,7 @@ tag = "v2"
 new_sqlite_classes = ["DiscordGatewayDO"]
 
 [env.production]
-name = "anju-api-production"
+name = "ganju-api-production"
 [env.production.observability]
 enabled = true
 [env.production.observability.logs]
@@ -144,94 +144,94 @@ enabled = false
 [env.production.vars]
 NODE_ENV = "production"
 RESOURCE_HANDLER_PORT="8082"
-NEXT_PUBLIC_API_URL = "https://api.anju.ai"
-NEXT_PUBLIC_MCP_URL = "https://mcp.anju.ai"
-NEXT_PUBLIC_WEB_URL = "https://app.anju.ai"
-NEXT_PUBLIC_DOMAIN = "anju.ai"
+NEXT_PUBLIC_API_URL = "https://api.ganju.ai"
+NEXT_PUBLIC_MCP_URL = "https://mcp.ganju.ai"
+NEXT_PUBLIC_WEB_URL = "https://app.ganju.ai"
+NEXT_PUBLIC_DOMAIN = "ganju.ai"
 [[env.production.services]]
 binding = "MCP"
-service = "anju-mcp-production"
+service = "ganju-mcp-production"
 [[env.production.services]]
 binding = "API"
-service = "anju-api-production"
+service = "ganju-api-production"
 [[env.production.hyperdrive]]
 binding = "HYPERDRIVE"
 id = "<YOUR_HYPERDRIVE_ID>"
 [[env.production.r2_buckets]]
 binding = "STORAGE_BUCKET"
-bucket_name = "anju-storage-production"
+bucket_name = "ganju-storage-production"
 [[env.production.send_email]]
 name = "SEND_EMAIL"
 [[env.production.queues.producers]]
 binding = "INDEX_QUEUE"
-queue = "anju-index-production"
+queue = "ganju-index-production"
 [[env.production.queues.producers]]
 binding = "CRAWL_DISCOVER_QUEUE"
-queue = "anju-crawl-discover-production"
+queue = "ganju-crawl-discover-production"
 [[env.production.queues.producers]]
 binding = "CRAWL_PAGE_QUEUE"
-queue = "anju-crawl-page-production"
+queue = "ganju-crawl-page-production"
 [[env.production.queues.producers]]
 binding = "GDRIVE_DISCOVER_QUEUE"
-queue = "anju-gdrive-discover-production"
+queue = "ganju-gdrive-discover-production"
 [[env.production.queues.producers]]
 binding = "GDRIVE_FILE_QUEUE"
-queue = "anju-gdrive-file-production"
+queue = "ganju-gdrive-file-production"
 [[env.production.queues.producers]]
 binding = "ONEDRIVE_DISCOVER_QUEUE"
-queue = "anju-onedrive-discover-production"
+queue = "ganju-onedrive-discover-production"
 [[env.production.queues.producers]]
 binding = "ONEDRIVE_FILE_QUEUE"
-queue = "anju-onedrive-file-production"
+queue = "ganju-onedrive-file-production"
 [[env.production.queues.consumers]]
-queue = "anju-index-production"
+queue = "ganju-index-production"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 5
 max_retries = 3
-dead_letter_queue = "anju-index-dlq-production"
+dead_letter_queue = "ganju-index-dlq-production"
 [[env.production.queues.consumers]]
-queue = "anju-crawl-discover-production"
+queue = "ganju-crawl-discover-production"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 2
 max_retries = 3
-dead_letter_queue = "anju-crawl-discover-dlq-production"
+dead_letter_queue = "ganju-crawl-discover-dlq-production"
 [[env.production.queues.consumers]]
-queue = "anju-crawl-page-production"
+queue = "ganju-crawl-page-production"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 5
 max_retries = 3
-dead_letter_queue = "anju-crawl-page-dlq-production"
+dead_letter_queue = "ganju-crawl-page-dlq-production"
 [[env.production.queues.consumers]]
-queue = "anju-gdrive-discover-production"
+queue = "ganju-gdrive-discover-production"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 2
 max_retries = 3
-dead_letter_queue = "anju-gdrive-discover-dlq-production"
+dead_letter_queue = "ganju-gdrive-discover-dlq-production"
 [[env.production.queues.consumers]]
-queue = "anju-gdrive-file-production"
+queue = "ganju-gdrive-file-production"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 5
 max_retries = 3
-dead_letter_queue = "anju-gdrive-file-dlq-production"
+dead_letter_queue = "ganju-gdrive-file-dlq-production"
 [[env.production.queues.consumers]]
-queue = "anju-onedrive-discover-production"
+queue = "ganju-onedrive-discover-production"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 2
 max_retries = 3
-dead_letter_queue = "anju-onedrive-discover-dlq-production"
+dead_letter_queue = "ganju-onedrive-discover-dlq-production"
 [[env.production.queues.consumers]]
-queue = "anju-onedrive-file-production"
+queue = "ganju-onedrive-file-production"
 max_batch_size = 1
 max_batch_timeout = 5
 max_concurrency = 5
 max_retries = 3
-dead_letter_queue = "anju-onedrive-file-dlq-production"
+dead_letter_queue = "ganju-onedrive-file-dlq-production"
 [[env.production.containers]]
 class_name = "ResourceHandler"
 image = "../resource-handler/Dockerfile"

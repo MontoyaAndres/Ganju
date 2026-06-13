@@ -1,4 +1,4 @@
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 const renderInline = (text: string): string => {
   let out = utils.escapeHtml(text);

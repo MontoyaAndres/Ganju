@@ -5,7 +5,7 @@ import type {
   R2Bucket,
   SendEmail
 } from '@cloudflare/workers-types';
-import type { ResourceHandler } from '@anju/containers';
+import type { ResourceHandler } from '@ganju/containers';
 
 import type { Auth } from './utils';
 import type { DiscordGatewayDO } from './durable-objects/discordGateway';

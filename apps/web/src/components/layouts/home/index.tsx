@@ -6,8 +6,8 @@ import {
   useState
 } from 'react';
 import { useRouter } from 'next/router';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import {
@@ -790,7 +790,7 @@ const HomeLayout = ({ page }: { page: HomePage }) => {
               </IconButton>
             </Tooltip>
             <div className="header-logo-image"></div>
-            <p className="header-logo-text">Anju.ai</p>
+            <p className="header-logo-text">Ganju.ai</p>
           </div>
         </nav>
         {accountClicked && (

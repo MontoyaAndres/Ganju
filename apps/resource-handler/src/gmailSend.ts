@@ -1,10 +1,10 @@
 import http from 'node:http';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 import type {
   GmailSendRequest,
   MimeAttachment,
   MimeMessageInput
-} from '@anju/utils';
+} from '@ganju/utils';
 
 import { utils as serverUtils } from './utils/index.js';
 
@@ -26,7 +26,10 @@ const dispatchGmail = async (
       break;
     case 'reply-email':
       if (!req.threadId) {
-        return { status: 400, body: { error: 'reply-email requires threadId' } };
+        return {
+          status: 400,
+          body: { error: 'reply-email requires threadId' }
+        };
       }
       url = `${GMAIL_API_BASE}/messages/send`;
       method = 'POST';
@@ -39,7 +42,10 @@ const dispatchGmail = async (
       break;
     case 'update-draft':
       if (!req.draftId) {
-        return { status: 400, body: { error: 'update-draft requires draftId' } };
+        return {
+          status: 400,
+          body: { error: 'update-draft requires draftId' }
+        };
       }
       url = `${GMAIL_API_BASE}/drafts/${encodeURIComponent(req.draftId)}`;
       method = 'PUT';
@@ -48,7 +54,9 @@ const dispatchGmail = async (
     default:
       return {
         status: 400,
-        body: { error: `unknown operation: ${(req as { operation: string }).operation}` }
+        body: {
+          error: `unknown operation: ${(req as { operation: string }).operation}`
+        }
       };
   }
 
@@ -96,11 +104,15 @@ export const handleGmailSend = async (
   }
 
   if (!metadata.accessToken) {
-    serverUtils.sendJson(res, 401, { error: 'missing accessToken in metadata' });
+    serverUtils.sendJson(res, 401, {
+      error: 'missing accessToken in metadata'
+    });
     return;
   }
   if (!metadata.to || !metadata.body) {
-    serverUtils.sendJson(res, 400, { error: 'metadata must include to and body' });
+    serverUtils.sendJson(res, 400, {
+      error: 'metadata must include to and body'
+    });
     return;
   }
 
@@ -121,8 +133,7 @@ export const handleGmailSend = async (
     }
     attachments.push({
       filename: file.name || 'attachment',
-      mimeType:
-        file.type || utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM,
+      mimeType: file.type || utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM,
       base64: buf.toString('base64')
     });
   }

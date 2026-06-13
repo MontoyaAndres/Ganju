@@ -1,8 +1,8 @@
 import type { ExecutionContext, MessageBatch } from '@cloudflare/workers-types';
-import { db } from '@anju/db';
-import { utils } from '@anju/utils';
+import { db } from '@ganju/db';
+import { utils } from '@ganju/utils';
 import { eq, and, inArray, ne, sql } from 'drizzle-orm';
-import { getResourceHandler } from '@anju/containers';
+import { getResourceHandler } from '@ganju/containers';
 
 import { markResourceFailed, reportQueueError } from './shared';
 
@@ -89,10 +89,7 @@ const discoverOne = async (
           .from(db.schema.artifactResource)
           .where(
             and(
-              eq(
-                db.schema.artifactResource.artifactId,
-                resource.artifactId
-              ),
+              eq(db.schema.artifactResource.artifactId, resource.artifactId),
               inArray(db.schema.artifactResource.uri, candidateUris),
               ne(db.schema.artifactResource.id, resource.id)
             )

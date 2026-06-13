@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { UI } from '@anju/ui';
-import { utils } from '@anju/utils';
+import { UI } from '@ganju/ui';
+import { utils } from '@ganju/utils';
 import IconButton from '@mui/material/IconButton';
 import Switch from '@mui/material/Switch';
 import {
@@ -37,7 +37,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { Wrapper } from './styles';
 
-import type { CloudDriveItem } from '@anju/ui';
+import type { CloudDriveItem } from '@ganju/ui';
 
 interface Resource {
   id: string;

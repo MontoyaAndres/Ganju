@@ -1,7 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 // Connect to a remote (third-party) MCP server from inside the container. This
 // mirrors apps/mcp's worker-side client, but runs here so large resource bytes
@@ -64,7 +64,7 @@ export const connectRemoteMcpClient = async (
       : new StreamableHTTPClientTransport(parsed, { fetch: fetchWithAuth });
 
   const client = new Client({
-    name: 'anju-resource-handler-mcp-proxy',
+    name: 'ganju-resource-handler-mcp-proxy',
     version: '0.0.1'
   });
 

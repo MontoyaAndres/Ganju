@@ -1,9 +1,9 @@
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 import type {
   ExtractedDocument,
   ExtractedDocumentMetadata,
   ExtractedDocumentSource
-} from '@anju/utils';
+} from '@ganju/utils';
 
 const {
   constants,

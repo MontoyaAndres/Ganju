@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { utils as dbUtils } from '@anju/db';
-import { utils } from '@anju/utils';
+import { utils as dbUtils } from '@ganju/db';
+import { utils } from '@ganju/utils';
 
 import { MCPController, WellKnownController } from './controllers';
 import { AuthMiddleware } from './middleware';

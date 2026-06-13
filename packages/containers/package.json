@@ -1,5 +1,5 @@
 {
-  "name": "@anju/containers",
+  "name": "@ganju/containers",
   "version": "0.0.1",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -15,11 +15,11 @@
     "clean": "rm -rf dist && rm -rf node_modules"
   },
   "dependencies": {
-    "@anju/utils": "*",
+    "@ganju/utils": "*",
     "@cloudflare/containers": "^0.3.7"
   },
   "devDependencies": {
-    "@anju/tsconfig": "*",
+    "@ganju/tsconfig": "*",
     "@cloudflare/workers-types": "^4.20260611.1",
     "typescript": "^6.0.3"
   }

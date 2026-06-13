@@ -2,7 +2,7 @@
 // Shown after login when a client requests authorization. The Allow/Cancel
 // buttons POST to `/auth/oauth2/consent`, which replies with `{ redirectURI }`.
 
-import { utils } from '@anju/utils';
+import { utils } from '@ganju/utils';
 
 const SCOPE_LABELS: Record<string, string> = {
   openid: 'Verify your identity',
@@ -30,7 +30,9 @@ export const oauthConsentHTML = (props: {
   scopes: string[];
 }): string => {
   const name = utils.escapeHtml(props.clientName || 'An application');
-  const initial = utils.escapeHtml((props.clientName || 'A').trim().charAt(0).toUpperCase());
+  const initial = utils.escapeHtml(
+    (props.clientName || 'A').trim().charAt(0).toUpperCase()
+  );
   const icon =
     props.clientIcon && /^https?:\/\//i.test(props.clientIcon)
       ? `<img class="brand-icon" src="${utils.escapeHtml(props.clientIcon)}" alt="" />`
@@ -110,7 +112,7 @@ export const oauthConsentHTML = (props: {
 <body>
   <div class="card">
     ${icon}
-    <h1>${name} wants to access your Anju account</h1>
+    <h1>${name} wants to access your Ganju account</h1>
     <p class="sub">It will be able to:</p>
     <ul>${items}</ul>
     <div class="actions">

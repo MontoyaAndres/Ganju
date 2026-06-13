@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
-import { db, utils as dbUtils } from '@anju/db';
-import { utils } from '@anju/utils';
-import type { EnvSource, ExtractedDocument } from '@anju/utils';
+import { db, utils as dbUtils } from '@ganju/db';
+import { utils } from '@ganju/utils';
+import type { EnvSource, ExtractedDocument } from '@ganju/utils';
 import { eq } from 'drizzle-orm';
 
 import type { Bindings } from '../types';

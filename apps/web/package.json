@@ -12,8 +12,8 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "@anju/ui": "*",
-    "@anju/utils": "*",
+    "@ganju/ui": "*",
+    "@ganju/utils": "*",
     "better-auth": "^1.6.16",
     "chart.js": "^4.5.1",
     "next": "^16.2.9",
@@ -23,7 +23,7 @@
     "swr": "^2.4.1"
   },
   "devDependencies": {
-    "@anju/tsconfig": "*",
+    "@ganju/tsconfig": "*",
     "@opennextjs/cloudflare": "^1.19.11",
     "@types/node": "^25.9.3",
     "@types/react": "^19.2.17",
