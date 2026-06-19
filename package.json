@@ -5,7 +5,7 @@
   "repository": "git@github.com:MontoyaAndres/ganju.git",
   "author": "MontoyaAndres <andresmontoyafcb@gmail.com>",
   "packageManager": "npm@11.17.0",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "workspaces": [
     "apps/*",
     "packages/*"

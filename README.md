@@ -111,5 +111,5 @@ Contributions are welcome — please read [CONTRIBUTING.md](CONTRIBUTING.md) fir
 
 ## License
 
-[MIT](LICENSE)
+[Apache-2.0](LICENSE) — see also [NOTICE](NOTICE).
 </content>
