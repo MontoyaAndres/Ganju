@@ -7,10 +7,10 @@
   "scripts": {
     "dev": "astro dev --port 3001",
     "build": "astro build",
-    "preview": "astro build && wrangler pages dev dist --port 3001",
-    "deploy-dev": "astro build && wrangler pages deploy dist --branch=preview --commit-dirty=true",
-    "deploy-prod": "astro build && wrangler pages deploy dist --branch=main --commit-dirty=true",
-    "clean": "rm -rf dist .astro node_modules"
+    "clean": "rm -rf dist .astro node_modules",
+    "preview": "npm run build && wrangler pages dev dist --port 3001",
+    "deploy-dev": "npm run build && wrangler pages deploy dist --project-name=ganju-website-development --branch=main --commit-dirty=true",
+    "deploy-prod": "npm run build && wrangler pages deploy dist --project-name=ganju-website-production  --branch=main --commit-dirty=true"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.1",

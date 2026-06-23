@@ -18,8 +18,8 @@
     "generate": "turbo run generate",
     "migrate-dev": "turbo run generate && turbo run migrate-dev",
     "migrate-prod": "turbo run generate && turbo run migrate-prod",
-    "deploy-dev": "turbo run deploy-dev",
-    "deploy-prod": "turbo run deploy-prod"
+    "deploy-dev": "turbo run deploy-dev --ui=stream < /dev/null",
+    "deploy-prod": "turbo run deploy-prod --ui=stream < /dev/null"
   },
   "dependencies": {
     "turbo": "^2.9.18"
