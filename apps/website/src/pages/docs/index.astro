@@ -1,0 +1,39 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import ConnectionUrl from '../../components/react/ConnectionUrl.tsx';
+
+const docs = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base
+  title="Docs"
+  description="Ganju documentation — guides for connecting your AI to your files, tools, and apps."
+  mdPath="/docs.md"
+>
+  <section class="section">
+    <div class="container narrow">
+      <div class="section-head reveal">
+        <span class="eyebrow">Documentation</span>
+        <h2>Docs</h2>
+        <p>Everything you need to connect your AI to your content, tools, and chat apps.</p>
+      </div>
+
+      {/* Selective island: only this copy widget hydrates; the rest is static HTML. */}
+      <div class="reveal" style="max-width:520px;margin:0 auto 2.5rem">
+        <ConnectionUrl url="https://app.ganju.ai/mcp/your-workspace" client:only="react" />
+      </div>
+
+      <ul class="doc-list reveal">
+        {docs.map((doc) => (
+          <li>
+            <a href={`/docs/${doc.id}`}>
+              <strong>{doc.data.title}</strong>
+              <span>{doc.data.description}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</Base>

@@ -1,5 +1,5 @@
-name = "ganju-landing"
-pages_build_output_dir = "public"
+name = "ganju-website"
+pages_build_output_dir = "dist"
 # Pinned so `wrangler pages dev` shims its Worker with a date the local
 # runtime supports. Static Pages run no Worker code in production, so this
 # only affects local preview. Matches the apps' compatibility_date.

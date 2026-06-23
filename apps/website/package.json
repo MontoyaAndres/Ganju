@@ -1,0 +1,29 @@
+{
+  "name": "website",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Ganju site",
+  "scripts": {
+    "dev": "astro dev --port 3001",
+    "build": "astro build",
+    "preview": "astro build && wrangler pages dev dist --port 3001",
+    "deploy-dev": "astro build && wrangler pages deploy dist --branch=preview --commit-dirty=true",
+    "deploy-prod": "astro build && wrangler pages deploy dist --branch=main --commit-dirty=true",
+    "clean": "rm -rf dist .astro node_modules"
+  },
+  "dependencies": {
+    "@astrojs/react": "^4.4.1",
+    "@astrojs/sitemap": "^3.7.0",
+    "@ganju/ui": "*",
+    "@ganju/utils": "*",
+    "astro": "^5.17.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3"
+  }
+}

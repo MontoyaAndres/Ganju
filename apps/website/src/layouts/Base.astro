@@ -1,0 +1,101 @@
+---
+import Seo from '../components/Seo.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  mdPath?: string;
+  ogType?: 'website' | 'article';
+  image?: string;
+}
+
+const { title, description, mdPath, ogType, image } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/icons/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fustat:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <Seo {title} {description} {mdPath} {ogType} {image} />
+  </head>
+  <body>
+    <Header />
+    <main id="top">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      // Header shadow on scroll, mobile nav drawer, scroll-reveal, GitHub stars.
+      const header = document.getElementById('header');
+      const onScroll = () => header?.classList.toggle('scrolled', window.scrollY > 8);
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+
+      const navToggle = document.getElementById('navToggle');
+      const nav = document.getElementById('nav');
+      if (navToggle && nav) {
+        const closeNav = () => {
+          nav.classList.remove('open');
+          navToggle.classList.remove('open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        };
+        navToggle.addEventListener('click', () => {
+          const open = nav.classList.toggle('open');
+          navToggle.classList.toggle('open', open);
+          navToggle.setAttribute('aria-expanded', String(open));
+        });
+        nav.querySelectorAll('a').forEach((a) => a.addEventListener('click', closeNav));
+        window.addEventListener('resize', () => {
+          if (window.innerWidth > 900) closeNav();
+        });
+      }
+
+      const revealEls = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window && revealEls.length) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+        );
+        revealEls.forEach((el) => io.observe(el));
+      } else {
+        revealEls.forEach((el) => el.classList.add('visible'));
+      }
+
+      const starEl = document.getElementById('starCount');
+      if (starEl) {
+        const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n));
+        fetch('https://api.github.com/repos/MontoyaAndres/ganju')
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (data && typeof data.stargazers_count === 'number') {
+              starEl.textContent = fmt(data.stargazers_count);
+            }
+          })
+          .catch(() => {});
+      }
+    </script>
+  </body>
+</html>

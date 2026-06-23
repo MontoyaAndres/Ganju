@@ -1,0 +1,64 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../lib/site';
+
+const description = 'Ganju pricing — start free, scale when you are ready, or self-host for free under Apache-2.0.';
+---
+
+<Base title="Pricing" description={description} mdPath="/pricing.md">
+  <section class="section">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Pricing</span>
+        <h2>Start free. Scale when you're ready.</h2>
+        <p>Use it free, upgrade as you grow — or run it yourself for free.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <article class="price-card reveal">
+          <h3 class="tier">Free</h3>
+          <div class="price"><span class="amount">$0</span><span class="per">/mo</span></div>
+          <p class="tier-sub">Perfect for personal projects and trying things out.</p>
+          <ul class="price-features">
+            <li>1 workspace</li>
+            <li>Up to 24&nbsp;MB per file</li>
+            <li>Up to 5 tools and 5 prompts</li>
+            <li>Your own connection link</li>
+            <li>Community support</li>
+          </ul>
+          <a class="btn btn-ghost btn-block" href={SITE.appUrl} target="_blank" rel="noopener">Get started</a>
+        </article>
+
+        <article class="price-card price-featured reveal">
+          <span class="ribbon">Most popular</span>
+          <h3 class="tier">Pro</h3>
+          <div class="price"><span class="amount">$—</span><span class="per">/mo</span></div>
+          <p class="tier-sub">For teams and growing products.</p>
+          <ul class="price-features">
+            <li>Unlimited projects &amp; teammates</li>
+            <li>Up to 500&nbsp;MB per file</li>
+            <li>Unlimited tools, prompts &amp; files</li>
+            <li>Your own custom web address</li>
+            <li>Build your own custom tools</li>
+            <li>24/7 support</li>
+          </ul>
+          <a class="btn btn-primary btn-block" href={SITE.appUrl} target="_blank" rel="noopener">Start Pro</a>
+        </article>
+
+        <article class="price-card reveal">
+          <h3 class="tier">Enterprise</h3>
+          <div class="price"><span class="amount">Custom</span></div>
+          <p class="tier-sub">For larger organizations with advanced needs.</p>
+          <ul class="price-features">
+            <li>No upload limits</li>
+            <li>Unlimited everything</li>
+            <li>Custom web address &amp; tools</li>
+            <li>Dedicated support with guaranteed response times</li>
+            <li>Hands-on help from our team</li>
+          </ul>
+          <a class="btn btn-ghost btn-block" href={SITE.appUrl} target="_blank" rel="noopener">Contact sales</a>
+        </article>
+      </div>
+    </div>
+  </section>
+</Base>

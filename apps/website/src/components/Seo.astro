@@ -1,0 +1,46 @@
+---
+import { SITE } from '../lib/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Path (e.g. `/docs/getting-started.md`) to the raw Markdown twin of this page. */
+  mdPath?: string;
+  ogType?: 'website' | 'article';
+  image?: string;
+}
+
+const {
+  title,
+  description = SITE.description,
+  mdPath,
+  ogType = 'website',
+  image = '/images/hero.png'
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const fullTitle = title === SITE.name ? title : `${title} — ${SITE.name}`;
+const imageUrl = new URL(image, SITE.url).href;
+const mdUrl = mdPath ? new URL(mdPath, SITE.url).href : undefined;
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+{/* AI/agent-friendly: every page advertises its raw Markdown twin. */}
+{mdUrl && <link rel="alternate" type="text/markdown" href={mdUrl} />}
+
+{/* Open Graph */}
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+
+{/* Twitter */}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />

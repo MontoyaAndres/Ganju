@@ -1,0 +1,37 @@
+---
+import { SITE, NAV } from '../lib/site';
+---
+
+<header class="site-header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="brand" aria-label="Ganju home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Ganju</span>
+    </a>
+
+    <nav class="nav" id="nav" aria-label="Primary">
+      {NAV.map((item) => <a href={item.href}>{item.label}</a>)}
+    </nav>
+
+    <div class="header-actions">
+      <a
+        class="btn btn-ghost btn-star"
+        href={SITE.repo}
+        target="_blank"
+        rel="noopener"
+        aria-label="Star Ganju on GitHub"
+      >
+        <img class="brand-ico" src="/icons/github.svg" alt="GitHub logo" loading="lazy" />
+        Star
+        <span class="star-count" id="starCount">—</span>
+      </a>
+      <a class="btn btn-primary" href={SITE.appUrl} target="_blank" rel="noopener">
+        Get started
+      </a>
+    </div>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>

@@ -20,7 +20,7 @@
   --shadow: 0px 10px 50px rgba(0, 0, 0, 0.16);
   --shadow-sm: 0px 3px 20px rgba(0, 0, 0, 0.25);
   --shadow-glow: 0 0 0 1px var(--border), 0px 14px 44px rgba(0, 0, 0, 0.12);
-  --maxw: 1160px;
+  --maxw: 1400px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --font-sans: "Fustat", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: "Fustat", var(--font-sans);
@@ -1048,4 +1048,121 @@ svg {
   html {
     scroll-behavior: auto;
   }
+}
+
+/* ===== Docs / Blog listings ===== */
+.doc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.doc-list li a {
+  display: block;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+.doc-list li a:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.doc-list li strong {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.doc-list li span {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* ===== Prose (docs / blog / legal article bodies) ===== */
+.prose {
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.prose h1 {
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  margin-bottom: 0.4em;
+}
+
+.prose h2 {
+  font-size: 1.5rem;
+  margin: 1.8em 0 0.5em;
+}
+
+.prose h3 {
+  font-size: 1.2rem;
+  margin: 1.5em 0 0.4em;
+}
+
+.prose p {
+  margin: 0 0 1em;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0 0 1em;
+  padding-left: 1.4em;
+}
+
+.prose li {
+  margin: 0.3em 0;
+}
+
+.prose a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--bg-2);
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+}
+
+.prose pre {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  overflow-x: auto;
+  margin: 0 0 1.2em;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose blockquote {
+  margin: 0 0 1.2em;
+  padding: 0.4em 1em;
+  border-left: 3px solid var(--border-strong);
+  color: var(--muted);
+}
+
+.prose .eyebrow a {
+  text-decoration: none;
+}
+
+.post-meta {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0 0 1.5em;
 }
