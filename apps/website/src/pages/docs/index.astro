@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import ConnectionUrl from '../../components/react/ConnectionUrl.tsx';
+import ConnectionUrl from '../../components/ConnectionUrl.astro';
 
 const docs = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
 ---
@@ -20,7 +20,7 @@ const docs = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.
       </div>
 
       <div class="reveal" style="max-width:520px;margin:0 auto 2.5rem">
-        <ConnectionUrl url="https://app.ganju.ai/mcp/your-workspace" client:only="react" />
+        <ConnectionUrl url="https://app.ganju.ai/mcp/your-workspace" />
       </div>
 
       <ul class="doc-list reveal">

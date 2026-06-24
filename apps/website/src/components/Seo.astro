@@ -1,5 +1,6 @@
 ---
-import { SITE } from '../lib/site';
+import { SITE, ORGANIZATION_SCHEMA, WEBSITE_SCHEMA } from '../lib/site';
+import Schema from './Schema.astro';
 
 interface Props {
   title: string;
@@ -8,6 +9,11 @@ interface Props {
   mdPath?: string;
   ogType?: 'website' | 'article';
   image?: string;
+  imageAlt?: string;
+  /** Page-specific JSON-LD (FAQPage, SoftwareApplication, BlogPosting, …). */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Set true to keep a page out of the index (e.g. thank-you pages). */
+  noindex?: boolean;
 }
 
 const {
@@ -15,18 +21,35 @@ const {
   description = SITE.description,
   mdPath,
   ogType = 'website',
-  image = '/images/hero.png'
+  image = '/images/hero.png',
+  imageAlt = SITE.tagline,
+  jsonLd,
+  noindex = false
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const fullTitle = title === SITE.name ? title : `${title} — ${SITE.name}`;
 const imageUrl = new URL(image, SITE.url).href;
 const mdUrl = mdPath ? new URL(mdPath, SITE.url).href : undefined;
+const twitterHandle = '@' + SITE.social.x.split('/').pop();
+
+// Global structured data (every page) plus any page-specific blocks.
+const globalSchema = [ORGANIZATION_SCHEMA, WEBSITE_SCHEMA];
+const pageSchema = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+const schema = [...globalSchema, ...pageSchema];
 ---
 
 <title>{fullTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
+<meta name="theme-color" content="#1C1825" />
+
+<meta
+  name="robots"
+  content={noindex
+    ? 'noindex, nofollow'
+    : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}
+/>
 
 {/* AI/agent-friendly: every page advertises its raw Markdown twin. */}
 {mdUrl && <link rel="alternate" type="text/markdown" href={mdUrl} />}
@@ -37,10 +60,17 @@ const mdUrl = mdPath ? new URL(mdPath, SITE.url).href : undefined;
 <meta property="og:description" content={description} />
 <meta property="og:type" content={ogType} />
 <meta property="og:url" content={canonical} />
+<meta property="og:locale" content="en_US" />
 <meta property="og:image" content={imageUrl} />
+<meta property="og:image:alt" content={imageAlt} />
 
 {/* Twitter */}
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content={twitterHandle} />
+<meta name="twitter:creator" content={twitterHandle} />
 <meta name="twitter:title" content={fullTitle} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={imageUrl} />
+<meta name="twitter:image:alt" content={imageAlt} />
+
+<Schema {schema} />

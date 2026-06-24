@@ -1,0 +1,23 @@
+---
+/**
+ * Emits one or more JSON-LD blocks. Pass a single schema object or an array.
+ * Kept as a dedicated component so any page can attach page-specific
+ * structured data (FAQPage, SoftwareApplication, BlogPosting, …).
+ */
+interface Props {
+  schema: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const { schema } = Astro.props;
+const blocks = Array.isArray(schema) ? schema : [schema];
+---
+
+{
+  blocks.map((block) => (
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(block)}
+    />
+  ))
+}

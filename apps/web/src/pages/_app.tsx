@@ -31,8 +31,9 @@ const MyApp = (props: MyAppProps) => {
           name="viewport"
           content="initial-scale=1, width=device-width, maximum-scale=1, interactive-widget=resizes-content"
         />
-        <link rel="icon" href="/ganju.png" />
-        <title>Ganju.ai</title>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="canonical" href="https://app.ganju.ai/" />
+        <title>Ganju.ai — Connect your AI to your files, tools &amp; apps</title>
         <meta name="author" content="ganju.ai" />
         <meta
           name="keywords"
@@ -42,7 +43,7 @@ const MyApp = (props: MyAppProps) => {
         <meta name="language" content="English" />
         <meta name="theme-color" content="#FFFFFF" />
         <meta name="msapplication-TileColor" content="#FFFFFF" />
-        <meta name="msapplication-TileImage" content="/ganju.png" />
+        <meta name="msapplication-TileImage" content="/favicon.svg" />
         <meta name="application-name" content="ganju.ai" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />
@@ -55,23 +56,29 @@ const MyApp = (props: MyAppProps) => {
           content="Ganju.ai is a no-code tool for creating fast and scalable MCP servers."
         />
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Ganju" />
+        <meta property="og:locale" content="en_US" />
         <meta property="og:url" content="https://app.ganju.ai/" />
-        <meta property="og:title" content="ganju.ai" />
+        <meta property="og:title" content="Ganju.ai" />
         <meta
           property="og:description"
           content="Ganju.ai is a no-code tool for creating fast and scalable MCP servers."
         />
+        <meta property="og:image" content="https://ganju.ai/images/hero.png" />
         <meta
-          property="og:image"
-          content="https://app.ganju.ai/background.png"
+          property="og:image:alt"
+          content="Connect your AI to your files, tools & apps"
         />
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://app.ganju.ai/" />
-        <meta property="twitter:title" content="ganju.ai" />
-        <meta property="twitter:description" content="" />
+        <meta property="twitter:title" content="Ganju.ai" />
+        <meta
+          property="twitter:description"
+          content="Ganju.ai is a no-code tool for creating fast and scalable MCP servers."
+        />
         <meta
           property="twitter:image"
-          content="https://app.ganju.ai/background.png"
+          content="https://ganju.ai/images/hero.png"
         />
       </Head>
       <div id="modal" />

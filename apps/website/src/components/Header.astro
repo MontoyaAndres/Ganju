@@ -1,5 +1,8 @@
 ---
 import { SITE, NAV } from '../lib/site';
+import { getStarCount } from '../lib/stars';
+
+const stars = await getStarCount();
 ---
 
 <header class="site-header" id="header">
@@ -23,7 +26,7 @@ import { SITE, NAV } from '../lib/site';
       >
         <img class="brand-ico" src="/icons/github.svg" alt="GitHub logo" loading="lazy" />
         Star
-        <span class="star-count" id="starCount">—</span>
+        {stars && <span class="star-count" id="starCount">{stars}</span>}
       </a>
       <a class="btn btn-primary" href={SITE.appUrl} target="_blank" rel="noopener">
         Get started

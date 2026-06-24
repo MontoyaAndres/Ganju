@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /$
+Disallow: /link
+
+# Marketing site holds the indexable content.
+Sitemap: https://ganju.ai/sitemap-index.xml

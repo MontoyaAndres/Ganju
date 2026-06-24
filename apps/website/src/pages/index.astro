@@ -1,9 +1,34 @@
 ---
 import Base from '../layouts/Base.astro';
-import { SITE } from '../lib/site';
+import { SITE, SOFTWARE_APPLICATION_SCHEMA, faqSchema } from '../lib/site';
+
+const faqs = [
+  {
+    q: 'Do I need to be technical to use Ganju?',
+    a: 'No. If you can fill out a form and click a few buttons, you can set up Ganju — connecting your files, tools, and AI takes just a few minutes, no coding required. (Developers get powerful options too, like connecting their own apps.)'
+  },
+  {
+    q: 'What is MCP?',
+    a: "MCP (the Model Context Protocol) is the standard way AI assistants connect to outside tools and information. You don't need to understand the details — Ganju handles all of it so your AI can safely use your files and apps."
+  },
+  {
+    q: 'Which AI assistants can I use?',
+    a: 'Use Google Gemini, Anthropic Claude, or OpenAI (ChatGPT) — just add your own account. Other compatible providers work too.'
+  },
+  {
+    q: 'Is my data safe?',
+    a: "Yes. Your passwords and keys are encrypted, never shown in plain text, and never shared. Everything runs on Cloudflare's secure global network — and if you run Ganju yourself, your data stays entirely in your own account."
+  },
+  {
+    q: 'Can I run Ganju myself?',
+    a: 'Yes. Ganju is open source and free to use and modify. Host it on your own account, or let us run it for you on a paid plan.'
+  }
+];
+
+const jsonLd = [SOFTWARE_APPLICATION_SCHEMA, faqSchema(faqs)];
 ---
 
-<Base title={SITE.name} description={SITE.description} mdPath="/index.md">
+<Base title={SITE.name} description={SITE.description} mdPath="/index.md" {jsonLd}>
   <!-- ===== Hero ===== -->
   <section class="hero">
     <div class="hero-glow" aria-hidden="true"></div>
@@ -26,13 +51,17 @@ import { SITE } from '../lib/site';
 
       <div class="hero-art reveal">
         <div class="art-frame art-hero">
-          <img
-            src="/images/hero.png"
-            alt="Tools and AI clients connecting to your Ganju MCP server"
-            width="1024"
-            height="1024"
-            onerror="this.style.display = 'none'"
-          />
+          <picture>
+            <source srcset="/images/hero.webp" type="image/webp" />
+            <img
+              src="/images/hero.png"
+              alt="Tools and AI clients connecting to your Ganju MCP server"
+              width="1024"
+              height="1024"
+              fetchpriority="high"
+              onerror="this.style.display = 'none'"
+            />
+          </picture>
         </div>
       </div>
     </div>
@@ -66,7 +95,10 @@ import { SITE } from '../lib/site';
       <div class="feature-grid">
         <article class="card reveal">
           <div class="art-spot">
-            <img src="/images/feature-host.png" alt="Managed hosting illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/feature-host.webp" type="image/webp" />
+              <img src="/images/feature-host.png" alt="Managed hosting illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <h3>No setup, no servers</h3>
           <p>Nothing to install or maintain. Create a connection and it's live instantly — we host and run everything for you.</p>
@@ -74,7 +106,10 @@ import { SITE } from '../lib/site';
 
         <article class="card reveal">
           <div class="art-spot">
-            <img src="/images/feature-rag.png" alt="Search across your files illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/feature-rag.webp" type="image/webp" />
+              <img src="/images/feature-rag.png" alt="Search across your files illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <h3>Answers from your content</h3>
           <p>Upload files, add a website, or connect Google Drive or OneDrive. Your AI searches all of it and answers using your own information.</p>
@@ -82,7 +117,10 @@ import { SITE } from '../lib/site';
 
         <article class="card reveal">
           <div class="art-spot">
-            <img src="/images/feature-tools.png" alt="Pluggable tools illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/feature-tools.webp" type="image/webp" />
+              <img src="/images/feature-tools.png" alt="Pluggable tools illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <h3>Tools your AI can use</h3>
           <p>Let your AI handle email, check your calendar, search the web, post to Slack — or connect your own apps and services, no coding needed.</p>
@@ -90,7 +128,10 @@ import { SITE } from '../lib/site';
 
         <article class="card reveal">
           <div class="art-spot">
-            <img src="/images/feature-channels.png" alt="Messaging channels illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/feature-channels.webp" type="image/webp" />
+              <img src="/images/feature-channels.png" alt="Messaging channels illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <h3>Bring it to your chat apps</h3>
           <p>Turn the same setup into a helpful bot on Telegram, Slack, WhatsApp, or Discord — for your team or your customers.</p>
@@ -98,7 +139,10 @@ import { SITE } from '../lib/site';
 
         <article class="card reveal">
           <div class="art-spot">
-            <img src="/images/feature-team.png" alt="Team and shared projects illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/feature-team.webp" type="image/webp" />
+              <img src="/images/feature-team.png" alt="Team and shared projects illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <h3>Built for teams</h3>
           <p>Invite teammates, organize work into projects, and control who can do what — all built in from day one.</p>
@@ -106,7 +150,10 @@ import { SITE } from '../lib/site';
 
         <article class="card reveal">
           <div class="art-spot">
-            <img src="/images/feature-audit.png" alt="Activity logs illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/feature-audit.webp" type="image/webp" />
+              <img src="/images/feature-audit.png" alt="Activity logs illustration" width="64" height="64" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <h3>See everything it does</h3>
           <p>Every question, action, and message is recorded — so you always know what your AI did, when, and for whom.</p>
@@ -127,7 +174,10 @@ import { SITE } from '../lib/site';
       <div class="steps">
         <article class="step reveal">
           <div class="art-frame art-step">
-            <img src="/images/step-1.png" alt="Create a new Ganju workspace" width="1024" height="768" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/step-1.webp" type="image/webp" />
+              <img src="/images/step-1.png" alt="Create a new Ganju workspace" width="1024" height="768" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <div class="step-body">
             <span class="step-num">01</span>
@@ -138,7 +188,10 @@ import { SITE } from '../lib/site';
 
         <article class="step reveal step-reverse">
           <div class="art-frame art-step">
-            <img src="/images/step-2.png" alt="Add documents and tools" width="1024" height="768" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/step-2.webp" type="image/webp" />
+              <img src="/images/step-2.png" alt="Add documents and tools" width="1024" height="768" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <div class="step-body">
             <span class="step-num">02</span>
@@ -149,7 +202,10 @@ import { SITE } from '../lib/site';
 
         <article class="step reveal">
           <div class="art-frame art-step">
-            <img src="/images/step-3.png" alt="Securely connect an AI assistant" width="1024" height="768" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/step-3.webp" type="image/webp" />
+              <img src="/images/step-3.png" alt="Securely connect an AI assistant" width="1024" height="768" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <div class="step-body">
             <span class="step-num">03</span>
@@ -160,7 +216,10 @@ import { SITE } from '../lib/site';
 
         <article class="step reveal step-reverse">
           <div class="art-frame art-step">
-            <img src="/images/step-4.png" alt="Share your assistant across chat apps" width="1024" height="768" loading="lazy" onerror="this.style.display = 'none'" />
+            <picture>
+              <source srcset="/images/step-4.webp" type="image/webp" />
+              <img src="/images/step-4.png" alt="Share your assistant across chat apps" width="1024" height="768" loading="lazy" onerror="this.style.display = 'none'" />
+            </picture>
           </div>
           <div class="step-body">
             <span class="step-num">04</span>
@@ -236,26 +295,14 @@ import { SITE } from '../lib/site';
       </div>
 
       <div class="faq">
-        <details class="reveal">
-          <summary>Do I need to be technical to use Ganju?</summary>
-          <p>No. If you can fill out a form and click a few buttons, you can set up Ganju — connecting your files, tools, and AI takes just a few minutes, no coding required. (Developers get powerful options too, like connecting their own apps.)</p>
-        </details>
-        <details class="reveal">
-          <summary>What is MCP?</summary>
-          <p>MCP (the Model Context Protocol) is the standard way AI assistants connect to outside tools and information. You don't need to understand the details — Ganju handles all of it so your AI can safely use your files and apps.</p>
-        </details>
-        <details class="reveal">
-          <summary>Which AI assistants can I use?</summary>
-          <p>Use Google Gemini, Anthropic Claude, or OpenAI (ChatGPT) — just add your own account. Other compatible providers work too.</p>
-        </details>
-        <details class="reveal">
-          <summary>Is my data safe?</summary>
-          <p>Yes. Your passwords and keys are encrypted, never shown in plain text, and never shared. Everything runs on Cloudflare's secure global network — and if you run Ganju yourself, your data stays entirely in your own account.</p>
-        </details>
-        <details class="reveal">
-          <summary>Can I run Ganju myself?</summary>
-          <p>Yes. Ganju is open source and free to use and modify. Host it on your own account, or let us run it for you on a paid plan.</p>
-        </details>
+        {
+          faqs.map((item) => (
+            <details class="reveal">
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))
+        }
       </div>
     </div>
   </section>

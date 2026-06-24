@@ -1,0 +1,9 @@
+# Cloudflare Pages: long-lived browser cache for static media in /public.
+# Astro's hashed _astro/* assets are already immutable; these unhashed paths
+# are not, so give them an explicit 30-day cache (re-fetched after a change
+# since the deploy replaces the file at the same URL).
+/images/*
+  Cache-Control: public, max-age=2592000
+
+/icons/*
+  Cache-Control: public, max-age=2592000

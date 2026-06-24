@@ -1,4 +1,5 @@
 ---
+import { Font } from 'astro:assets';
 import Seo from '../components/Seo.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -10,9 +11,13 @@ interface Props {
   mdPath?: string;
   ogType?: 'website' | 'article';
   image?: string;
+  imageAlt?: string;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  noindex?: boolean;
 }
 
-const { title, description, mdPath, ogType, image } = Astro.props;
+const { title, description, mdPath, ogType, image, imageAlt, jsonLd, noindex } =
+  Astro.props;
 ---
 
 <!doctype html>
@@ -23,15 +28,9 @@ const { title, description, mdPath, ogType, image } = Astro.props;
     <link rel="icon" href="/icons/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fustat:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <Font cssVariable="--font-fustat" preload />
 
-    <Seo {title} {description} {mdPath} {ogType} {image} />
+    <Seo {title} {description} {mdPath} {ogType} {image} {imageAlt} {jsonLd} {noindex} />
   </head>
   <body>
     <Header />
@@ -41,7 +40,7 @@ const { title, description, mdPath, ogType, image } = Astro.props;
     <Footer />
 
     <script>
-      // Header shadow on scroll, mobile nav drawer, scroll-reveal, GitHub stars.
+      // Header shadow on scroll, mobile nav drawer, scroll-reveal.
       const header = document.getElementById('header');
       const onScroll = () => header?.classList.toggle('scrolled', window.scrollY > 8);
       onScroll();
@@ -82,19 +81,6 @@ const { title, description, mdPath, ogType, image } = Astro.props;
         revealEls.forEach((el) => io.observe(el));
       } else {
         revealEls.forEach((el) => el.classList.add('visible'));
-      }
-
-      const starEl = document.getElementById('starCount');
-      if (starEl) {
-        const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n));
-        fetch('https://api.github.com/repos/MontoyaAndres/ganju')
-          .then((r) => (r.ok ? r.json() : null))
-          .then((data) => {
-            if (data && typeof data.stargazers_count === 'number') {
-              starEl.textContent = fmt(data.stargazers_count);
-            }
-          })
-          .catch(() => {});
       }
     </script>
   </body>
