@@ -1185,15 +1185,15 @@ const PLAN_LIMITS: Record<
 > = {
   FREE: {
     maxProjects: 1,
-    maxToolsPerArtifact: 5,
-    maxPromptsPerArtifact: 5,
-    maxChannelsPerArtifact: 2,
-    maxRawStorageBytes: 500 * MB,
-    maxEmbeddedBytes: 50 * MB,
-    monthlyMessageCap: 2_000,
+    maxToolsPerArtifact: 3,
+    maxPromptsPerArtifact: 3,
+    maxChannelsPerArtifact: 1,
+    maxRawStorageBytes: 300 * MB,
+    maxEmbeddedBytes: 30 * MB,
+    monthlyMessageCap: 1_000,
     canInvite: false,
-    includedMessages: 2_000,
-    includedEmbeddedBytes: 50 * MB
+    includedMessages: 1_000,
+    includedEmbeddedBytes: 30 * MB
   },
   PRO: {
     maxProjects: null,

@@ -199,7 +199,9 @@ export const Wrapper = styled.div`
         border-radius: 8px;
         padding: 20px;
         cursor: pointer;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -227,6 +229,13 @@ export const Wrapper = styled.div`
             word-break: break-word;
           }
 
+          .organization-badges {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+
           .organization-badge {
             flex-shrink: 0;
             font-size: 10px;
@@ -241,6 +250,16 @@ export const Wrapper = styled.div`
             &.organization-badge-basic {
               color: ${theme.colors.saltBox};
               background: ${theme.colors.bastille}0d;
+            }
+
+            &.organization-badge-plan {
+              color: ${theme.colors.saltBox};
+              background: ${theme.colors.bastille}0d;
+            }
+
+            &.organization-badge-plan-paid {
+              color: ${theme.colors.fernGreen};
+              background: ${theme.colors.fernGreen}1a;
             }
           }
         }
@@ -323,14 +342,20 @@ export const Wrapper = styled.div`
 `;
 
 export const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 16px;
+  ${({ theme }) => css`
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 0;
+
+    @media (min-width: ${theme.screens.md}) {
+      padding: 16px;
+    }
+  `}
 `;
 
 export const ModalDialog = styled.div`
@@ -338,11 +363,16 @@ export const ModalDialog = styled.div`
     background-color: ${theme.colors.white};
     border-radius: 12px;
     width: 100%;
+    height: 100vh;
     max-width: 520px;
-    max-height: 90vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    position: relative;
+
+    @media (min-width: ${theme.screens.md}) {
+      max-height: 90vh;
+    }
 
     .modal-header {
       display: flex;
@@ -413,6 +443,10 @@ export const ModalDialog = styled.div`
       gap: 8px;
       padding: 14px 20px;
       border-top: 1px solid ${theme.colors.alto};
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
     }
 
     .MuiButtonBase-root {

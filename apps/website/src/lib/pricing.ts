@@ -19,8 +19,8 @@ export const PRICING: PricingConfig = {
   messagePer1k: 2, // $ per 1,000 extra messages
   storagePerGb: 0.5, // $ per extra GB of embedded content
   customDomain: 15, // $/mo custom-domain add-on (covers Cloudflare ACM + margin)
-  freeMessages: 2_000, // Free tier monthly cap — well below Pro's 10k allowance
-  freeEmbeddedMb: 50, // Free tier embedded-content allowance
+  freeMessages: 1_000, // Free tier monthly cap — well below Pro's 10k allowance
+  freeEmbeddedMb: 30, // Free tier embedded-content allowance
   messageMax: 200_000, // estimator slider upper bound
   storageMax: 200 // estimator slider upper bound (GB)
 };

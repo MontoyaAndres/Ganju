@@ -37,6 +37,20 @@ interface MyInvitation {
 
 const initial = (value: string) => (value.trim()[0] || '?').toUpperCase();
 
+// Human label for the subscription tier the organization is on.
+const planLabel = (plan: string) => {
+  switch (plan) {
+    case utils.constants.PLAN_PRO:
+      return 'Pro';
+    case utils.constants.PLAN_ENTERPRISE:
+      return 'Enterprise';
+    default:
+      return 'Free';
+  }
+};
+
+const isPaidPlan = (plan: string) => plan !== utils.constants.PLAN_FREE;
+
 const isHttpUrl = (value: string | null): value is string =>
   !!value && /^https?:\/\//i.test(value);
 
@@ -350,13 +364,26 @@ export const Organization = (props: IProps) => {
       >
         <div className="organization-card-head">
           <h2 className="organization-card-name">{organization.name}</h2>
-          {organization.isMember ? (
-            isOwner && <span className="organization-badge">Owner</span>
-          ) : (
-            <span className="organization-badge organization-badge-basic">
-              Project access
-            </span>
-          )}
+          <div className="organization-badges">
+            {organization.isMember ? (
+              <>
+                {isOwner && <span className="organization-badge">Owner</span>}
+                <span
+                  className={`organization-badge organization-badge-plan${
+                    isPaidPlan(organization.plan)
+                      ? ' organization-badge-plan-paid'
+                      : ''
+                  }`}
+                >
+                  {planLabel(organization.plan)}
+                </span>
+              </>
+            ) : (
+              <span className="organization-badge organization-badge-basic">
+                Project access
+              </span>
+            )}
+          </div>
         </div>
 
         {organization.isMember ? (

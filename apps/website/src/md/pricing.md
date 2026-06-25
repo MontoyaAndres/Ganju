@@ -7,9 +7,9 @@ Start free, scale when you're ready — or run it yourself for free under Apache
 Perfect for personal projects and trying things out.
 
 - 1 workspace, no teammates
-- Up to 5 tools, 5 prompts, 2 channels
-- 500 MB files · ~50 MB searchable (embedded) content
-- 2,000 channel messages / mo
+- Up to 3 tools, 3 prompts, 1 channel
+- 300 MB files · ~30 MB searchable (embedded) content
+- 1,000 channel messages / mo
 - Your own connection link
 - Community support
 

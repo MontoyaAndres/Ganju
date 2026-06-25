@@ -1,4 +1,3 @@
-- Subscription module on app (Stripe)
 - https://www.chatbase.co/
 - Make an introdution view like chatbase does
 - implement evals in the code and for general use in mcps for users promptfoo
@@ -30,9 +29,9 @@ Free:
 
 - One organization / one project, can't invite people
 - mcp.ganju.ai/<slug>
-- Limits: 5 tools, 5 prompts, 2 channels
-- Storage: 500 MB raw files, ≤ ~50 MB embedded/RAG content
-- 2,000 channel messages / month (HARD CAP — well below Pro's 10k allowance so
+- Limits: 3 tools, 3 prompts, 1 channel
+- Storage: 300 MB raw files, ≤ ~30 MB embedded/RAG content
+- 1,000 channel messages / month (HARD CAP — well below Pro's 10k allowance so
   messages are a real upgrade reason, and channel bots are our costliest path)
 - Community support
 

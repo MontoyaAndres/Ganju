@@ -201,6 +201,9 @@ const list = async (c: Context<AppEnv>) => {
             columns: { id: true, name: true, email: true, image: true }
           }
         }
+      },
+      subscription: {
+        columns: { plan: true, status: true }
       }
     }
   });
@@ -209,6 +212,18 @@ const list = async (c: Context<AppEnv>) => {
   // see basic org info plus just the projects they can actually reach.
   const result = organizations.map(organization => {
     const isMember = fullOrgIds.has(organization.id);
+
+    // The plan only counts while the subscription is in an entitled status;
+    // otherwise (canceled, unpaid, …) the org falls back to Free.
+    const sub = organization.subscription;
+    const plan =
+      sub &&
+      (
+        utils.constants.SUBSCRIPTION_ENTITLED_STATUSES as readonly string[]
+      ).includes(sub.status)
+        ? sub.plan
+        : utils.constants.PLAN_FREE;
+
     const projects = organization.projects
       .filter(project => isMember || memberProjectIds.has(project.id))
       .map(project => ({
@@ -226,6 +241,7 @@ const list = async (c: Context<AppEnv>) => {
       createdAt: organization.createdAt,
       updatedAt: organization.updatedAt,
       isMember,
+      plan,
       projects,
       members: isMember
         ? organization.organizationUsers.map(organizationUser => ({
@@ -247,6 +263,20 @@ const remove = async (c: Context<AppEnv>) => {
   });
 
   const dbInstance = db.create(c);
+
+  const [organization] = await dbInstance
+    .select({ ownerId: db.schema.organization.ownerId })
+    .from(db.schema.organization)
+    .where(eq(db.schema.organization.id, currentValues.id))
+    .limit(1);
+
+  if (!organization) {
+    throw new Error('Organization not found');
+  }
+
+  if (organization.ownerId !== currentValues.userId) {
+    throw new Error('Only the organization owner can remove it');
+  }
 
   const [sub] = await dbInstance
     .select({

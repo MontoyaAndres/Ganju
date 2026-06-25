@@ -21,6 +21,20 @@ export const Wrapper = styled.div`
       flex-direction: row;
       gap: 4px;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      position: sticky;
+      top: 60px;
+      z-index: 5;
+      margin: -24px -20px 0;
+      padding: 12px 20px;
+      background: ${theme.colors.white};
+      border-bottom: 1px solid ${theme.colors.bastille}14;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
 
       @media (min-width: ${theme.screens.md}) {
         flex-direction: column;
@@ -28,8 +42,13 @@ export const Wrapper = styled.div`
         width: 200px;
         position: sticky;
         top: 24px;
+        z-index: auto;
         align-self: flex-start;
         overflow-x: visible;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        border-bottom: none;
       }
 
       .settings-nav-item {
@@ -45,7 +64,9 @@ export const Wrapper = styled.div`
         padding: 8px 12px;
         border-radius: 8px;
         white-space: nowrap;
-        transition: background 120ms ease, color 120ms ease;
+        transition:
+          background 120ms ease,
+          color 120ms ease;
 
         &:hover {
           background: ${theme.colors.bastille}0d;
@@ -100,8 +121,12 @@ export const Wrapper = styled.div`
       background: ${theme.colors.white};
       border: 1px solid ${theme.colors.bastille}1a;
       border-radius: 12px;
-      padding: 20px 24px;
+      padding: 18px 16px;
       margin-bottom: 20px;
+
+      @media (min-width: ${theme.screens.md}) {
+        padding: 20px 24px;
+      }
 
       &.danger-card {
         border-color: ${theme.colors.red}33;
@@ -110,10 +135,16 @@ export const Wrapper = styled.div`
 
       .settings-section-header {
         display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+        flex-direction: column;
+        align-items: stretch;
         gap: 12px;
         margin-bottom: 16px;
+
+        @media (min-width: ${theme.screens.md}) {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: flex-start;
+        }
 
         .settings-section-text {
           flex: 1;
@@ -242,10 +273,15 @@ export const Wrapper = styled.div`
         border-radius: 10px;
 
         .project-item-name {
+          flex: 1;
+          min-width: 0;
           font-size: ${theme.fonts.sm};
           font-weight: 600;
           color: ${theme.colors.bastille};
           margin: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .project-item-link {

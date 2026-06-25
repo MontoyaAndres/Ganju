@@ -479,7 +479,7 @@ const HomeLayout = ({ page }: { page: HomePage }) => {
       if (newProject?.error) {
         setProjectStatus('rejected');
         setProjectApiError(
-          newProject.error.message || 'Something went wrong. Please try again.'
+          newProject.error || 'Something went wrong. Please try again.'
         );
         return;
       }

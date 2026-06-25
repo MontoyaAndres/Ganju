@@ -843,14 +843,20 @@ export const OrgSwitcherWrapper = styled.div`
 `;
 
 export const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 16px;
+  ${({ theme }) => css`
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 0;
+
+    @media (min-width: ${theme.screens.md}) {
+      padding: 16px;
+    }
+  `}
 `;
 
 export const ModalDialog = styled.div`
@@ -858,11 +864,16 @@ export const ModalDialog = styled.div`
     background-color: ${theme.colors.white};
     border-radius: 12px;
     width: 100%;
+    height: 100vh;
     max-width: 480px;
-    max-height: 90vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    position: relative;
+
+    @media (min-width: ${theme.screens.md}) {
+      max-height: 90vh;
+    }
 
     .profile-modal-header {
       display: flex;
@@ -983,6 +994,10 @@ export const ModalDialog = styled.div`
       gap: 8px;
       padding: 14px 20px;
       border-top: 1px solid ${theme.colors.alto};
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
     }
 
     .MuiButtonBase-root {
