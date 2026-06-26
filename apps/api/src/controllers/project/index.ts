@@ -145,9 +145,9 @@ const getOverview = async (c: Context<AppEnv>) => {
 
   const dbInstance = db.create(c);
 
-  // Project + its artifact in one shot. Available counts, storage and usage are
-  // all denormalized on the artifact row, so the home cards read straight from
-  // here without aggregating anything.
+  // Project + its artifact in one shot. Counts and usage are denormalized on the
+  // artifact row so the home cards read straight from here; raw storage is the
+  // one exception — it's summed live from the resource rows (see below).
   const [base] = await dbInstance
     .select({
       projectId: db.schema.project.id,
@@ -156,7 +156,9 @@ const getOverview = async (c: Context<AppEnv>) => {
       artifactId: db.schema.artifact.id,
       slug: db.schema.artifact.slug,
       resourceCount: db.schema.artifact.artifactResourceCount,
-      resourceTotalSize: db.schema.artifact.artifactResourceTotalSize,
+      // Summed live from the resource rows — the denormalized
+      // artifactResourceTotalSize column is never maintained (always 0).
+      resourceTotalSize: sql<number>`coalesce((select sum(${db.schema.artifactResource.size}) from ${db.schema.artifactResource} where ${db.schema.artifactResource.artifactId} = ${db.schema.artifact.id}), 0)::bigint`,
       resourceUsageCount: db.schema.artifact.artifactResourceUsageCount,
       toolCount: db.schema.artifact.artifactToolCount,
       toolUsageCount: db.schema.artifact.artifactToolUsageCount,

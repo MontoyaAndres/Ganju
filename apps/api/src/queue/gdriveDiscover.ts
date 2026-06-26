@@ -135,6 +135,11 @@ const insertChildResource = async (
   if (!supported) return null;
 
   const dbInstance = db.create({ env });
+  // Drive reports a byte size for files (not folders); record it up front so the
+  // org's raw-storage total is correct before the file body is fetched. The
+  // gdriveFile sync later overwrites it with the actual stored size.
+  const parsedSize = !folder && child.size ? Number.parseInt(child.size, 10) : NaN;
+  const sizeBytes = Number.isFinite(parsedSize) ? parsedSize : null;
   const inserted = await dbInstance.transaction(async tx => {
     const [created] = await tx
       .insert(db.schema.artifactResource)
@@ -148,6 +153,7 @@ const insertChildResource = async (
         status: utils.constants.STATUS_PENDING,
         mimeType: child.mimeType,
         fileName: child.name,
+        size: sizeBytes,
         artifactId: parent.artifactId,
         parentResourceId: parent.id,
         metadata: buildDriveResourceMetadata(child)
@@ -254,10 +260,12 @@ const discoverOne = async (
     }
 
     if (await hasFileChanged(env.STORAGE_BUCKET, existingRow, child)) {
+      const parsedSize = child.size ? Number.parseInt(child.size, 10) : NaN;
       await dbInstance
         .update(db.schema.artifactResource)
         .set({
           status: utils.constants.STATUS_PENDING,
+          ...(Number.isFinite(parsedSize) ? { size: parsedSize } : {}),
           metadata: buildDriveResourceMetadata(child)
         })
         .where(eq(db.schema.artifactResource.id, existingRow.id));

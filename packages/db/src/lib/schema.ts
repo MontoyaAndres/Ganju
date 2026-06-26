@@ -680,12 +680,17 @@ export const errorLog = pgTable(
     userId: text('user_id'),
     organizationId: text('organization_id'),
     projectId: text('project_id'),
+    artifactResourceId: text('artifact_resource_id').references(
+      () => artifactResource.id,
+      { onDelete: 'set null' }
+    ),
     metadata: json('metadata'),
     createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow()
   },
   table => [
     index('error_log_service_idx').on(table.service),
-    index('error_log_createdAt_idx').on(table.createdAt)
+    index('error_log_createdAt_idx').on(table.createdAt),
+    index('error_log_artifactResource_idx').on(table.artifactResourceId)
   ]
 );
 

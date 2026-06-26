@@ -138,6 +138,10 @@ const insertChildResource = async (
   const driveId = child.parentReference?.driveId ?? parentDriveId;
 
   const dbInstance = db.create({ env });
+  // OneDrive reports a byte size for files (folders report an aggregate we skip);
+  // record it up front so the org's raw-storage total is correct before the file
+  // body is synced. The onedriveFile sync later overwrites it with the stored size.
+  const sizeBytes = !folder && typeof child.size === 'number' ? child.size : null;
   const inserted = await dbInstance.transaction(async tx => {
     const [created] = await tx
       .insert(db.schema.artifactResource)
@@ -153,6 +157,7 @@ const insertChildResource = async (
           ? utils.constants.MIMETYPE_APPLICATION_OCTET_STREAM
           : mimeType,
         fileName: child.name,
+        size: sizeBytes,
         artifactId: parent.artifactId,
         parentResourceId: parent.id,
         metadata: buildOneDriveResourceMetadata(child, driveId)
@@ -272,6 +277,7 @@ const discoverOne = async (
         .update(db.schema.artifactResource)
         .set({
           status: utils.constants.STATUS_PENDING,
+          ...(typeof child.size === 'number' ? { size: child.size } : {}),
           metadata: buildOneDriveResourceMetadata(
             child,
             ref.driveId ?? child.parentReference?.driveId

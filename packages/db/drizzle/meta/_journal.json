@@ -393,6 +393,13 @@
       "when": 1782326983490,
       "tag": "0055_living_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1782423369555,
+      "tag": "0056_giant_moondragon",
+      "breakpoints": true
     }
   ]
 }

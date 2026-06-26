@@ -65,12 +65,14 @@ export const reportQueueError = async (
   error: unknown,
   metadata: Record<string, unknown>
 ): Promise<void> => {
+  const resourceId = metadata.resourceId;
   await dbUtils.handleError(
     { env, request: { method: 'QUEUE', path } },
     error,
     {
       service: utils.constants.SERVICE_NAME_API,
-      metadata
+      metadata,
+      artifactResourceId: typeof resourceId === 'string' ? resourceId : null
     }
   );
 };

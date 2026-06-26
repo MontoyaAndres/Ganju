@@ -9,6 +9,7 @@ export interface HandleErrorOptions {
   service: string;
   metadata?: Record<string, unknown>;
   status?: number;
+  artifactResourceId?: string | null;
 }
 
 export interface HandleErrorResult {
@@ -136,6 +137,7 @@ export const handleError = async (
       stack: err?.stack || null,
       status,
       ...ctx,
+      artifactResourceId: options.artifactResourceId ?? null,
       metadata: options.metadata ?? null
     })
     .returning()

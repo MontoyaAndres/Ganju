@@ -1,0 +1,3 @@
+ALTER TABLE "error_log" ADD COLUMN "artifact_resource_id" text;--> statement-breakpoint
+ALTER TABLE "error_log" ADD CONSTRAINT "error_log_artifact_resource_id_artifact_resource_id_fk" FOREIGN KEY ("artifact_resource_id") REFERENCES "public"."artifact_resource"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "error_log_artifactResource_idx" ON "error_log" USING btree ("artifact_resource_id");

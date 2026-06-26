@@ -65,8 +65,14 @@ export default function PricingCalculator({
     const extraMessages = Math.max(0, messages - includedMessages);
     const extraStorage = Math.max(0, storageGb - includedStorageGb);
 
-    const messageCost = (extraMessages / 1_000) * messagePer1k;
-    const storageCost = extraStorage * storagePerGb;
+    // Stripe bills these meters in whole packages ("round up to nearest complete
+    // package": 1,000 messages, 1 GB), so mirror that here — otherwise the
+    // estimate could quote less than the real invoice for partial blocks.
+    const messageBlocks = Math.ceil(extraMessages / 1_000);
+    const storageBlocks = Math.ceil(extraStorage);
+
+    const messageCost = messageBlocks * messagePer1k;
+    const storageCost = storageBlocks * storagePerGb;
     const domainCost = customDomain ? customDomainPrice : 0;
     const total = proBase + messageCost + storageCost + domainCost;
 
@@ -94,7 +100,7 @@ export default function PricingCalculator({
   // content allowance, with no paid add-on turned on.
   const withinFree =
     messages <= freeMessages &&
-    storageGb <= freeEmbeddedMb / 1_000 &&
+    storageGb <= freeEmbeddedMb / 1_024 &&
     !customDomain;
 
   return (
