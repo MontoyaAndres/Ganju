@@ -589,7 +589,9 @@ export const Overview = () => {
             <div className="overview-activity-headings">
               <p className="overview-activity-title">Activity</p>
               <p className="overview-activity-sub">
-                Interactions per day across channels and MCP clients
+                All interactions per day across channels and MCP clients —
+                including incoming messages. Only assistant replies count toward
+                billing.
               </p>
             </div>
             <div className="overview-activity-controls">

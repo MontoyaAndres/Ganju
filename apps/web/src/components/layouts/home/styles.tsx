@@ -736,40 +736,40 @@ export const OrgSwitcherWrapper = styled.div`
           font-weight: 700;
         }
       }
+    }
 
-      .switcher-item-texts {
-        min-width: 0;
-      }
+    .switcher-item-texts {
+      min-width: 0;
+    }
 
-      .switcher-item-name {
-        color: ${theme.colors.bastille};
-        font-size: ${theme.fonts.base};
-        font-weight: 500;
-        line-height: 120%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
+    .switcher-item-name {
+      color: ${theme.colors.bastille};
+      font-size: ${theme.fonts.base};
+      font-weight: 500;
+      line-height: 120%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-      .switcher-item-meta {
-        color: ${theme.colors.bastille}A3;
-        font-size: ${theme.fonts.sm};
-        font-weight: 400;
-        line-height: 120%;
-        margin-top: 4px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
+    .switcher-item-meta {
+      color: ${theme.colors.bastille}A3;
+      font-size: ${theme.fonts.sm};
+      font-weight: 400;
+      line-height: 120%;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-      .switcher-item-count {
-        color: ${theme.colors.saltBox};
-        font-size: ${theme.fonts.sm};
-        font-weight: 500;
-        padding: 2px 10px;
-        border-radius: 100px;
-        border: 1px solid ${theme.colors.alto};
-      }
+    .switcher-item-count {
+      color: ${theme.colors.saltBox};
+      font-size: ${theme.fonts.sm};
+      font-weight: 500;
+      padding: 2px 10px;
+      border-radius: 100px;
+      border: 1px solid ${theme.colors.alto};
     }
 
     .switcher-empty {

@@ -66,8 +66,9 @@ const UsageRow = (props: {
   limit: number | null;
   render: (n: number) => string;
   overageRate?: string;
+  hint?: string;
 }) => {
-  const { label, used, limit, render, overageRate } = props;
+  const { label, used, limit, render, overageRate, hint } = props;
   const pct =
     limit && limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
   const over = limit != null && used > limit;
@@ -113,6 +114,9 @@ const UsageRow = (props: {
         <div style={{ fontSize: 12, color: overColor, marginTop: 4 }}>
           {render(used - (limit as number))} over · billed at {overageRate}
         </div>
+      )}
+      {hint && (
+        <div style={{ fontSize: 12, opacity: 0.6, marginTop: 4 }}>{hint}</div>
       )}
     </div>
   );
@@ -253,7 +257,7 @@ export const BillingManager = (props: BillingManagerProps) => {
 
       <div style={{ marginTop: 8 }}>
         <UsageRow
-          label="Messages this month"
+          label="Assistant replies this month"
           used={status.usage.messagesUsed}
           // Free shows the hard cap; paid shows the included allowance (overage
           // is metered, not blocked).
@@ -264,6 +268,7 @@ export const BillingManager = (props: BillingManagerProps) => {
           overageRate={
             isFree ? undefined : `$${status.pricing.messagePer1kUsd}/1k`
           }
+          hint="Only your assistant's replies count here. Incoming messages from users are free and don't use your allowance."
         />
         <UsageRow
           label="Embedded content (RAG)"

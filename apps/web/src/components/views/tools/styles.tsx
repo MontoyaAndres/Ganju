@@ -359,6 +359,19 @@ export const Wrapper = styled.div`
         display: flex;
         flex-direction: column;
         gap: 2px;
+
+        .tools-group-title {
+          font-size: ${theme.fonts.base};
+          font-weight: 600;
+          color: ${theme.colors.bastille};
+          margin: 0;
+        }
+
+        .tools-group-meta {
+          font-size: ${theme.fonts.xs};
+          color: ${theme.colors.bastille}99;
+          margin: 0;
+        }
       }
 
       .tools-accordion-header-actions {

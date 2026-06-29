@@ -926,7 +926,10 @@ const HomeLayout = ({ page }: { page: HomePage }) => {
                             <div className="switcher-item-texts">
                               <p className="switcher-item-name">{org.name}</p>
                               <p className="switcher-item-meta">
-                                {org.organizationUserCount ?? 0} members
+                                {org.organizationUserCount ?? 0} member
+                                {Number(org.organizationUserCount ?? 0) === 1
+                                  ? ''
+                                  : 's'}
                               </p>
                             </div>
                             <span className="switcher-item-count">
@@ -1047,7 +1050,10 @@ const HomeLayout = ({ page }: { page: HomePage }) => {
                             <div className="switcher-item-texts">
                               <p className="switcher-item-name">{org.name}</p>
                               <p className="switcher-item-meta">
-                                {org.organizationUserCount ?? 0} members
+                                {org.organizationUserCount ?? 0} member
+                                {Number(org.organizationUserCount ?? 0) === 1
+                                  ? ''
+                                  : 's'}
                               </p>
                             </div>
                             <span className="switcher-item-count">
